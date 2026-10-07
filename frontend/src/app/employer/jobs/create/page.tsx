@@ -17,7 +17,7 @@ interface ScreeningQItem {
 }
 
 export default function CreateJobPage() {
-  const { theme, sdk } = useTheme();
+  const { theme, sdk, user } = useTheme();
   const router = useRouter();
 
   const [formData, setFormData] = useState({

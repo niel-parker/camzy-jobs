@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+**/node_modules/
+.pnpm-store/
+
+# Next.js Build Output
+.next/
+**/.next/
+out/
+build/
+
+# NestJS / TypeScript Compilation Output
+dist/
+**/dist/
+*.tsbuildinfo
+
+# Environment & Secrets Files
+.env
+.env*.local
+.env.production
+.env.staging
+.env.development
+
+# Logs & Runtime Diagnostics
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Database Dumps & Local Data
+*.sql
+*.sqlite
+*.db
+job_portal_db_dump.sql
+
+# OS & System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE & Editor Configurations
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Testing & Coverage Outputs
+coverage/
+.nyc_output/
+
+# Cache Directories
+.cache/
+.turbo/
