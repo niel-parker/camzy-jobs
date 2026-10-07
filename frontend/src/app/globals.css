@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #6366f1;
+  --color-primary-hover: #4f46e5;
+  --color-secondary: #8b5cf6;
+  --color-accent: #06b6d4;
+  --color-bg: #090d16;
+  --color-surface: #111827;
+  --color-text: #f9fafb;
+  --radius: 0.75rem;
+  --font-main: 'Inter', sans-serif;
+}
+
+/* Dark Mode Variables */
+html.dark {
+  --glass-bg: rgba(17, 24, 39, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --header-bg: rgba(9, 13, 22, 0.85);
+  --input-bg: rgba(15, 23, 42, 0.9);
+  --input-border: rgba(51, 65, 85, 0.8);
+  --input-text: #f8fafc;
+  --input-placeholder: #64748b;
+  --card-subtle-bg: #111827;
+  --text-muted: #94a3b8;
+  --heading-color: #f8fafc;
+}
+
+/* Light Mode Variables */
+html.light {
+  --glass-bg: #ffffff;
+  --glass-border: #e2e8f0;
+  --header-bg: rgba(255, 255, 255, 0.95);
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --input-text: #0f172a;
+  --input-placeholder: #94a3b8;
+  --card-subtle-bg: #f8fafc;
+  --text-muted: #64748b;
+  --heading-color: #0f172a;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.glass-card {
+  background: var(--glass-bg, rgba(17, 24, 39, 0.75));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.glass-header {
+  background: var(--header-bg, rgba(9, 13, 22, 0.85));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+}
+
+.theme-input {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--input-text);
+}
+
+.theme-input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.theme-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
