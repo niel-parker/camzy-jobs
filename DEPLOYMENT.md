@@ -16,9 +16,9 @@ PORT=4000
 NODE_ENV=production
 DB_HOST=localhost
 DB_PORT=3306
-DB_USER=camzy_db_user
-DB_PASS=secure_db_password
-DB_NAME=camzy_jobs_db
+DB_USER=job_user
+DB_PASS=job_password
+DB_NAME=job_portal_db
 REDIS_HOST=localhost
 REDIS_PORT=6379
 JWT_SECRET=super_secret_jwt_key_here
@@ -58,6 +58,10 @@ npm run build
 
 ### Step B: Build & Start Backend API
 ```bash
+# 1. Restore Database Dump (If using clean MySQL instance)
+mysql -u job_user -pjob_password job_portal_db < website/job_portal_db_dump.sql
+
+# 2. Build & Start NestJS Server
 cd website/backend
 npm install
 npm run build
