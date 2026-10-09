@@ -5,10 +5,14 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Enable CORS for Next.js frontend
+  // Enable CORS for Next.js frontend (production domain https://jobs.camzytech.com + local + credentials support)
   app.enableCors({
-    origin: '*',
+    origin: (origin, callback) => {
+      // Allow all origins dynamically while reflecting origin header (fixes browser wildcard credentials issue)
+      callback(null, true);
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type,Accept,Authorization,X-Requested-With,Tenant-ID,X-Company-Slug,Access-Control-Allow-Origin',
     credentials: true,
   });
 
