@@ -4,7 +4,9 @@ export declare class AuthController {
     constructor(authService: AuthService);
     login(body: {
         email: string;
-        password_hash: string;
+        password?: string;
+        password_hash?: string;
+        passwordHash?: string;
     }): Promise<{
         accessToken: string;
         user: import("./auth.service").UserDto;

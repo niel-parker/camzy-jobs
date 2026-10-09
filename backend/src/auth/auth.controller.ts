@@ -9,8 +9,9 @@ export class AuthController {
 
   @Post('login')
   @ApiOperation({ summary: 'Login user & retrieve JWT access token' })
-  async login(@Body() body: { email: string; password_hash: string }) {
-    return await this.authService.login(body.email, body.password_hash);
+  async login(@Body() body: { email: string; password?: string; password_hash?: string; passwordHash?: string }) {
+    const pwd = body.password || body.password_hash || body.passwordHash;
+    return await this.authService.login(body.email, pwd);
   }
 
   @Post('register/company')

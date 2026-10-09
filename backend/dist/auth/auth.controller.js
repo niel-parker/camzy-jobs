@@ -21,7 +21,8 @@ let AuthController = class AuthController {
         this.authService = authService;
     }
     async login(body) {
-        return await this.authService.login(body.email, body.password_hash);
+        const pwd = body.password || body.password_hash || body.passwordHash;
+        return await this.authService.login(body.email, pwd);
     }
     async registerCompany(body) {
         return await this.authService.registerCompany(body);

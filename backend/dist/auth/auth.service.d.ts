@@ -23,7 +23,7 @@ export declare class AuthService {
     private readonly subRepo;
     private readonly planRepo;
     constructor(userRepo: Repository<User>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>);
-    login(email: string, password_hash: string): Promise<{
+    login(email: string, rawPassword?: string): Promise<{
         accessToken: string;
         user: UserDto;
     }>;

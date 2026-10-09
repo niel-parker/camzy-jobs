@@ -16,6 +16,7 @@ exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
+const bcrypt = require("bcryptjs");
 const user_entity_1 = require("../users/entities/user.entity");
 const tenant_entity_1 = require("../tenants/entities/tenant.entity");
 const candidate_entity_1 = require("../candidates/entities/candidate.entity");
@@ -29,8 +30,8 @@ let AuthService = class AuthService {
         this.subRepo = subRepo;
         this.planRepo = planRepo;
     }
-    async login(email, password_hash) {
-        if (!email || !password_hash) {
+    async login(email, rawPassword) {
+        if (!email || !rawPassword) {
             throw new common_1.BadRequestException('Email address and password are required.');
         }
         const cleanEmail = email.toLowerCase().trim();
@@ -41,9 +42,15 @@ let AuthService = class AuthService {
         if (!user) {
             throw new common_1.UnauthorizedException('Invalid email or password.');
         }
-        const isValidPassword = user.passwordHash === password_hash ||
-            (user.passwordHash === 'admin123' && password_hash === 'admin123') ||
-            (user.passwordHash === 'password123' && password_hash === 'password123');
+        let isValidPassword = false;
+        if (user.passwordHash) {
+            if (user.passwordHash.startsWith('$2a$') || user.passwordHash.startsWith('$2b$')) {
+                isValidPassword = bcrypt.compareSync(rawPassword, user.passwordHash);
+            }
+            else {
+                isValidPassword = user.passwordHash === rawPassword;
+            }
+        }
         if (!isValidPassword) {
             throw new common_1.UnauthorizedException('Invalid email or password.');
         }
@@ -83,9 +90,11 @@ let AuthService = class AuthService {
         const nameParts = (body.adminName || 'Company Admin').trim().split(' ');
         const firstName = nameParts[0] || 'Company';
         const lastName = nameParts.slice(1).join(' ') || 'Admin';
+        const plainPassword = body.adminPassword || 'password123';
+        const hashedPassword = bcrypt.hashSync(plainPassword, 10);
         const newUser = this.userRepo.create({
             email: cleanEmail,
-            passwordHash: body.adminPassword || 'password123',
+            passwordHash: hashedPassword,
             firstName,
             lastName,
             role: user_entity_1.UserRole.COMPANY_ADMIN,
@@ -129,9 +138,11 @@ let AuthService = class AuthService {
         const nameParts = (body.fullName || 'Candidate User').trim().split(' ');
         const firstName = nameParts[0] || 'Candidate';
         const lastName = nameParts.slice(1).join(' ') || 'User';
+        const plainPassword = body.password || 'password123';
+        const hashedPassword = bcrypt.hashSync(plainPassword, 10);
         const newUser = this.userRepo.create({
             email: cleanEmail,
-            passwordHash: body.password || 'password123',
+            passwordHash: hashedPassword,
             firstName,
             lastName,
             role: user_entity_1.UserRole.CANDIDATE,
