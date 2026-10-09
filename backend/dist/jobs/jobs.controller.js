@@ -30,6 +30,12 @@ let JobsController = class JobsController {
     async createJob(body) {
         return await this.jobsService.createJob(body);
     }
+    async updateJob(id, body) {
+        return await this.jobsService.updateJob(id, body);
+    }
+    async deleteJob(id) {
+        return await this.jobsService.deleteJob(id);
+    }
     async featureJob(id) {
         return await this.jobsService.featureJob(id);
     }
@@ -66,6 +72,23 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], JobsController.prototype, "createJob", null);
+__decorate([
+    (0, common_1.Put)(':id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update an existing job posting' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], JobsController.prototype, "updateJob", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete a job posting' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], JobsController.prototype, "deleteJob", null);
 __decorate([
     (0, common_1.Post)(':id/feature'),
     (0, swagger_1.ApiOperation)({ summary: 'Promote job posting to Featured status (Consumes Featured Job Credit)' }),

@@ -41,6 +41,8 @@ export declare class JobPosting {
     locationCity: string;
     isRemote: boolean;
     isFeatured: boolean;
+    applyType: 'INTERNAL' | 'EXTERNAL';
+    applyUrl: string;
     screeningQuestions: Array<{
         id: string;
         questionText: string;

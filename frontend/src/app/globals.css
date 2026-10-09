@@ -10,28 +10,34 @@
   --color-secondary: #8b5cf6;
   --color-accent: #06b6d4;
   --color-bg: #090d16;
-  --color-surface: #111827;
-  --color-text: #f9fafb;
+  --color-surface: #ffffff;
+  --color-text: #0f172a;
   --radius: 0.75rem;
   --font-main: 'Inter', sans-serif;
 }
 
 /* Dark Mode Variables */
 html.dark {
-  --glass-bg: rgba(17, 24, 39, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --header-bg: rgba(9, 13, 22, 0.85);
-  --input-bg: rgba(15, 23, 42, 0.9);
-  --input-border: rgba(51, 65, 85, 0.8);
+  --color-bg: #090d16;
+  --color-surface: #0f172a;
+  --color-text: #f8fafc;
+  --glass-bg: #0f172a;
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --header-bg: rgba(15, 23, 42, 0.95);
+  --input-bg: #1e293b;
+  --input-border: #334155;
   --input-text: #f8fafc;
   --input-placeholder: #64748b;
-  --card-subtle-bg: #111827;
+  --card-subtle-bg: #0f172a;
   --text-muted: #94a3b8;
   --heading-color: #f8fafc;
 }
 
 /* Light Mode Variables */
 html.light {
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-text: #0f172a;
   --glass-bg: #ffffff;
   --glass-border: #e2e8f0;
   --header-bg: rgba(255, 255, 255, 0.95);
@@ -51,19 +57,66 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Solid Theme Utility Classes */
+.theme-surface {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+html.dark .theme-surface {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+/* Modal Dialog Solid Opaque Containers */
+.theme-modal {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+  opacity: 1 !important;
+}
+
+html.dark .theme-modal {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+.theme-text {
+  color: #0f172a;
+}
+
+html.dark .theme-text {
+  color: #f8fafc;
+}
+
+.theme-muted {
+  color: #64748b;
+}
+
+html.dark .theme-muted {
+  color: #94a3b8;
+}
+
+.theme-border {
+  border-color: #e2e8f0;
+}
+
+html.dark .theme-border {
+  border-color: #1e293b;
+}
+
 .glass-card {
-  background: var(--glass-bg, rgba(17, 24, 39, 0.75));
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  background: var(--glass-bg, #ffffff);
+  border: 1px solid var(--glass-border, #e2e8f0);
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
 }
 
 .glass-header {
-  background: var(--header-bg, rgba(9, 13, 22, 0.85));
+  background: var(--header-bg, rgba(255, 255, 255, 0.95));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  border-bottom: 1px solid var(--glass-border, #e2e8f0);
 }
 
 .theme-input {

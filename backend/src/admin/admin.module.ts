@@ -7,6 +7,7 @@ import { Tenant } from '../tenants/entities/tenant.entity';
 import { Candidate } from '../candidates/entities/candidate.entity';
 import { JobApplication } from '../applications/entities/job-application.entity';
 import { TenantSubscription } from '../subscriptions/entities/tenant-subscription.entity';
+import { SubscriptionPlan } from '../subscriptions/entities/subscription-plan.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TenantSubscription } from '../subscriptions/entities/tenant-subscriptio
       Candidate,
       JobApplication,
       TenantSubscription,
+      SubscriptionPlan,
     ]),
   ],
   controllers: [AdminController],

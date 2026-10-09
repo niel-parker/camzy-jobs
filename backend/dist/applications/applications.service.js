@@ -45,6 +45,16 @@ let ApplicationsService = class ApplicationsService {
                 jobId = firstJob.id;
         }
         let candidateId = data.candidateId;
+        if (candidateId) {
+            let cand = await this.candidateRepo.findOne({ where: { id: candidateId } });
+            if (!cand) {
+                cand = await this.candidateRepo.findOne({ where: { userId: candidateId } });
+            }
+            if (cand)
+                candidateId = cand.id;
+            else
+                candidateId = undefined;
+        }
         if (!candidateId) {
             const firstCand = await this.candidateRepo.findOne({ where: {} });
             if (firstCand)
@@ -55,6 +65,7 @@ let ApplicationsService = class ApplicationsService {
             candidateId: candidateId || 'cnd-101',
             coverLetter: data.coverLetter || '',
             resumeUrlSnapshot: data.resumeUrlSnapshot || 'https://example.com/resumes/resume.pdf',
+            answersJson: data.answersJson || {},
             stage: job_application_entity_1.ApplicationStage.APPLIED,
             rating: 0,
         });

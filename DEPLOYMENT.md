@@ -22,7 +22,7 @@ DB_NAME=camzy_jobs_db
 REDIS_HOST=localhost
 REDIS_PORT=6379
 JWT_SECRET=super_secret_jwt_key_here
-STRIPE_SECRET_KEY=sk_live_...
+STRIPE_SECRET_KEY=sk_test_51UOPRtIeu7vvxPLc3VaRMJDdlMzK00tDlUoFZUlqWpIccZ1xHoCz4hxkL7qFoMJl3LrXiH2aMK1Zf2qxf4wszWfS00pxU3Dt0W
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 

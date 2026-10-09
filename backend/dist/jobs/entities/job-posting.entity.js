@@ -119,6 +119,14 @@ __decorate([
     __metadata("design:type", Boolean)
 ], JobPosting.prototype, "isFeatured", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ length: 20, default: 'INTERNAL' }),
+    __metadata("design:type", String)
+], JobPosting.prototype, "applyType", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ length: 500, nullable: true }),
+    __metadata("design:type", String)
+], JobPosting.prototype, "applyUrl", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'json', nullable: true }),
     __metadata("design:type", Array)
 ], JobPosting.prototype, "screeningQuestions", void 0);

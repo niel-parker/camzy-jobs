@@ -18,10 +18,16 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const user_entity_1 = require("../users/entities/user.entity");
 const tenant_entity_1 = require("../tenants/entities/tenant.entity");
+const candidate_entity_1 = require("../candidates/entities/candidate.entity");
+const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-subscription.entity");
+const subscription_plan_entity_1 = require("../subscriptions/entities/subscription-plan.entity");
 let AuthService = class AuthService {
-    constructor(userRepo, tenantRepo) {
+    constructor(userRepo, tenantRepo, candidateRepo, subRepo, planRepo) {
         this.userRepo = userRepo;
         this.tenantRepo = tenantRepo;
+        this.candidateRepo = candidateRepo;
+        this.subRepo = subRepo;
+        this.planRepo = planRepo;
     }
     async login(email, password_hash) {
         const user = await this.userRepo.findOne({
@@ -48,9 +54,101 @@ let AuthService = class AuthService {
             user: this.mapToDto(user),
         };
     }
+    async registerCompany(body) {
+        if (!body.adminEmail) {
+            throw new common_1.BadRequestException('Admin email address is required.');
+        }
+        const existingUser = await this.userRepo.findOne({
+            where: { email: body.adminEmail.toLowerCase() },
+        });
+        if (existingUser) {
+            throw new common_1.BadRequestException('An account with this email address already exists.');
+        }
+        const slug = (body.companyName || 'company').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Math.floor(1000 + Math.random() * 9000);
+        const newTenant = this.tenantRepo.create({
+            name: body.companyName || 'New Company',
+            slug,
+            type: tenant_entity_1.TenantType.COMPANY,
+            industry: body.industry || 'Software & SaaS',
+            website: body.website || 'https://example.com',
+            taxId: body.taxId || 'TAX-VERIFIED',
+            description: body.description || 'Registered hiring company.',
+            logoUrl: body.logoUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=120',
+            status: tenant_entity_1.TenantStatus.ACTIVE,
+        });
+        const savedTenant = await this.tenantRepo.save(newTenant);
+        const nameParts = (body.adminName || 'Company Admin').trim().split(' ');
+        const firstName = nameParts[0] || 'Company';
+        const lastName = nameParts.slice(1).join(' ') || 'Admin';
+        const newUser = this.userRepo.create({
+            email: body.adminEmail.toLowerCase(),
+            passwordHash: body.adminPassword || 'password123',
+            firstName,
+            lastName,
+            role: user_entity_1.UserRole.COMPANY_ADMIN,
+            tenantId: savedTenant.id,
+            status: user_entity_1.UserStatus.ACTIVE,
+        });
+        const savedUser = await this.userRepo.save(newUser);
+        const planCode = body.selectedPlan === 'STARTER' ? subscription_plan_entity_1.PlanCode.FREE : body.selectedPlan === 'ENTERPRISE' ? subscription_plan_entity_1.PlanCode.ENTERPRISE : subscription_plan_entity_1.PlanCode.PRO;
+        let plan = await this.planRepo.findOne({ where: { code: planCode } });
+        if (!plan) {
+            plan = await this.planRepo.findOne({ where: {} });
+        }
+        if (plan) {
+            const newSub = this.subRepo.create({
+                tenantId: savedTenant.id,
+                planId: plan.id,
+                status: tenant_subscription_entity_1.SubscriptionStatus.ACTIVE,
+                currentPeriodStart: new Date(),
+                currentPeriodEnd: new Date(Date.now() + 30 * 86400000),
+            });
+            await this.subRepo.save(newSub);
+        }
+        return {
+            accessToken: `jwt-company-token-${savedUser.id}-${Date.now()}`,
+            user: this.mapToDto(savedUser),
+            tenant: savedTenant,
+        };
+    }
+    async registerCandidate(body) {
+        if (!body.email) {
+            throw new common_1.BadRequestException('Email address is required.');
+        }
+        const existingUser = await this.userRepo.findOne({
+            where: { email: body.email.toLowerCase() },
+        });
+        if (existingUser) {
+            throw new common_1.BadRequestException('An account with this email address already exists.');
+        }
+        const nameParts = (body.fullName || 'Candidate User').trim().split(' ');
+        const firstName = nameParts[0] || 'Candidate';
+        const lastName = nameParts.slice(1).join(' ') || 'User';
+        const newUser = this.userRepo.create({
+            email: body.email.toLowerCase(),
+            passwordHash: body.password || 'password123',
+            firstName,
+            lastName,
+            role: user_entity_1.UserRole.CANDIDATE,
+            status: user_entity_1.UserStatus.ACTIVE,
+        });
+        const savedUser = await this.userRepo.save(newUser);
+        const newCandidate = this.candidateRepo.create({
+            userId: savedUser.id,
+            headline: body.headline || 'Software Developer',
+            skills: body.skills ? body.skills.split(',').map((s) => s.trim()) : ['TypeScript', 'React'],
+            experienceYears: 3,
+            expectedSalary: 130000,
+        });
+        await this.candidateRepo.save(newCandidate);
+        return {
+            accessToken: `jwt-candidate-token-${savedUser.id}-${Date.now()}`,
+            user: this.mapToDto(savedUser),
+        };
+    }
     async getCurrentUser(token) {
         if (token) {
-            if (token.includes('usr-company-1') || token.includes('recruiter')) {
+            if (token.includes('usr-company-1') || token.includes('recruiter') || token.includes('company')) {
                 const recruiter = await this.userRepo.findOne({
                     where: { role: user_entity_1.UserRole.COMPANY_ADMIN },
                     relations: { tenant: true },
@@ -103,7 +201,13 @@ exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __param(1, (0, typeorm_1.InjectRepository)(tenant_entity_1.Tenant)),
+    __param(2, (0, typeorm_1.InjectRepository)(candidate_entity_1.Candidate)),
+    __param(3, (0, typeorm_1.InjectRepository)(tenant_subscription_entity_1.TenantSubscription)),
+    __param(4, (0, typeorm_1.InjectRepository)(subscription_plan_entity_1.SubscriptionPlan)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

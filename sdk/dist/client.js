@@ -4,8 +4,8 @@ exports.JobPortalSdk = void 0;
 class JobPortalSdk {
     baseUrl;
     token = null;
-    constructor(baseUrl = 'http://localhost:4000/api/v1') {
-        this.baseUrl = baseUrl;
+    constructor(baseUrl) {
+        this.baseUrl = baseUrl || (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000/api/v1';
         if (typeof window !== 'undefined') {
             this.token = localStorage.getItem('jp_access_token');
         }
@@ -98,6 +98,17 @@ class JobPortalSdk {
         return this.request('/jobs', {
             method: 'POST',
             body: JSON.stringify(jobData),
+        });
+    }
+    async updateJob(id, jobData) {
+        return this.request(`/jobs/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(jobData),
+        });
+    }
+    async deleteJob(id) {
+        return this.request(`/jobs/${id}`, {
+            method: 'DELETE',
         });
     }
     async featureJob(id) {

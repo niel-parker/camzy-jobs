@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { JobListingDto, JobsService } from './jobs.service';
 import { JobQuotaGuard } from '../guards/job-quota.guard';
@@ -35,9 +35,22 @@ export class JobsController {
     return await this.jobsService.createJob(body);
   }
 
+  @Put(':id')
+  @ApiOperation({ summary: 'Update an existing job posting' })
+  async updateJob(@Param('id') id: string, @Body() body: Partial<JobListingDto>): Promise<JobListingDto> {
+    return await this.jobsService.updateJob(id, body);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a job posting' })
+  async deleteJob(@Param('id') id: string): Promise<{ success: boolean }> {
+    return await this.jobsService.deleteJob(id);
+  }
+
   @Post(':id/feature')
   @ApiOperation({ summary: 'Promote job posting to Featured status (Consumes Featured Job Credit)' })
   async featureJob(@Param('id') id: string): Promise<JobListingDto> {
     return await this.jobsService.featureJob(id);
   }
 }
+

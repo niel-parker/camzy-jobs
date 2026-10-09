@@ -5,7 +5,7 @@ import { JobsService } from '../jobs/jobs.service';
 export class JobQuotaGuard implements CanActivate {
   constructor(private readonly jobsService: JobsService) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const user = request.user || { tenantId: 'tnt-techcorp', role: 'COMPANY_ADMIN' }; // Demo context fallback
 
@@ -15,8 +15,8 @@ export class JobQuotaGuard implements CanActivate {
     }
 
     // Retrieve active jobs count for company
-    const activeJobs = this.jobsService.getActiveJobsCountForTenant(user.tenantId || 'tnt-techcorp');
-    const planMaxJobs = this.jobsService.getPlanJobLimitForTenant(user.tenantId || 'tnt-techcorp');
+    const activeJobs = await this.jobsService.getActiveJobsCountForTenant(user.tenantId || 'tnt-techcorp');
+    const planMaxJobs = await this.jobsService.getPlanJobLimitForTenant(user.tenantId || 'tnt-techcorp');
 
     if (activeJobs >= planMaxJobs) {
       throw new ForbiddenException(
@@ -27,3 +27,4 @@ export class JobQuotaGuard implements CanActivate {
     return true;
   }
 }
+

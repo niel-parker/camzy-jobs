@@ -14,9 +14,6 @@ interface ThemeContextType {
   applyPreset: (presetId: string) => Promise<void>;
   updateAppConfig: (partial: Partial<AppConfig>) => Promise<void>;
   login: (email: string, password: string) => Promise<User>;
-  loginAsCandidate: () => Promise<void>;
-  loginAsEmployer: () => Promise<void>;
-  loginAsSuperAdmin: () => Promise<void>;
   logout: () => void;
 }
 
@@ -64,7 +61,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingTheme, setIsLoadingTheme] = useState(true);
 
-  // Load active theme & app config from NestJS Backend or fallback
+  // Load active theme & app config from NestJS Backend
   useEffect(() => {
     async function loadInitialData() {
       try {
@@ -76,13 +73,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setAppConfig(activeAppConfig);
         applyThemeToCssVariables(activeTheme);
       } catch (err) {
-        console.warn('Backend API offline, using local default configs.');
+        console.warn('Backend API offline, using default theme variables.');
         applyThemeToCssVariables(defaultThemeConfig);
       } finally {
         setIsLoadingTheme(false);
       }
 
-      // Check user session
+      // Restore user session from valid JWT token
       const savedToken = sdk.getToken();
       if (savedToken) {
         try {
@@ -90,6 +87,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setUser(currentUser);
         } catch {
           sdk.setToken(null);
+          setUser(null);
         }
       }
     }
@@ -141,62 +139,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return res.user;
   };
 
-  const loginAsCandidate = async () => {
-    try {
-      const res = await sdk.login('alex.candidate@example.com', 'password123');
-      setUser(res.user);
-    } catch {
-      const mockUser: User = {
-        id: 'usr-cand-1',
-        email: 'alex.candidate@example.com',
-        firstName: 'Alex',
-        lastName: 'Morgan',
-        role: 'CANDIDATE',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-      };
-      setUser(mockUser);
-    }
-  };
-
-  const loginAsEmployer = async () => {
-    try {
-      const res = await sdk.login('recruiter@techcorp.com', 'password123');
-      setUser(res.user);
-    } catch {
-      const mockUser: User = {
-        id: 'usr-emp-1',
-        email: 'recruiter@techcorp.com',
-        firstName: 'Sarah',
-        lastName: 'Jenkins',
-        role: 'RECRUITER',
-        tenantId: 'tnt-techcorp',
-        tenantName: 'TechCorp Global',
-        avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200',
-      };
-      setUser(mockUser);
-    }
-  };
-
-  const loginAsSuperAdmin = async () => {
-    try {
-      const res = await sdk.login('admin@camzyjobs.com', 'admin123');
-      setUser(res.user);
-    } catch {
-      const mockUser: User = {
-        id: 'usr-admin-1',
-        email: 'admin@camzyjobs.com',
-        firstName: 'Super',
-        lastName: 'Admin',
-        role: 'SUPER_ADMIN',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-      };
-      setUser(mockUser);
-    }
-  };
-
   const logout = () => {
     sdk.setToken(null);
     setUser(null);
+    if (typeof window !== 'undefined') {
+      window.location.href = '/auth/login';
+    }
   };
 
   return (
@@ -212,9 +160,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         applyPreset,
         updateAppConfig,
         login,
-        loginAsCandidate,
-        loginAsEmployer,
-        loginAsSuperAdmin,
         logout,
       }}
     >

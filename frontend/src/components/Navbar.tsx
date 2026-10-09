@@ -15,7 +15,7 @@ export const Navbar: React.FC = () => {
     setMounted(true);
   }, []);
 
-  const { theme, user, appConfig, loginAsSuperAdmin, logout } = useTheme();
+  const { theme, user, appConfig, logout } = useTheme();
   const [isThemePanelOpen, setIsThemePanelOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);

@@ -38,6 +38,7 @@ services:
       DB_NAME: job_portal_db
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      STRIPE_SECRET_KEY: sk_test_51UOPRtIeu7vvxPLc3VaRMJDdlMzK00tDlUoFZUlqWpIccZ1xHoCz4hxkL7qFoMJl3LrXiH2aMK1Zf2qxf4wszWfS00pxU3Dt0W
     depends_on:
       - mysql
       - redis
@@ -52,7 +53,7 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://backend:4000/api/v1
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
     depends_on:
       - backend
 

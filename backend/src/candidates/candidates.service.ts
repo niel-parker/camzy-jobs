@@ -13,6 +13,52 @@ export interface CandidateProfileDto {
   expectedSalary: number;
   resumeUrl?: string;
   skills: string[];
+  experience?: Array<{
+    id?: string;
+    designation: string;
+    companyName: string;
+    isCurrentJob?: boolean;
+    startDate?: string;
+    endDate?: string;
+    noticePeriod?: string;
+    location?: string;
+    jobSummary?: string;
+  }>;
+  education?: Array<{
+    id?: string;
+    degree: string;
+    fieldOfStudy?: string;
+    institution: string;
+    startYear?: string;
+    endYear?: string;
+    grade?: string;
+  }>;
+  certifications?: Array<{
+    id?: string;
+    title: string;
+    issuingOrganization: string;
+    issueDate?: string;
+    expiryDate?: string;
+    credentialUrl?: string;
+  }>;
+  projects?: Array<{
+    id?: string;
+    projectTitle: string;
+    client?: string;
+    role?: string;
+    projectDescription?: string;
+    technologies?: string[];
+    projectUrl?: string;
+  }>;
+  languages?: Array<{
+    language: string;
+    proficiency: 'BASIC' | 'CONVERSATIONAL' | 'FLUENT' | 'NATIVE';
+  }>;
+  socialLinks?: {
+    github?: string;
+    linkedin?: string;
+    website?: string;
+  };
   visibility: ProfileVisibility;
 }
 
@@ -39,25 +85,50 @@ export class CandidatesService {
   }
 
   async findOne(id: string): Promise<CandidateProfileDto> {
-    const candidate = await this.candidateRepo.findOne({
+    let candidate = await this.candidateRepo.findOne({
       where: [{ id }, { userId: id }],
       relations: { user: true },
     });
 
     if (!candidate) {
-      throw new NotFoundException(`Candidate profile ${id} not found`);
+      try {
+        const newCand = this.candidateRepo.create({
+          userId: id,
+          headline: 'Software Engineer',
+          currentTitle: 'Engineer',
+          experienceYears: 2,
+          resumeUrl: 'https://example.com/resumes/candidate-resume-2026.pdf',
+          skills: ['TypeScript', 'React', 'Node.js'],
+        });
+        candidate = await this.candidateRepo.save(newCand);
+        candidate = await this.candidateRepo.findOne({
+          where: { id: candidate.id },
+          relations: { user: true },
+        });
+      } catch (err) {
+        throw new NotFoundException(`Candidate profile ${id} not found`);
+      }
     }
 
     return this.mapToDto(candidate);
   }
 
   async updateProfile(id: string, partial: Partial<CandidateProfileDto>): Promise<CandidateProfileDto> {
-    const candidate = await this.candidateRepo.findOne({
+    let candidate = await this.candidateRepo.findOne({
       where: [{ id }, { userId: id }],
     });
 
     if (!candidate) {
-      throw new NotFoundException(`Candidate profile ${id} not found`);
+      candidate = this.candidateRepo.create({
+        userId: id,
+        headline: partial.headline || 'Software Engineer',
+        summary: partial.summary || '',
+        currentTitle: partial.currentTitle || 'Engineer',
+        experienceYears: partial.experienceYears || 0,
+        expectedSalary: partial.expectedSalary || 0,
+        resumeUrl: partial.resumeUrl || '',
+        skills: partial.skills || [],
+      });
     }
 
     if (partial.headline !== undefined) candidate.headline = partial.headline;
@@ -67,6 +138,12 @@ export class CandidatesService {
     if (partial.expectedSalary !== undefined) candidate.expectedSalary = partial.expectedSalary;
     if (partial.resumeUrl !== undefined) candidate.resumeUrl = partial.resumeUrl;
     if (partial.skills !== undefined) candidate.skills = partial.skills;
+    if (partial.experience !== undefined) candidate.experience = partial.experience;
+    if (partial.education !== undefined) candidate.education = partial.education;
+    if (partial.certifications !== undefined) candidate.certifications = partial.certifications;
+    if (partial.projects !== undefined) candidate.projects = partial.projects;
+    if (partial.languages !== undefined) candidate.languages = partial.languages;
+    if (partial.socialLinks !== undefined) candidate.socialLinks = partial.socialLinks;
     if (partial.visibility !== undefined) candidate.visibility = partial.visibility;
 
     const saved = await this.candidateRepo.save(candidate);
@@ -84,6 +161,12 @@ export class CandidatesService {
       expectedSalary: c.expectedSalary ? Number(c.expectedSalary) : 0,
       resumeUrl: c.resumeUrl || undefined,
       skills: c.skills || [],
+      experience: c.experience || [],
+      education: c.education || [],
+      certifications: c.certifications || [],
+      projects: c.projects || [],
+      languages: c.languages || [],
+      socialLinks: c.socialLinks || {},
       visibility: c.visibility || ProfileVisibility.PUBLIC,
     };
   }

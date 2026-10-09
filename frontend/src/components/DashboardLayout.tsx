@@ -7,7 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import { 
   LayoutDashboard, Briefcase, Users, FileText, Bookmark, Settings, 
   ShieldCheck, Palette, Bell, Search, ChevronLeft, ChevronRight, 
-  LogOut, User, Building2, Plus, Sparkles, UserCheck, HelpCircle, Lock, LogIn 
+  LogOut, User, Building2, Plus, Sparkles, UserCheck, Lock, LogIn 
 } from 'lucide-react';
 import { SuperAdminThemeCustomizer } from './SuperAdminThemeCustomizer';
 
@@ -25,59 +25,66 @@ interface NavItem {
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role }) => {
   const pathname = usePathname();
-  const { theme, user, logout, loginAsCandidate, loginAsEmployer, loginAsSuperAdmin } = useTheme();
+  const { theme, user, logout } = useTheme();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isThemePanelOpen, setIsThemePanelOpen] = useState(false);
 
   const roleTitle = role === 'EMPLOYER' ? 'Employer Workspace' : role === 'CANDIDATE' ? 'Candidate Portal' : 'Super Admin Control';
 
+  // Strict Role Authorization Check
   const isAuthorized = React.useMemo(() => {
     if (!user) return false;
-    if (user.role === 'SUPER_ADMIN') return true;
-    if (role === 'CANDIDATE' && user.role === 'CANDIDATE') return true;
-    if (role === 'EMPLOYER' && (user.role === 'RECRUITER' || user.role === 'COMPANY_ADMIN' || user.role === 'CONSULTANCY_ADMIN' || user.role === 'AGENCY_AGENT')) return true;
+    
+    if (role === 'SUPER_ADMIN') {
+      return user.role === 'SUPER_ADMIN';
+    }
+    
+    if (role === 'EMPLOYER') {
+      return (
+        user.role === 'COMPANY_ADMIN' || 
+        user.role === 'RECRUITER' || 
+        user.role === 'CONSULTANCY_ADMIN' || 
+        user.role === 'AGENCY_AGENT' ||
+        user.role === 'SUPER_ADMIN'
+      );
+    }
+    
+    if (role === 'CANDIDATE') {
+      return user.role === 'CANDIDATE' || user.role === 'SUPER_ADMIN';
+    }
+    
     return false;
   }, [user, role]);
 
   if (!isAuthorized) {
+    const loginLink = role === 'SUPER_ADMIN' ? '/admin/login' : '/auth/login';
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 p-6 theme-transition">
         <div className="max-w-md w-full theme-surface border theme-border rounded-2xl shadow-2xl p-8 text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto border border-indigo-500/20">
-            <Lock className="w-8 h-8 animate-pulse" />
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto border border-rose-500/20">
+            <Lock className="w-8 h-8" />
           </div>
 
           <div className="space-y-2">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">
-              Authentication & Role Guard
+              403 Access Forbidden
             </span>
             <h2 className="text-xl font-black theme-text tracking-tight">
               {roleTitle} Access Restricted
             </h2>
             <p className="text-xs theme-muted leading-relaxed">
-              This dashboard path is protected. Please sign in with an authorized <span className="font-bold theme-text">{roleTitle}</span> account to access applicant records and management tools.
+              You are not authorized to access this dashboard. Please sign in with an official <span className="font-bold theme-text">{roleTitle}</span> account.
             </p>
           </div>
 
           <div className="space-y-3 pt-2 border-t theme-border">
-            <button
-              onClick={() => {
-                if (role === 'CANDIDATE') loginAsCandidate();
-                else if (role === 'EMPLOYER') loginAsEmployer();
-                else loginAsSuperAdmin();
-              }}
-              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>1-Click Authenticate as {roleTitle}</span>
-            </button>
-
             <Link
-              href="/auth/login"
-              className="w-full py-2.5 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center justify-center space-x-1"
+              href={loginLink}
+              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center space-x-2"
             >
-              <LogIn className="w-3.5 h-3.5 mr-1" />
-              <span>Go to Sign In Page</span>
+              <LogIn className="w-4 h-4 mr-1" />
+              <span>Sign In with Authorized Account</span>
             </Link>
 
             <Link
@@ -92,7 +99,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
     );
   }
 
-  // Define Navigation Items based on Role
+  // Navigation Items per Role
   let navItems: NavItem[] = [];
 
   if (role === 'EMPLOYER') {
@@ -192,8 +199,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
             </div>
             {!isSidebarCollapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold theme-text truncate">{user?.firstName || 'Logged User'}</p>
-                <p className="text-[10px] theme-muted truncate">{user?.email || 'user@camzyjobs.com'}</p>
+                <p className="text-xs font-bold theme-text truncate">{user?.firstName || 'User'}</p>
+                <p className="text-[10px] theme-muted truncate">{user?.email || ''}</p>
               </div>
             )}
           </div>
@@ -222,49 +229,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
       <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
         {/* HEADER NAVBAR BAR */}
         <header className="sticky top-0 z-30 h-16 theme-surface border-b theme-border px-6 flex items-center justify-between shadow-sm">
-          {/* Left Search / Breadcrumb */}
+          {/* Left Search / Title */}
           <div className="flex items-center space-x-4">
-            <div className="relative hidden md:block w-72">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 theme-muted" />
-              <input
-                type="text"
-                placeholder="Search candidates, jobs, or settings..."
-                className="w-full pl-9 pr-3 py-1.5 rounded-lg border theme-border theme-input theme-text text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              />
-            </div>
+            <span className="text-xs font-extrabold theme-text uppercase tracking-wider">{roleTitle}</span>
           </div>
 
-          {/* Right Action Icons */}
+          {/* Right User Controls */}
           <div className="flex items-center space-x-3">
-            {/* Quick Switch Portal Dropdown */}
-            <div className="relative group">
-              <button className="flex items-center space-x-2 px-3 py-1.5 rounded-lg border theme-border theme-surface theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>{roleTitle}</span>
-                <span className="text-[10px] text-slate-400 font-mono">▼</span>
-              </button>
-              <div className="absolute right-0 w-52 py-2 theme-surface border theme-border rounded-xl shadow-xl z-50 text-xs font-medium space-y-1 hidden group-hover:block">
-                <div className="px-3 py-1 text-[10px] font-bold theme-muted uppercase tracking-wider">Direct Portal Switch</div>
-                <Link href="/candidate/applications" className="flex items-center px-4 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 theme-text">
-                  <User className="w-3.5 h-3.5 mr-2 text-indigo-500" /> Candidate Portal
-                </Link>
-                <Link href="/employer/dashboard" className="flex items-center px-4 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 theme-text">
-                  <Building2 className="w-3.5 h-3.5 mr-2 text-emerald-500" /> Employer Workspace
-                </Link>
-                <Link href="/admin/dashboard" className="flex items-center px-4 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 theme-text">
-                  <ShieldCheck className="w-3.5 h-3.5 mr-2 text-amber-500" /> Super Admin Control
-                </Link>
-                <div className="border-t theme-border pt-1">
-                  <Link href="/" className="flex items-center px-4 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 theme-text">
-                    <Briefcase className="w-3.5 h-3.5 mr-2 text-indigo-400" /> Public Website
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <span className="text-xs font-semibold theme-muted hidden sm:inline">
+              Signed in as <strong className="theme-text">{user?.email}</strong> ({user?.role})
+            </span>
 
-            <button className="relative p-2 rounded-lg theme-border border theme-text hover:bg-slate-100 dark:hover:bg-slate-800">
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500" />
+            <button
+              onClick={logout}
+              className="px-3 py-1.5 rounded-lg border theme-border theme-text text-xs font-bold hover:bg-rose-500/10 hover:text-rose-500 transition-all"
+            >
+              Sign Out
             </button>
           </div>
         </header>

@@ -5,11 +5,13 @@ import { JobsService } from './jobs.service';
 import { JobPosting } from './entities/job-posting.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { User } from '../users/entities/user.entity';
+import { TenantSubscription } from '../subscriptions/entities/tenant-subscription.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([JobPosting, Tenant, User])],
+  imports: [TypeOrmModule.forFeature([JobPosting, Tenant, User, TenantSubscription])],
   controllers: [JobsController],
   providers: [JobsService],
   exports: [JobsService],
 })
 export class JobsModule {}
+

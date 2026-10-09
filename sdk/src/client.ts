@@ -1,11 +1,13 @@
 import { AppConfig, AuthResponse, DashboardMetrics, JobListing, ThemeConfig, User } from './types';
 
+declare const process: any;
+
 export class JobPortalSdk {
   private baseUrl: string;
   private token: string | null = null;
 
-  constructor(baseUrl: string = 'http://localhost:4000/api/v1') {
-    this.baseUrl = baseUrl;
+  constructor(baseUrl?: string) {
+    this.baseUrl = baseUrl || (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000/api/v1';
     if (typeof window !== 'undefined') {
       this.token = localStorage.getItem('jp_access_token');
     }
@@ -113,6 +115,19 @@ export class JobPortalSdk {
     return this.request<JobListing>('/jobs', {
       method: 'POST',
       body: JSON.stringify(jobData),
+    });
+  }
+
+  async updateJob(id: string, jobData: Partial<JobListing>): Promise<JobListing> {
+    return this.request<JobListing>(`/jobs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(jobData),
+    });
+  }
+
+  async deleteJob(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/jobs/${id}`, {
+      method: 'DELETE',
     });
   }
 

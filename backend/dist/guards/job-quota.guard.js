@@ -16,14 +16,14 @@ let JobQuotaGuard = class JobQuotaGuard {
     constructor(jobsService) {
         this.jobsService = jobsService;
     }
-    canActivate(context) {
+    async canActivate(context) {
         const request = context.switchToHttp().getRequest();
         const user = request.user || { tenantId: 'tnt-techcorp', role: 'COMPANY_ADMIN' };
         if (user.role === 'SUPER_ADMIN') {
             return true;
         }
-        const activeJobs = this.jobsService.getActiveJobsCountForTenant(user.tenantId || 'tnt-techcorp');
-        const planMaxJobs = this.jobsService.getPlanJobLimitForTenant(user.tenantId || 'tnt-techcorp');
+        const activeJobs = await this.jobsService.getActiveJobsCountForTenant(user.tenantId || 'tnt-techcorp');
+        const planMaxJobs = await this.jobsService.getPlanJobLimitForTenant(user.tenantId || 'tnt-techcorp');
         if (activeJobs >= planMaxJobs) {
             throw new common_1.ForbiddenException(`Job posting quota exceeded! Your plan limit is ${planMaxJobs} active jobs. Upgrade your company subscription to post more.`);
         }

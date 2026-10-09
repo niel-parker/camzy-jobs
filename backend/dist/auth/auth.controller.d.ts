@@ -9,5 +9,14 @@ export declare class AuthController {
         accessToken: string;
         user: import("./auth.service").UserDto;
     }>;
+    registerCompany(body: any): Promise<{
+        accessToken: string;
+        user: import("./auth.service").UserDto;
+        tenant: import("../tenants/entities/tenant.entity").Tenant;
+    }>;
+    registerCandidate(body: any): Promise<{
+        accessToken: string;
+        user: import("./auth.service").UserDto;
+    }>;
     getCurrentUser(authHeader?: string): Promise<import("./auth.service").UserDto>;
 }

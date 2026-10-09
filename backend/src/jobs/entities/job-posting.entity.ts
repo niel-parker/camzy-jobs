@@ -87,6 +87,12 @@ export class JobPosting {
   @Column({ default: false })
   isFeatured: boolean;
 
+  @Column({ length: 20, default: 'INTERNAL' })
+  applyType: 'INTERNAL' | 'EXTERNAL';
+
+  @Column({ length: 500, nullable: true })
+  applyUrl: string;
+
   @Column({ type: 'json', nullable: true })
   screeningQuestions: Array<{
     id: string;

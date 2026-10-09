@@ -23,6 +23,10 @@ export declare class JobPortalSdk {
     }): Promise<JobListing[]>;
     getJobById(id: string): Promise<JobListing>;
     createJob(jobData: Partial<JobListing>): Promise<JobListing>;
+    updateJob(id: string, jobData: Partial<JobListing>): Promise<JobListing>;
+    deleteJob(id: string): Promise<{
+        success: boolean;
+    }>;
     featureJob(id: string): Promise<JobListing>;
     getDashboardMetrics(): Promise<DashboardMetrics>;
 }

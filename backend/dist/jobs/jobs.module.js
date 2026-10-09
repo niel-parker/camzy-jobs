@@ -14,12 +14,13 @@ const jobs_service_1 = require("./jobs.service");
 const job_posting_entity_1 = require("./entities/job-posting.entity");
 const tenant_entity_1 = require("../tenants/entities/tenant.entity");
 const user_entity_1 = require("../users/entities/user.entity");
+const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-subscription.entity");
 let JobsModule = class JobsModule {
 };
 exports.JobsModule = JobsModule;
 exports.JobsModule = JobsModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([job_posting_entity_1.JobPosting, tenant_entity_1.Tenant, user_entity_1.User])],
+        imports: [typeorm_1.TypeOrmModule.forFeature([job_posting_entity_1.JobPosting, tenant_entity_1.Tenant, user_entity_1.User, tenant_subscription_entity_1.TenantSubscription])],
         controllers: [jobs_controller_1.JobsController],
         providers: [jobs_service_1.JobsService],
         exports: [jobs_service_1.JobsService],

@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Building2, ShieldCheck, Upload, FileText, CheckCircle2, ArrowRight, ArrowLeft, Sparkles, Globe, MapPin, Mail, Lock } from 'lucide-react';
+import { Building2, ShieldCheck, Upload, FileText, CheckCircle2, ArrowRight, ArrowLeft, Sparkles, Globe, MapPin, Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
 import { SearchableSelect } from '../../../../components/SearchableSelect';
+import { useTheme } from '../../../../context/ThemeContext';
 
 const INDUSTRY_OPTIONS = [
   { value: 'Software & SaaS', label: 'Software & SaaS' },
@@ -22,6 +23,7 @@ const COMPANY_SIZE_OPTIONS = [
 ];
 
 export default function CompanyOnboardingPage() {
+  const { sdk } = useTheme();
   const [step, setStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -38,13 +40,41 @@ export default function CompanyOnboardingPage() {
   const [logoUrl, setLogoUrl] = useState('');
   const [description, setDescription] = useState('');
   const [selectedPlan, setSelectedPlan] = useState<'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE'>('PROFESSIONAL');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleNext = (e: React.FormEvent) => {
+  const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     if (step < 3) {
       setStep(step + 1);
     } else {
-      setIsSubmitted(true);
+      setIsSubmitting(true);
+      try {
+        await sdk.request('/auth/register/company', {
+          method: 'POST',
+          body: JSON.stringify({
+            companyName,
+            industry,
+            companySize,
+            website,
+            taxId,
+            headquarters,
+            adminName,
+            adminEmail,
+            adminPassword,
+            logoUrl,
+            description,
+            selectedPlan,
+          }),
+        });
+        setIsSubmitted(true);
+      } catch (err: any) {
+        console.error('Error registering company:', err);
+        setErrorMsg(err.message || 'Failed to onboard company. Please check details and try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 

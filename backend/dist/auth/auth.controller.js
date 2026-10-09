@@ -23,6 +23,12 @@ let AuthController = class AuthController {
     async login(body) {
         return await this.authService.login(body.email, body.password_hash);
     }
+    async registerCompany(body) {
+        return await this.authService.registerCompany(body);
+    }
+    async registerCandidate(body) {
+        return await this.authService.registerCandidate(body);
+    }
     async getCurrentUser(authHeader) {
         const token = authHeader ? authHeader.replace('Bearer ', '') : undefined;
         return await this.authService.getCurrentUser(token);
@@ -37,6 +43,22 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.Post)('register/company'),
+    (0, swagger_1.ApiOperation)({ summary: 'Onboard new hiring company tenant & admin user into database' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "registerCompany", null);
+__decorate([
+    (0, common_1.Post)('register/candidate'),
+    (0, swagger_1.ApiOperation)({ summary: 'Register new job candidate account into database' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "registerCandidate", null);
 __decorate([
     (0, common_1.Get)('me'),
     (0, swagger_1.ApiOperation)({ summary: 'Get profile of current authenticated user' }),

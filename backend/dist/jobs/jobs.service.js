@@ -18,10 +18,14 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const job_posting_entity_1 = require("./entities/job-posting.entity");
 const tenant_entity_1 = require("../tenants/entities/tenant.entity");
+const user_entity_1 = require("../users/entities/user.entity");
+const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-subscription.entity");
 let JobsService = class JobsService {
-    constructor(jobRepo, tenantRepo) {
+    constructor(jobRepo, tenantRepo, userRepo, subRepo) {
         this.jobRepo = jobRepo;
         this.tenantRepo = tenantRepo;
+        this.userRepo = userRepo;
+        this.subRepo = subRepo;
     }
     async findAll(category, query) {
         const qb = this.jobRepo.createQueryBuilder('job')
@@ -48,12 +52,27 @@ let JobsService = class JobsService {
         return this.mapToDto(job);
     }
     async getActiveJobsCountForTenant(tenantId) {
+        const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+        const effectiveTenantId = tenant ? tenant.id : (await this.tenantRepo.findOne({ where: {} }))?.id;
+        if (!effectiveTenantId)
+            return 0;
         return await this.jobRepo.count({
-            where: { tenantId, status: job_posting_entity_1.JobStatus.PUBLISHED },
+            where: { tenantId: effectiveTenantId, status: job_posting_entity_1.JobStatus.PUBLISHED },
         });
     }
     async getPlanJobLimitForTenant(tenantId) {
-        return 15;
+        let targetTenantId = tenantId;
+        const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+        if (!tenant) {
+            const firstTenant = await this.tenantRepo.findOne({ where: {} });
+            if (firstTenant)
+                targetTenantId = firstTenant.id;
+        }
+        const sub = await this.subRepo.findOne({
+            where: { tenantId: targetTenantId },
+            relations: { plan: true },
+        });
+        return sub?.plan?.maxActiveJobs || 15;
     }
     async createJob(jobData) {
         let tenantId = jobData.tenantId;
@@ -62,9 +81,25 @@ let JobsService = class JobsService {
             if (firstTenant)
                 tenantId = firstTenant.id;
         }
+        let postedByUserId = jobData.postedByUserId;
+        if (postedByUserId) {
+            const existingUser = await this.userRepo.findOne({ where: { id: postedByUserId } });
+            if (!existingUser)
+                postedByUserId = undefined;
+        }
+        if (!postedByUserId && tenantId) {
+            const companyUser = await this.userRepo.findOne({ where: { tenantId } });
+            if (companyUser)
+                postedByUserId = companyUser.id;
+        }
+        if (!postedByUserId) {
+            const anyUser = await this.userRepo.findOne({ where: {} });
+            if (anyUser)
+                postedByUserId = anyUser.id;
+        }
         const newJob = this.jobRepo.create({
             tenantId: tenantId || 'tnt-techcorp',
-            postedByUserId: 'usr-company-1',
+            postedByUserId: postedByUserId,
             title: jobData.title || 'Untitled Role',
             slug: (jobData.title || 'job').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
             description: jobData.description || 'Job description details.',
@@ -79,12 +114,62 @@ let JobsService = class JobsService {
             locationCity: jobData.location || 'Remote',
             isRemote: jobData.isRemote ?? true,
             isFeatured: jobData.isFeatured ?? false,
+            applyType: jobData.applyType || 'INTERNAL',
+            applyUrl: jobData.applyUrl || '',
             status: job_posting_entity_1.JobStatus.PUBLISHED,
             expiresAt: new Date(Date.now() + 60 * 86400000),
             screeningQuestions: jobData.screeningQuestions || [],
         });
         const saved = await this.jobRepo.save(newJob);
         return this.findOne(saved.id);
+    }
+    async updateJob(id, updateData) {
+        const job = await this.jobRepo.findOne({ where: { id } });
+        if (!job) {
+            throw new common_1.NotFoundException(`Job ${id} not found`);
+        }
+        if (updateData.title) {
+            job.title = updateData.title;
+            job.slug = updateData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        }
+        if (updateData.description !== undefined)
+            job.description = updateData.description;
+        if (updateData.category !== undefined)
+            job.category = updateData.category;
+        if (updateData.employmentType !== undefined)
+            job.employmentType = updateData.employmentType;
+        if (updateData.experienceLevel !== undefined)
+            job.experienceLevel = updateData.experienceLevel;
+        if (updateData.salaryMin !== undefined)
+            job.salaryMin = updateData.salaryMin;
+        if (updateData.salaryMax !== undefined)
+            job.salaryMax = updateData.salaryMax;
+        if (updateData.currency !== undefined)
+            job.currency = updateData.currency;
+        if (updateData.isSalaryVisible !== undefined)
+            job.isSalaryVisible = updateData.isSalaryVisible;
+        if (updateData.location !== undefined)
+            job.locationCity = updateData.location;
+        if (updateData.isRemote !== undefined)
+            job.isRemote = updateData.isRemote;
+        if (updateData.isFeatured !== undefined)
+            job.isFeatured = updateData.isFeatured;
+        if (updateData.applyType !== undefined)
+            job.applyType = updateData.applyType;
+        if (updateData.applyUrl !== undefined)
+            job.applyUrl = updateData.applyUrl;
+        if (updateData.screeningQuestions !== undefined)
+            job.screeningQuestions = updateData.screeningQuestions;
+        await this.jobRepo.save(job);
+        return this.findOne(id);
+    }
+    async deleteJob(id) {
+        const job = await this.jobRepo.findOne({ where: { id } });
+        if (!job) {
+            throw new common_1.NotFoundException(`Job ${id} not found`);
+        }
+        await this.jobRepo.remove(job);
+        return { success: true };
     }
     async featureJob(id) {
         const job = await this.jobRepo.findOne({ where: { id } });
@@ -114,6 +199,8 @@ let JobsService = class JobsService {
             experienceLevel: job.experienceLevel || 'Mid',
             description: job.description,
             isFeatured: job.isFeatured,
+            applyType: job.applyType || 'INTERNAL',
+            applyUrl: job.applyUrl || undefined,
             screeningQuestions: job.screeningQuestions,
             createdAt: job.createdAt ? job.createdAt.toISOString() : new Date().toISOString(),
         };
@@ -124,7 +211,11 @@ exports.JobsService = JobsService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(job_posting_entity_1.JobPosting)),
     __param(1, (0, typeorm_1.InjectRepository)(tenant_entity_1.Tenant)),
+    __param(2, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(3, (0, typeorm_1.InjectRepository)(tenant_subscription_entity_1.TenantSubscription)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository])
 ], JobsService);
 //# sourceMappingURL=jobs.service.js.map

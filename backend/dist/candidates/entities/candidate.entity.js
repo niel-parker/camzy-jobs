@@ -67,6 +67,30 @@ __decorate([
     __metadata("design:type", Array)
 ], Candidate.prototype, "skills", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], Candidate.prototype, "experience", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], Candidate.prototype, "education", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], Candidate.prototype, "certifications", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], Candidate.prototype, "projects", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], Candidate.prototype, "languages", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Object)
+], Candidate.prototype, "socialLinks", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'enum', enum: ProfileVisibility, default: ProfileVisibility.PUBLIC }),
     __metadata("design:type", String)
 ], Candidate.prototype, "visibility", void 0);

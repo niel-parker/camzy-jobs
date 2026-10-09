@@ -8,6 +8,7 @@ export interface User {
     tenantId?: string;
     tenantName?: string;
     tenantType?: 'COMPANY' | 'CONSULTANCY';
+    candidateId?: string;
     avatarUrl?: string;
 }
 export interface AuthResponse {
@@ -85,6 +86,8 @@ export interface JobListing {
     experienceLevel: 'Entry' | 'Mid' | 'Senior' | 'Lead' | 'Executive';
     description: string;
     isFeatured: boolean;
+    applyType?: 'INTERNAL' | 'EXTERNAL';
+    applyUrl?: string;
     screeningQuestions?: ScreeningQuestion[];
     createdAt: string;
 }

@@ -16,6 +16,7 @@ const tenant_entity_1 = require("../tenants/entities/tenant.entity");
 const candidate_entity_1 = require("../candidates/entities/candidate.entity");
 const job_application_entity_1 = require("../applications/entities/job-application.entity");
 const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-subscription.entity");
+const subscription_plan_entity_1 = require("../subscriptions/entities/subscription-plan.entity");
 let AdminModule = class AdminModule {
 };
 exports.AdminModule = AdminModule;
@@ -28,6 +29,7 @@ exports.AdminModule = AdminModule = __decorate([
                 candidate_entity_1.Candidate,
                 job_application_entity_1.JobApplication,
                 tenant_subscription_entity_1.TenantSubscription,
+                subscription_plan_entity_1.SubscriptionPlan,
             ]),
         ],
         controllers: [admin_controller_1.AdminController],

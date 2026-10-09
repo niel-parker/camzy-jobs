@@ -46,7 +46,7 @@ export class ApplicationsService {
     return apps.map((a) => this.mapToDto(a));
   }
 
-  async submitApplication(data: Partial<ApplicationDto>): Promise<ApplicationDto> {
+  async submitApplication(data: Partial<ApplicationDto> & { answersJson?: Record<string, any> }): Promise<ApplicationDto> {
     let jobId = data.jobId;
     if (!jobId) {
       const firstJob = await this.jobRepo.findOne({ where: {} });
@@ -54,6 +54,15 @@ export class ApplicationsService {
     }
 
     let candidateId = data.candidateId;
+    if (candidateId) {
+      let cand = await this.candidateRepo.findOne({ where: { id: candidateId } });
+      if (!cand) {
+        cand = await this.candidateRepo.findOne({ where: { userId: candidateId } });
+      }
+      if (cand) candidateId = cand.id;
+      else candidateId = undefined;
+    }
+
     if (!candidateId) {
       const firstCand = await this.candidateRepo.findOne({ where: {} });
       if (firstCand) candidateId = firstCand.id;
@@ -64,6 +73,7 @@ export class ApplicationsService {
       candidateId: candidateId || 'cnd-101',
       coverLetter: data.coverLetter || '',
       resumeUrlSnapshot: data.resumeUrlSnapshot || 'https://example.com/resumes/resume.pdf',
+      answersJson: data.answersJson || {},
       stage: ApplicationStage.APPLIED,
       rating: 0,
     });

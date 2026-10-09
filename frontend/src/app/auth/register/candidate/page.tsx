@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, CheckCircle2, Upload, FileText, ArrowRight, ArrowLeft, Mail, Lock, ShieldCheck, Briefcase } from 'lucide-react';
+import { User, CheckCircle2, Upload, FileText, ArrowRight, ArrowLeft, Mail, Lock, ShieldCheck, Briefcase, AlertCircle, Loader2 } from 'lucide-react';
 import { SearchableSelect } from '../../../../components/SearchableSelect';
+import { useTheme } from '../../../../context/ThemeContext';
 
 const EXPERIENCE_LEVELS = [
   { value: 'Entry Level', label: 'Entry Level (0-2 Years)' },
@@ -12,8 +13,11 @@ const EXPERIENCE_LEVELS = [
 ];
 
 export default function CandidateRegistrationPage() {
+  const { sdk } = useTheme();
   const [step, setStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Candidate State
   const [fullName, setFullName] = useState('');
@@ -25,12 +29,33 @@ export default function CandidateRegistrationPage() {
   const [skills, setSkills] = useState('React, Next.js, TypeScript, NestJS, MySQL');
   const [resumeFileName, setResumeFileName] = useState('');
 
-  const handleNext = (e: React.FormEvent) => {
+  const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     if (step < 2) {
       setStep(step + 1);
     } else {
-      setIsSubmitted(true);
+      setIsSubmitting(true);
+      try {
+        await sdk.request('/auth/register/candidate', {
+          method: 'POST',
+          body: JSON.stringify({
+            fullName,
+            email,
+            password,
+            headline,
+            experienceLevel,
+            expectedSalary,
+            skills,
+          }),
+        });
+        setIsSubmitted(true);
+      } catch (err: any) {
+        console.error('Error registering candidate:', err);
+        setErrorMsg(err.message || 'Failed to register candidate. Please check details and try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 

@@ -21,7 +21,9 @@ export declare class ApplicationsService {
     private readonly candidateRepo;
     constructor(appRepo: Repository<JobApplication>, jobRepo: Repository<JobPosting>, candidateRepo: Repository<Candidate>);
     findAllByJob(jobId?: string): Promise<ApplicationDto[]>;
-    submitApplication(data: Partial<ApplicationDto>): Promise<ApplicationDto>;
+    submitApplication(data: Partial<ApplicationDto> & {
+        answersJson?: Record<string, any>;
+    }): Promise<ApplicationDto>;
     updateStage(id: string, stage: ApplicationStage, rating?: number): Promise<ApplicationDto>;
     private mapToDto;
 }

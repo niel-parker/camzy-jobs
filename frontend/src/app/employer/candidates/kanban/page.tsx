@@ -4,11 +4,13 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from '../../../../context/ThemeContext';
 import { DashboardLayout } from '../../../../components/DashboardLayout';
-import { Star, ArrowLeft, HelpCircle, Loader2 } from 'lucide-react';
+import { Star, ArrowLeft, HelpCircle, Loader2, FileText, Briefcase, GraduationCap, Award, ExternalLink, X } from 'lucide-react';
 
 export default function EmployerKanbanPage() {
   const { sdk } = useTheme();
   const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
+  const [candidateProfileData, setCandidateProfileData] = useState<any | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [candidates, setCandidates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,6 +29,23 @@ export default function EmployerKanbanPage() {
     }
     loadApplications();
   }, [sdk]);
+
+  const handleOpenInfoModal = async (c: any) => {
+    setSelectedCandidate(c);
+    setCandidateProfileData(null);
+    setLoadingProfile(true);
+
+    try {
+      if (c.candidateId) {
+        const prof = await sdk.request<any>(`/candidates/${c.candidateId}`);
+        setCandidateProfileData(prof);
+      }
+    } catch (err) {
+      console.log('Error fetching candidate detailed profile:', err);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   const stages = [
     { code: 'APPLIED', title: 'Applied', color: 'bg-slate-500' },
@@ -96,11 +115,11 @@ export default function EmployerKanbanPage() {
 
                         <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/80">
                           <button
-                            onClick={() => setSelectedCandidate(c)}
-                            className="text-[10px] font-bold text-indigo-500 hover:text-indigo-600 flex items-center gap-1"
-                            title="View Candidate Information"
+                            onClick={() => handleOpenInfoModal(c)}
+                            className="text-[10px] font-bold text-indigo-500 hover:text-indigo-600 flex items-center gap-1 cursor-pointer"
+                            title="View Full Candidate Profile & Screening Answers"
                           >
-                            <HelpCircle className="w-3 h-3" /> Info
+                            <HelpCircle className="w-3 h-3" /> View Profile
                           </button>
 
                           <select
@@ -123,32 +142,147 @@ export default function EmployerKanbanPage() {
         )}
       </div>
 
-      {/* Info Modal */}
+      {/* Recruiter Evaluation Info Modal */}
       {selectedCandidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md theme-surface border theme-border rounded-xl shadow-xl p-6 relative space-y-4">
-            <div className="flex items-center justify-between border-b theme-border pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 relative space-y-5 theme-modal animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b theme-border pb-4">
               <div>
-                <h3 className="text-sm font-extrabold theme-text">{selectedCandidate.candidateName}</h3>
-                <p className="text-[11px] theme-muted">{selectedCandidate.jobTitle}</p>
+                <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                  Naukri ATS Evaluation
+                </span>
+                <h3 className="text-lg font-black theme-text mt-1">{selectedCandidate.candidateName}</h3>
+                <p className="text-xs theme-muted">Applied for: <strong className="theme-text">{selectedCandidate.jobTitle}</strong></p>
               </div>
               <button
                 onClick={() => setSelectedCandidate(null)}
-                className="text-xs font-bold theme-muted hover:theme-text"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
               >
-                Close
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold text-indigo-500 flex items-center gap-1">
-                <HelpCircle className="w-4 h-4" /> Cover Letter / Application Summary
-              </h4>
-
-              <div className="p-3 rounded-lg bg-slate-100 dark:bg-slate-900 border theme-border text-xs leading-relaxed theme-text">
-                "{selectedCandidate.coverLetter || 'No cover letter provided.'}"
+            {loadingProfile ? (
+              <div className="py-12 text-center text-xs theme-muted flex items-center justify-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+                <span>Loading full candidate profile history...</span>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                {/* Resume Attachment Box */}
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border theme-border flex items-center justify-between text-xs">
+                  <div className="flex items-center space-x-2">
+                    <FileText className="w-4.5 h-4.5 text-indigo-500" />
+                    <div>
+                      <p className="font-bold theme-text">Candidate Resume Snapshot</p>
+                      <p className="text-[11px] theme-muted">{selectedCandidate.resumeUrlSnapshot || 'resume.pdf'}</p>
+                    </div>
+                  </div>
+                  {selectedCandidate.resumeUrlSnapshot && (
+                    <a
+                      href={selectedCandidate.resumeUrlSnapshot}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm"
+                    >
+                      <ExternalLink className="w-3 h-3" /> Open Resume
+                    </a>
+                  )}
+                </div>
+
+                {/* Recruiter Screening Answers */}
+                {selectedCandidate.answersJson && Object.keys(selectedCandidate.answersJson).length > 0 && (
+                  <div className="p-4 rounded-xl border theme-border bg-indigo-50/20 dark:bg-indigo-950/20 space-y-2">
+                    <h4 className="text-xs font-black theme-text uppercase tracking-wider flex items-center gap-1.5">
+                      <HelpCircle className="w-4 h-4 text-indigo-500" /> Screening Questionnaire Responses
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                      {Object.entries(selectedCandidate.answersJson).map(([k, v]) => (
+                        <div key={k} className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border theme-border">
+                          <span className="text-[10px] theme-muted block font-bold capitalize">{k.replace(/([A-Z])/g, ' $1')}</span>
+                          <span className="font-semibold theme-text text-xs">{String(v)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cover Letter */}
+                {selectedCandidate.coverLetter && (
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-bold theme-text">Cover Note to Hiring Manager</h4>
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border theme-border text-xs theme-text leading-relaxed">
+                      "{selectedCandidate.coverLetter}"
+                    </div>
+                  </div>
+                )}
+
+                {/* Detailed Work Experience History */}
+                {candidateProfileData?.experience && candidateProfileData.experience.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t theme-border">
+                    <h4 className="text-xs font-black theme-text uppercase tracking-wider flex items-center gap-1.5">
+                      <Briefcase className="w-4 h-4 text-indigo-500" /> Work Experience History ({candidateProfileData.experience.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {candidateProfileData.experience.map((exp: any, idx: number) => (
+                        <div key={idx} className="p-3 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 text-xs space-y-1">
+                          <div className="flex justify-between font-bold theme-text">
+                            <span>{exp.designation}</span>
+                            <span className="text-indigo-500">{exp.companyName}</span>
+                          </div>
+                          <p className="text-[11px] theme-muted">{exp.startDate} – {exp.isCurrentJob ? 'Present' : exp.endDate} {exp.location && `• ${exp.location}`}</p>
+                          {exp.jobSummary && <p className="text-[11px] theme-text pt-0.5 leading-relaxed">{exp.jobSummary}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Education & Qualifications */}
+                {candidateProfileData?.education && candidateProfileData.education.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t theme-border">
+                    <h4 className="text-xs font-black theme-text uppercase tracking-wider flex items-center gap-1.5">
+                      <GraduationCap className="w-4 h-4 text-indigo-500" /> Education ({candidateProfileData.education.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {candidateProfileData.education.map((edu: any, idx: number) => (
+                        <div key={idx} className="p-3 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 text-xs space-y-1">
+                          <div className="flex justify-between font-bold theme-text">
+                            <span>{edu.degree} {edu.fieldOfStudy && `in ${edu.fieldOfStudy}`}</span>
+                            <span className="text-indigo-500">{edu.institution}</span>
+                          </div>
+                          <p className="text-[11px] theme-muted">{edu.startYear} – {edu.endYear} {edu.grade && `• Grade: ${edu.grade}`}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Certifications */}
+                {candidateProfileData?.certifications && candidateProfileData.certifications.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t theme-border">
+                    <h4 className="text-xs font-black theme-text uppercase tracking-wider flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-indigo-500" /> Certifications ({candidateProfileData.certifications.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {candidateProfileData.certifications.map((cert: any, idx: number) => (
+                        <div key={idx} className="p-3 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 text-xs flex justify-between items-center">
+                          <div>
+                            <p className="font-bold theme-text">{cert.title}</p>
+                            <p className="text-[11px] theme-muted">{cert.issuingOrganization}</p>
+                          </div>
+                          {cert.credentialUrl && (
+                            <a href={cert.credentialUrl} target="_blank" rel="noreferrer" className="text-[11px] font-bold text-indigo-500 hover:underline">
+                              Verify ↗
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

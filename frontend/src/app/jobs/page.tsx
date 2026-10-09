@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Briefcase, DollarSign, Filter, Sparkles, Building2, Clock, ChevronRight, CheckCircle2, ArrowRight, Bookmark, SlidersHorizontal, RotateCcw, Award, HelpCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Search, MapPin, Briefcase, DollarSign, Filter, Sparkles, Building2, Clock, ChevronRight, CheckCircle2, ArrowRight, Bookmark, SlidersHorizontal, RotateCcw, Award } from 'lucide-react';
 import { SearchableSelect } from '../../components/SearchableSelect';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -51,27 +53,6 @@ const MOCK_JOBS: JobItem[] = [
     description: 'Lead architecture of scalable multi-tenant SaaS systems, Next.js frontend micro-services, and TypeORM NestJS backend services.',
     tags: ['React', 'Next.js', 'NestJS', 'TypeScript', 'MySQL'],
     matchScore: 96,
-    screeningQuestions: [
-      {
-        id: 'sq1',
-        questionText: 'How many years of commercial experience do you have with Next.js & NestJS?',
-        questionType: 'CHOICE',
-        options: ['1-2 Years', '3-5 Years', '5+ Years'],
-        isRequired: true,
-      },
-      {
-        id: 'sq2',
-        questionText: 'Are you legally authorized to work in San Francisco or Remote?',
-        questionType: 'YES_NO',
-        isRequired: true,
-      },
-      {
-        id: 'sq3',
-        questionText: 'What is your current notice period or earliest available start date?',
-        questionType: 'TEXT',
-        isRequired: false,
-      },
-    ],
   },
   {
     id: 'job-102',
@@ -148,68 +129,73 @@ const MOCK_JOBS: JobItem[] = [
 ];
 
 const LOCATION_OPTIONS = [
-  { value: 'all', label: 'All Cities / Remote' },
+  { value: 'all', label: 'All Locations' },
   { value: 'San Francisco, CA', label: 'San Francisco, CA' },
   { value: 'New York, NY', label: 'New York, NY' },
   { value: 'Austin, TX', label: 'Austin, TX' },
   { value: 'Seattle, WA', label: 'Seattle, WA' },
   { value: 'Boston, MA', label: 'Boston, MA' },
+  { value: 'Remote', label: 'Remote / Anywhere' },
 ];
 
 const CATEGORY_OPTIONS = [
   { value: 'all', label: 'All Departments' },
   { value: 'Software Engineering', label: 'Software Engineering' },
-  { value: 'Data & AI', label: 'Data Science & AI' },
-  { value: 'Design & UX', label: 'Design & UI/UX' },
+  { value: 'Data & AI', label: 'Data & AI' },
+  { value: 'Design & UX', label: 'Design & UX' },
   { value: 'DevOps & Cloud', label: 'DevOps & Cloud' },
-  { value: 'Marketing', label: 'Marketing & Sales' },
+  { value: 'Marketing', label: 'Marketing' },
+  { value: 'Product Management', label: 'Product Management' },
 ];
 
-export default function NaukriStyleJobSearchPage() {
-  const { sdk } = useTheme();
+export default function JobDirectoryPage() {
+  const router = useRouter();
+  const { theme, sdk, user } = useTheme();
+
+  // Search & Filter State
   const [keyword, setKeyword] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedWorkMode, setSelectedWorkMode] = useState('all');
   const [selectedExp, setSelectedExp] = useState('all');
   const [selectedMinSalary, setSelectedMinSalary] = useState(0);
+
+  // Bookmark Saved State
   const [savedJobsMap, setSavedJobsMap] = useState<Record<string, boolean>>({});
 
-  const [jobsList, setJobsList] = useState<JobItem[]>([]);
-  const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+  // Dynamic Jobs List
+  const [jobsList, setJobsList] = useState<JobItem[]>(MOCK_JOBS);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
 
   useEffect(() => {
     async function loadBackendJobs() {
+      setIsLoadingJobs(true);
       try {
-        setIsLoadingJobs(true);
-        const remoteJobs = await sdk.getJobListings();
-        if (remoteJobs && remoteJobs.length > 0) {
-          const mappedJobs: JobItem[] = remoteJobs.map((j) => ({
+        const fetched = await sdk.request<any[]>('/jobs');
+        if (fetched && Array.isArray(fetched) && fetched.length > 0) {
+          const mappedJobs: JobItem[] = fetched.map((j) => ({
             id: j.id,
             title: j.title,
-            companyName: j.companyName || 'Verified Employer',
-            companySlug: j.companyName ? j.companyName.toLowerCase().replace(/\s+/g, '-') : 'company',
-            companyType: j.isConsultancy ? 'Startup' : 'Product Based',
-            location: j.location || 'San Francisco, CA',
-            category: j.category || 'Software Engineering',
+            companyName: j.companyName || 'Verified Corporate Partner',
+            companySlug: j.companySlug || 'company',
+            companyType: 'Product Based',
+            location: j.location,
+            category: j.department || 'Engineering',
             workMode: j.isRemote ? 'Remote' : 'Onsite',
-            experienceYears: j.experienceLevel === 'Senior' ? '5-8 Yrs' : j.experienceLevel === 'Lead' ? '8+ Yrs' : '1-3 Yrs',
-            salary: j.salaryMin && j.salaryMax ? `$${j.salaryMin.toLocaleString()} - $${j.salaryMax.toLocaleString()}` : '$140,000 - $180,000',
-            salaryMin: j.salaryMin || 100000,
-            isFeatured: j.isFeatured,
+            experienceYears: j.experienceLevel || '3-5 Yrs',
+            salary: j.isSalaryVisible && j.salaryMin ? `$${j.salaryMin.toLocaleString()} - $${j.salaryMax?.toLocaleString()}` : 'Competitive',
+            salaryMin: j.salaryMin || 0,
+            isFeatured: j.isFeatured || false,
             postedAt: 'Verified Position',
             description: j.description,
-            tags: [j.category, j.employmentType, j.experienceLevel],
+            tags: [j.category || 'Tech', j.employmentType || 'Full Time', j.experienceLevel || 'Mid Level'],
             matchScore: 95,
             screeningQuestions: j.screeningQuestions,
           }));
           setJobsList(mappedJobs);
-        } else {
-          setJobsList([]);
         }
       } catch (err) {
         console.warn('Backend job fetch fallback:', err);
-        setJobsList([]);
       } finally {
         setIsLoadingJobs(false);
       }
@@ -217,15 +203,16 @@ export default function NaukriStyleJobSearchPage() {
     loadBackendJobs();
   }, [sdk]);
 
-  // Quick Apply Modal
-  const [applyingJob, setApplyingJob] = useState<JobItem | null>(null);
-  const [applySuccess, setApplySuccess] = useState(false);
-  const [applicantName, setApplicantName] = useState('');
-  const [applicantEmail, setApplicantEmail] = useState('');
-  const [screeningAnswers, setScreeningAnswers] = useState<Record<string, string>>({});
-
   const toggleBookmark = (id: string) => {
     setSavedJobsMap((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleApplyClick = (jobId: string) => {
+    if (!user) {
+      router.push(`/auth/login?redirect=/jobs/${jobId}?apply=true`);
+    } else {
+      router.push(`/jobs/${jobId}?apply=true`);
+    }
   };
 
   const filteredJobs = jobsList.filter((job) => {
@@ -269,18 +256,6 @@ export default function NaukriStyleJobSearchPage() {
     setSelectedMinSalary(0);
   };
 
-  const handleApplySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setApplySuccess(true);
-    setTimeout(() => {
-      setApplyingJob(null);
-      setApplySuccess(false);
-      setApplicantName('');
-      setApplicantEmail('');
-      setScreeningAnswers({});
-    }, 2500);
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Search Header Banner */}
@@ -291,7 +266,7 @@ export default function NaukriStyleJobSearchPage() {
               Find Your Dream Job on <span className="text-indigo-500">Camzy Jobs</span>
             </h1>
             <p className="text-xs theme-muted mt-1">
-              Explore verified company openings with salary transparency and 1-click apply.
+              Explore verified company openings with salary transparency and candidate profile applications.
             </p>
           </div>
 
@@ -300,7 +275,7 @@ export default function NaukriStyleJobSearchPage() {
             className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center space-x-1"
           >
             <Award className="h-4 w-4 mr-1" />
-            <span>Create Verified Candidate Profile</span>
+            <span>Create Candidate Profile</span>
           </a>
         </div>
 
@@ -339,12 +314,13 @@ export default function NaukriStyleJobSearchPage() {
 
       {/* Main Naukri-Style 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* LEFT COLUMN: NAUKRI-GRADE MULTI-FACET FILTER SIDEBAR */}
-        <div className="p-5 rounded-2xl theme-surface border theme-border space-y-6 h-fit shadow-sm">
+        {/* LEFT COLUMN: FILTERS SIDEBAR */}
+        <div className="theme-surface p-5 rounded-2xl border theme-border space-y-5 h-fit shadow-sm">
           <div className="flex items-center justify-between border-b theme-border pb-3">
-            <h3 className="text-sm font-extrabold theme-text flex items-center">
-              <Filter className="h-4 w-4 text-indigo-500 mr-1.5" /> All Filters
-            </h3>
+            <div className="flex items-center space-x-2">
+              <SlidersHorizontal className="h-4 w-4 text-indigo-500" />
+              <h3 className="text-sm font-bold theme-text uppercase tracking-wider">Filter Jobs</h3>
+            </div>
             <button
               onClick={clearAllFilters}
               className="text-xs font-bold text-indigo-500 hover:underline flex items-center"
@@ -466,9 +442,11 @@ export default function NaukriStyleJobSearchPage() {
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="space-y-1.5 flex-1">
                     <div className="flex items-center space-x-2">
-                      <h2 className="text-lg font-bold theme-text hover:text-indigo-500 cursor-pointer transition-colors">
-                        {job.title}
-                      </h2>
+                      <Link href={`/jobs/${job.id}`}>
+                        <h2 className="text-lg font-bold theme-text hover:text-indigo-500 cursor-pointer transition-colors">
+                          {job.title}
+                        </h2>
+                      </Link>
                       {job.isFeatured && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400">
                           <Sparkles className="h-3 w-3 mr-0.5" /> Featured
@@ -532,10 +510,10 @@ export default function NaukriStyleJobSearchPage() {
                     </button>
 
                     <button
-                      onClick={() => setApplyingJob(job)}
-                      className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all flex items-center space-x-1"
+                      onClick={() => handleApplyClick(job.id)}
+                      className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all flex items-center space-x-1 cursor-pointer"
                     >
-                      <span>1-Click Apply</span>
+                      <span>Apply Now</span>
                       <ArrowRight className="h-3.5 w-3.5 ml-1" />
                     </button>
                   </div>
@@ -545,133 +523,6 @@ export default function NaukriStyleJobSearchPage() {
           )}
         </div>
       </div>
-
-      {/* Quick Apply Modal */}
-      {applyingJob && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg theme-surface border theme-border rounded-xl shadow-xl p-6 relative">
-            {applySuccess ? (
-              <div className="text-center py-8 space-y-3">
-                <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
-                <h3 className="text-xl font-bold theme-text">Application Sent to Recruiter!</h3>
-                <p className="text-xs theme-muted">
-                  Your candidate profile for <span className="font-semibold text-indigo-500">{applyingJob.title}</span> was delivered to {applyingJob.companyName}.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleApplySubmit} className="space-y-4">
-                <div className="border-b theme-border pb-3">
-                  <h3 className="text-base font-bold theme-text">Quick Apply Position</h3>
-                  <p className="text-xs text-indigo-500 font-bold">{applyingJob.title} at {applyingJob.companyName}</p>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold theme-text uppercase tracking-wider mb-1">Your Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Alex Morgan"
-                    value={applicantName}
-                    onChange={(e) => setApplicantName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border theme-border theme-input theme-text text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold theme-text uppercase tracking-wider mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="alex.morgan@example.com"
-                    value={applicantEmail}
-                    onChange={(e) => setApplicantEmail(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border theme-border theme-input theme-text text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  />
-                </div>
-
-                {/* Recruiter Custom Screening Questions Section */}
-                {applyingJob.screeningQuestions && applyingJob.screeningQuestions.length > 0 && (
-                  <div className="border-t border-b theme-border py-4 my-2 space-y-4 bg-indigo-50/30 dark:bg-indigo-950/20 p-4 rounded-xl">
-                    <div className="flex items-center gap-1.5 text-xs font-extrabold text-indigo-500">
-                      <HelpCircle className="w-4 h-4" />
-                      <span>Recruiter Screening Questions</span>
-                    </div>
-
-                    <div className="space-y-3">
-                      {applyingJob.screeningQuestions.map((q) => (
-                        <div key={q.id} className="space-y-1.5">
-                          <label className="text-xs font-semibold theme-text block">
-                            {q.questionText} {q.isRequired && <span className="text-rose-500">*</span>}
-                          </label>
-
-                          {q.questionType === 'CHOICE' && (
-                            <select
-                              required={q.isRequired}
-                              value={screeningAnswers[q.id] || ''}
-                              onChange={(e) => setScreeningAnswers({ ...screeningAnswers, [q.id]: e.target.value })}
-                              className="w-full px-3 py-2 rounded-lg border theme-border theme-input theme-text text-xs font-medium focus:ring-2 focus:ring-indigo-500"
-                            >
-                              <option value="">-- Select Response --</option>
-                              {q.options?.map((opt) => (
-                                <option key={opt} value={opt}>{opt}</option>
-                              ))}
-                            </select>
-                          )}
-
-                          {q.questionType === 'YES_NO' && (
-                            <div className="flex items-center space-x-4 pt-1 text-xs font-bold">
-                              {['Yes', 'No'].map((opt) => (
-                                <label key={opt} className="flex items-center space-x-1.5 cursor-pointer theme-text">
-                                  <input
-                                    type="radio"
-                                    name={`q_${q.id}`}
-                                    required={q.isRequired}
-                                    checked={screeningAnswers[q.id] === opt}
-                                    onChange={() => setScreeningAnswers({ ...screeningAnswers, [q.id]: opt })}
-                                    className="accent-indigo-600"
-                                  />
-                                  <span>{opt}</span>
-                                </label>
-                              ))}
-                            </div>
-                          )}
-
-                          {q.questionType === 'TEXT' && (
-                            <input
-                              type="text"
-                              required={q.isRequired}
-                              placeholder="Type your response here..."
-                              value={screeningAnswers[q.id] || ''}
-                              onChange={(e) => setScreeningAnswers({ ...screeningAnswers, [q.id]: e.target.value })}
-                              className="w-full px-3 py-2 rounded-lg border theme-border theme-input theme-text text-xs focus:ring-2 focus:ring-indigo-500 font-medium"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-end space-x-3 pt-3 border-t theme-border">
-                  <button
-                    type="button"
-                    onClick={() => setApplyingJob(null)}
-                    className="px-4 py-2 rounded-lg text-xs font-medium theme-muted hover:theme-text"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold"
-                  >
-                    Submit 1-Click Application
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
