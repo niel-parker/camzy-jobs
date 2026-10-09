@@ -288,7 +288,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES ('537b19b2-0785-46b6-9899-ed1f166a0469','recruiter@techcorp.com','recruiter123','Sarah','Jenkins','COMPANY_ADMIN',NULL,'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',1,'ACTIVE','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','2026-10-07 05:55:39.399753','2026-10-07 05:55:39.399753'),('a55b9ce1-5257-4618-90f6-b79bd16dca0c','admin@camzyjobs.com','admin123','Super','Admin','SUPER_ADMIN',NULL,'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',1,'ACTIVE',NULL,'2026-10-07 05:55:39.397892','2026-10-07 05:55:39.397892'),('fec2474b-2956-4e02-ad92-db25a44cf6af','candidate@example.com','candidate123','John','Doe','CANDIDATE',NULL,'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',1,'ACTIVE',NULL,'2026-10-07 05:55:39.401850','2026-10-07 05:55:39.401850');
+INSERT INTO `users` VALUES ('537b19b2-0785-46b6-9899-ed1f166a0469','recruiter@techcorp.com','recruiter123','Sarah','Jenkins','COMPANY_ADMIN',NULL,'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',1,'ACTIVE','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','2026-10-07 05:55:39.399753','2026-10-07 05:55:39.399753'),('83354815-6239-4c33-950b-20d3a63d0cbd','employer@techcorp.com','password123','TechCorp','Hiring Manager','COMPANY_ADMIN',NULL,'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',1,'ACTIVE','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','2026-10-09 07:24:08.455823','2026-10-09 07:24:08.455823'),('a55b9ce1-5257-4618-90f6-b79bd16dca0c','admin@camzyjobs.com','admin123','Super','Admin','SUPER_ADMIN',NULL,'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',1,'ACTIVE',NULL,'2026-10-07 05:55:39.397892','2026-10-07 05:55:39.397892'),('cad78692-81b7-4f7c-b251-f845eb446bd8','candidate@camzyjobs.com','password123','Alex','Candidate','CANDIDATE',NULL,'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',1,'ACTIVE',NULL,'2026-10-09 07:24:08.416729','2026-10-09 07:24:08.416729'),('fec2474b-2956-4e02-ad92-db25a44cf6af','candidate@example.com','candidate123','John','Doe','CANDIDATE',NULL,'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',1,'ACTIVE',NULL,'2026-10-07 05:55:39.401850','2026-10-07 05:55:39.401850');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -301,4 +301,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-09  7:09:16
+-- Dump completed on 2026-10-09  7:27:26
