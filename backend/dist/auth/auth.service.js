@@ -30,36 +30,39 @@ let AuthService = class AuthService {
         this.planRepo = planRepo;
     }
     async login(email, password_hash) {
+        if (!email || !password_hash) {
+            throw new common_1.BadRequestException('Email address and password are required.');
+        }
+        const cleanEmail = email.toLowerCase().trim();
         const user = await this.userRepo.findOne({
-            where: { email: email.toLowerCase() },
+            where: { email: cleanEmail },
             relations: { tenant: true },
         });
         if (!user) {
-            if (email.toLowerCase().includes('admin') || password_hash === 'admin123') {
-                const firstAdmin = await this.userRepo.findOne({
-                    where: { role: user_entity_1.UserRole.SUPER_ADMIN },
-                    relations: { tenant: true },
-                });
-                if (firstAdmin) {
-                    return {
-                        accessToken: 'jwt-super-admin-token-' + Date.now(),
-                        user: this.mapToDto(firstAdmin),
-                    };
-                }
-            }
-            throw new common_1.UnauthorizedException('Invalid credentials');
+            throw new common_1.UnauthorizedException('Invalid email or password.');
         }
+        const isValidPassword = user.passwordHash === password_hash ||
+            (user.passwordHash === 'admin123' && password_hash === 'admin123') ||
+            (user.passwordHash === 'password123' && password_hash === 'password123');
+        if (!isValidPassword) {
+            throw new common_1.UnauthorizedException('Invalid email or password.');
+        }
+        if (user.status === user_entity_1.UserStatus.BANNED || user.status === user_entity_1.UserStatus.INACTIVE) {
+            throw new common_1.UnauthorizedException('Your account has been disabled or suspended.');
+        }
+        const dto = await this.mapToDto(user);
         return {
-            accessToken: `mock-jwt-token-${user.id}-${Date.now()}`,
-            user: this.mapToDto(user),
+            accessToken: `jwt-user-token-${user.id}-${Date.now()}`,
+            user: dto,
         };
     }
     async registerCompany(body) {
         if (!body.adminEmail) {
             throw new common_1.BadRequestException('Admin email address is required.');
         }
+        const cleanEmail = body.adminEmail.toLowerCase().trim();
         const existingUser = await this.userRepo.findOne({
-            where: { email: body.adminEmail.toLowerCase() },
+            where: { email: cleanEmail },
         });
         if (existingUser) {
             throw new common_1.BadRequestException('An account with this email address already exists.');
@@ -81,7 +84,7 @@ let AuthService = class AuthService {
         const firstName = nameParts[0] || 'Company';
         const lastName = nameParts.slice(1).join(' ') || 'Admin';
         const newUser = this.userRepo.create({
-            email: body.adminEmail.toLowerCase(),
+            email: cleanEmail,
             passwordHash: body.adminPassword || 'password123',
             firstName,
             lastName,
@@ -105,9 +108,10 @@ let AuthService = class AuthService {
             });
             await this.subRepo.save(newSub);
         }
+        const dto = await this.mapToDto(savedUser);
         return {
-            accessToken: `jwt-company-token-${savedUser.id}-${Date.now()}`,
-            user: this.mapToDto(savedUser),
+            accessToken: `jwt-user-token-${savedUser.id}-${Date.now()}`,
+            user: dto,
             tenant: savedTenant,
         };
     }
@@ -115,8 +119,9 @@ let AuthService = class AuthService {
         if (!body.email) {
             throw new common_1.BadRequestException('Email address is required.');
         }
+        const cleanEmail = body.email.toLowerCase().trim();
         const existingUser = await this.userRepo.findOne({
-            where: { email: body.email.toLowerCase() },
+            where: { email: cleanEmail },
         });
         if (existingUser) {
             throw new common_1.BadRequestException('An account with this email address already exists.');
@@ -125,7 +130,7 @@ let AuthService = class AuthService {
         const firstName = nameParts[0] || 'Candidate';
         const lastName = nameParts.slice(1).join(' ') || 'User';
         const newUser = this.userRepo.create({
-            email: body.email.toLowerCase(),
+            email: cleanEmail,
             passwordHash: body.password || 'password123',
             firstName,
             lastName,
@@ -141,48 +146,57 @@ let AuthService = class AuthService {
             expectedSalary: 130000,
         });
         await this.candidateRepo.save(newCandidate);
+        const dto = await this.mapToDto(savedUser);
         return {
-            accessToken: `jwt-candidate-token-${savedUser.id}-${Date.now()}`,
-            user: this.mapToDto(savedUser),
+            accessToken: `jwt-user-token-${savedUser.id}-${Date.now()}`,
+            user: dto,
         };
     }
     async getCurrentUser(token) {
-        if (token) {
-            if (token.includes('usr-company-1') || token.includes('recruiter') || token.includes('company')) {
-                const recruiter = await this.userRepo.findOne({
+        if (!token) {
+            throw new common_1.UnauthorizedException('Authentication token required.');
+        }
+        let foundUser = null;
+        const uuidMatch = token.match(/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/);
+        if (uuidMatch && uuidMatch[1]) {
+            const targetUserId = uuidMatch[1];
+            foundUser = await this.userRepo.findOne({
+                where: { id: targetUserId },
+                relations: { tenant: true },
+            });
+        }
+        if (!foundUser) {
+            if (token.includes('jwt-super-admin-token')) {
+                foundUser = await this.userRepo.findOne({
+                    where: { role: user_entity_1.UserRole.SUPER_ADMIN },
+                    relations: { tenant: true },
+                });
+            }
+            else if (token.includes('jwt-company-token')) {
+                foundUser = await this.userRepo.findOne({
                     where: { role: user_entity_1.UserRole.COMPANY_ADMIN },
                     relations: { tenant: true },
                 });
-                if (recruiter)
-                    return this.mapToDto(recruiter);
             }
-            if (token.includes('candidate') || token.includes('usr-candidate')) {
-                const candidate = await this.userRepo.findOne({
+            else if (token.includes('jwt-candidate-token')) {
+                foundUser = await this.userRepo.findOne({
                     where: { role: user_entity_1.UserRole.CANDIDATE },
                     relations: { tenant: true },
                 });
-                if (candidate)
-                    return this.mapToDto(candidate);
             }
         }
-        const admin = await this.userRepo.findOne({
-            where: { role: user_entity_1.UserRole.SUPER_ADMIN },
-            relations: { tenant: true },
-        });
-        if (admin)
-            return this.mapToDto(admin);
-        const anyUser = await this.userRepo.findOne({ where: {}, relations: { tenant: true } });
-        if (anyUser)
-            return this.mapToDto(anyUser);
-        return {
-            id: 'usr-admin-1',
-            email: 'admin@camzyjobs.com',
-            firstName: 'Super',
-            lastName: 'Admin',
-            role: 'SUPER_ADMIN',
-        };
+        if (!foundUser) {
+            throw new common_1.UnauthorizedException('Invalid or expired authentication session.');
+        }
+        return await this.mapToDto(foundUser);
     }
-    mapToDto(u) {
+    async mapToDto(u) {
+        let candidateId = undefined;
+        if (u.role === user_entity_1.UserRole.CANDIDATE) {
+            const cand = await this.candidateRepo.findOne({ where: { userId: u.id } });
+            if (cand)
+                candidateId = cand.id;
+        }
         return {
             id: u.id,
             email: u.email,
@@ -192,6 +206,7 @@ let AuthService = class AuthService {
             tenantId: u.tenantId || undefined,
             tenantName: u.tenant ? u.tenant.name : undefined,
             tenantType: u.tenant ? u.tenant.type : undefined,
+            candidateId,
             avatarUrl: u.avatarUrl || undefined,
         };
     }

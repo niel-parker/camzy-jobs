@@ -13,6 +13,7 @@ export interface UserDto {
     tenantId?: string;
     tenantName?: string;
     tenantType?: 'COMPANY' | 'CONSULTANCY';
+    candidateId?: string;
     avatarUrl?: string;
 }
 export declare class AuthService {
