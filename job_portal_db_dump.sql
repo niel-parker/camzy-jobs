@@ -36,6 +36,12 @@ CREATE TABLE `candidates` (
   `visibility` enum('PUBLIC','ANONYMOUS','PRIVATE') NOT NULL DEFAULT 'PUBLIC',
   `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  `experience` json DEFAULT NULL,
+  `education` json DEFAULT NULL,
+  `certifications` json DEFAULT NULL,
+  `projects` json DEFAULT NULL,
+  `languages` json DEFAULT NULL,
+  `socialLinks` json DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `IDX_94a5fe85e7f5bd0221fa7d6f19` (`user_id`),
   UNIQUE KEY `REL_94a5fe85e7f5bd0221fa7d6f19` (`user_id`),
@@ -49,7 +55,7 @@ CREATE TABLE `candidates` (
 
 LOCK TABLES `candidates` WRITE;
 /*!40000 ALTER TABLE `candidates` DISABLE KEYS */;
-INSERT INTO `candidates` VALUES ('4148109f-c29f-4913-9c97-b39d76783463','fec2474b-2956-4e02-ad92-db25a44cf6af','Senior Full Stack Engineer | Next.js & NestJS Expert','Passionate developer with 6+ years building enterprise web applications, microservices, and design systems.','Senior Full Stack Developer',6,160000.00,'https://example.com/resumes/john-doe-resume.pdf',NULL,'[\"TypeScript\", \"Next.js\", \"NestJS\", \"React\", \"Tailwind CSS\", \"TypeORM\", \"MySQL\", \"Redis\"]','PUBLIC','2026-10-07 05:55:39.404304','2026-10-07 05:55:39.404304');
+INSERT INTO `candidates` VALUES ('4148109f-c29f-4913-9c97-b39d76783463','fec2474b-2956-4e02-ad92-db25a44cf6af','Senior Full Stack Engineer | Next.js & NestJS Expert','Passionate developer with 6+ years building enterprise web applications, microservices, and design systems.','Senior Full Stack Developer',6,160000.00,'https://example.com/resumes/john-doe-resume.pdf',NULL,'[\"TypeScript\", \"Next.js\", \"NestJS\", \"React\", \"Tailwind CSS\", \"TypeORM\", \"MySQL\", \"Redis\"]','PUBLIC','2026-10-07 05:55:39.404304','2026-10-07 05:55:39.404304',NULL,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `candidates` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -85,7 +91,7 @@ CREATE TABLE `job_applications` (
 
 LOCK TABLES `job_applications` WRITE;
 /*!40000 ALTER TABLE `job_applications` DISABLE KEYS */;
-INSERT INTO `job_applications` VALUES ('44c4c2c9-6dd1-4fa7-a317-8df1ab207ad8','381fb878-a4a8-414b-8783-a6fec014411d','4148109f-c29f-4913-9c97-b39d76783463','I have 6 years of hands-on experience building enterprise web applications using Next.js App Router and NestJS microservices.','https://example.com/resumes/john-doe-resume.pdf',NULL,'SHORTLISTED',5,'2026-10-07 05:55:39.416477','2026-10-07 05:55:39.416477');
+INSERT INTO `job_applications` VALUES ('44c4c2c9-6dd1-4fa7-a317-8df1ab207ad8','381fb878-a4a8-414b-8783-a6fec014411d','4148109f-c29f-4913-9c97-b39d76783463','I have 6 years of hands-on experience building enterprise web applications using Next.js App Router and NestJS microservices.','https://example.com/resumes/john-doe-resume.pdf',NULL,'SHORTLISTED',5,'2026-10-07 05:55:39.416477','2026-10-07 05:55:39.416477'),('c1d916d0-ae85-4b93-85ea-de39f3f41126','0059dc7a-255b-4feb-9e20-992894e624c4','4148109f-c29f-4913-9c97-b39d76783463','','https://example.com/resumes/john-doe-resume.pdf','{\"currentCtc\": \"120000\", \"expectedCtc\": \"150000\", \"noticePeriod\": \"Immediate / 15 Days\", \"currentLocation\": \"New York, NY\", \"willingToRelocate\": true}','APPLIED',0,'2026-10-09 03:43:16.671036','2026-10-09 03:43:16.671036');
 /*!40000 ALTER TABLE `job_applications` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -121,6 +127,8 @@ CREATE TABLE `job_postings` (
   `applicationsCount` int NOT NULL DEFAULT '0',
   `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  `applyType` varchar(20) NOT NULL DEFAULT 'INTERNAL',
+  `applyUrl` varchar(500) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FK_71549ebdaf6647e51de711396c3` (`tenant_id`),
   KEY `FK_e24ab7cffe7b1ecfd256441581a` (`posted_by_user_id`),
@@ -135,7 +143,7 @@ CREATE TABLE `job_postings` (
 
 LOCK TABLES `job_postings` WRITE;
 /*!40000 ALTER TABLE `job_postings` DISABLE KEYS */;
-INSERT INTO `job_postings` VALUES ('318d73f0-bdf2-4ad8-b661-1d0bb93c76b1','b0c543fb-d25b-401e-a84d-1ef897f004ad','537b19b2-0785-46b6-9899-ed1f166a0469','AI / Machine Learning Engineer (LLMs & Agents)','ai-machine-learning-engineer','Build agentic AI workflows, vector search indexes, and custom fine-tuned models for enterprise talent sourcing.','Artificial Intelligence','Full-time','Senior',160000.00,210000.00,'USD',1,'United States','Boston, MA',1,1,NULL,'PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.413943','2026-10-07 05:55:39.413943'),('381fb878-a4a8-414b-8783-a6fec014411d','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','537b19b2-0785-46b6-9899-ed1f166a0469','Senior Full Stack Engineer (Next.js & NestJS)','senior-full-stack-engineer-nextjs-nestjs','Lead design and development of enterprise multi-tenant web applications using Next.js App Router and NestJS microservices.','Engineering','Full-time','Senior',140000.00,180000.00,'USD',1,'United States','San Francisco, CA',1,1,'[{\"id\": \"q1\", \"options\": [\"1-2 Years\", \"3-5 Years\", \"5+ Years\"], \"isRequired\": true, \"questionText\": \"How many years of commercial experience do you have with Next.js & NestJS?\", \"questionType\": \"CHOICE\"}, {\"id\": \"q2\", \"isRequired\": true, \"questionText\": \"Are you legally authorized to work in the US or work remotely?\", \"questionType\": \"YES_NO\"}]','PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.407215','2026-10-07 05:55:39.407215'),('55dc8600-f612-4f28-869f-21b7f1dd5260','9e1edcde-e34d-45da-a0cd-a660c1670714','537b19b2-0785-46b6-9899-ed1f166a0469','Senior Product Designer (UI/UX & Design Systems)','senior-product-designer','Craft beautiful responsive UI components, design tokens, and dark/light mode themes for scalable SaaS platforms.','Design & Creative','Contract','Mid',110000.00,140000.00,'USD',1,'United States','Austin, TX',1,0,NULL,'PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.411698','2026-10-07 05:55:39.411698'),('a4902b5a-3cd9-4b11-848e-6b7f174df2a5','3ec4391c-d7e6-4810-9ac1-64f6e207fd8d','537b19b2-0785-46b6-9899-ed1f166a0469','Principal Cloud Architect (AWS & Microservices)','principal-cloud-architect-aws','Architect high-throughput financial transaction infrastructure with zero downtime and sub-millisecond latencies.','DevOps & Architecture','Full-time','Lead',190000.00,240000.00,'USD',1,'United States','New York, NY',0,1,NULL,'PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.409590','2026-10-07 05:55:39.409590');
+INSERT INTO `job_postings` VALUES ('0059dc7a-255b-4feb-9e20-992894e624c4','3ec4391c-d7e6-4810-9ac1-64f6e207fd8d','537b19b2-0785-46b6-9899-ed1f166a0469','SDE 3 Wipro','sde-3-wipro','gr','Engineering','Full-time','Senior',120000.00,160000.00,'USD',1,'United States','Pune',1,0,'[]','PUBLISHED','2026-12-08 03:40:15',0,0,'2026-10-09 03:40:15.308615','2026-10-09 03:40:15.308615','INTERNAL',NULL),('318d73f0-bdf2-4ad8-b661-1d0bb93c76b1','b0c543fb-d25b-401e-a84d-1ef897f004ad','537b19b2-0785-46b6-9899-ed1f166a0469','AI / Machine Learning Engineer (LLMs & Agents)','ai-machine-learning-engineer','Build agentic AI workflows, vector search indexes, and custom fine-tuned models for enterprise talent sourcing.','Artificial Intelligence','Full-time','Senior',160000.00,210000.00,'USD',1,'United States','Boston, MA',1,1,NULL,'PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.413943','2026-10-07 05:55:39.413943','INTERNAL',NULL),('381fb878-a4a8-414b-8783-a6fec014411d','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','537b19b2-0785-46b6-9899-ed1f166a0469','Senior Full Stack Engineer (Next.js & NestJS)','senior-full-stack-engineer-nextjs-nestjs','Lead design and development of enterprise multi-tenant web applications using Next.js App Router and NestJS microservices.','Engineering','Full-time','Senior',140000.00,180000.00,'USD',1,'United States','San Francisco, CA',1,1,'[{\"id\": \"q1\", \"options\": [\"1-2 Years\", \"3-5 Years\", \"5+ Years\"], \"isRequired\": true, \"questionText\": \"How many years of commercial experience do you have with Next.js & NestJS?\", \"questionType\": \"CHOICE\"}, {\"id\": \"q2\", \"isRequired\": true, \"questionText\": \"Are you legally authorized to work in the US or work remotely?\", \"questionType\": \"YES_NO\"}]','PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.407215','2026-10-07 05:55:39.407215','INTERNAL',NULL),('39ba1728-227c-4512-bc96-d66a9d146afe','3ec4391c-d7e6-4810-9ac1-64f6e207fd8d','537b19b2-0785-46b6-9899-ed1f166a0469','SDE 2','sde-2','dsfd','Engineering','Full-time','Senior',120000.00,160000.00,'USD',1,'United States','PUNE',1,0,'[]','PUBLISHED','2026-12-07 22:23:52',0,0,'2026-10-08 22:23:52.407412','2026-10-08 22:23:52.407412','INTERNAL',NULL),('55dc8600-f612-4f28-869f-21b7f1dd5260','9e1edcde-e34d-45da-a0cd-a660c1670714','537b19b2-0785-46b6-9899-ed1f166a0469','Senior Product Designer (UI/UX & Design Systems)','senior-product-designer','Craft beautiful responsive UI components, design tokens, and dark/light mode themes for scalable SaaS platforms.','Design & Creative','Contract','Mid',110000.00,140000.00,'USD',1,'United States','Austin, TX',1,0,NULL,'PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.411698','2026-10-07 05:55:39.411698','INTERNAL',NULL),('a4902b5a-3cd9-4b11-848e-6b7f174df2a5','3ec4391c-d7e6-4810-9ac1-64f6e207fd8d','537b19b2-0785-46b6-9899-ed1f166a0469','Principal Cloud Architect (AWS & Microservices)','principal-cloud-architect-aws','Architect high-throughput financial transaction infrastructure with zero downtime and sub-millisecond latencies.','DevOps & Architecture','Full-time','Lead',190000.00,240000.00,'USD',1,'United States','New York, NY',0,1,NULL,'PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.409590','2026-10-07 05:55:39.409590','INTERNAL',NULL);
 /*!40000 ALTER TABLE `job_postings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -207,7 +215,7 @@ CREATE TABLE `tenant_subscriptions` (
 
 LOCK TABLES `tenant_subscriptions` WRITE;
 /*!40000 ALTER TABLE `tenant_subscriptions` DISABLE KEYS */;
-INSERT INTO `tenant_subscriptions` VALUES ('56cea36a-b1ef-4051-8a24-b4a7a48a30d8','3ec4391c-d7e6-4810-9ac1-64f6e207fd8d','93cd8066-7c77-4353-a011-3f5d710bb877',NULL,'ACTIVE',1,0,0,'2026-10-07 05:55:39','2026-11-06 05:55:39','2026-10-07 05:55:39.394872','2026-10-07 05:55:39.394872'),('ff87c620-e561-49ed-87fa-5b824ff41549','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','5e9ce62d-9be6-4bea-b51a-434a6cbf48a5',NULL,'ACTIVE',1,0,0,'2026-10-07 05:55:39','2026-11-06 05:55:39','2026-10-07 05:55:39.392987','2026-10-07 05:55:39.392987');
+INSERT INTO `tenant_subscriptions` VALUES ('56cea36a-b1ef-4051-8a24-b4a7a48a30d8','3ec4391c-d7e6-4810-9ac1-64f6e207fd8d','5e9ce62d-9be6-4bea-b51a-434a6cbf48a5',NULL,'ACTIVE',1,0,0,'2026-10-07 05:55:39','2026-11-06 05:55:39','2026-10-07 05:55:39.394872','2026-10-08 22:39:08.000000'),('ff87c620-e561-49ed-87fa-5b824ff41549','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','5e9ce62d-9be6-4bea-b51a-434a6cbf48a5',NULL,'ACTIVE',1,0,0,'2026-10-07 05:55:39','2026-11-06 05:55:39','2026-10-07 05:55:39.392987','2026-10-07 05:55:39.392987');
 /*!40000 ALTER TABLE `tenant_subscriptions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -293,4 +301,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-07  7:33:20
+-- Dump completed on 2026-10-09  4:26:09
