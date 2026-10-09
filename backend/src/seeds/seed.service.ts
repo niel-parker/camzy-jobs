@@ -224,7 +224,34 @@ export class SeedService implements OnModuleInit {
         }),
       );
 
+      await this.userRepo.save(
+        this.userRepo.create({
+          email: 'employer@techcorp.com',
+          passwordHash: 'password123',
+          firstName: 'TechCorp',
+          lastName: 'Hiring Manager',
+          role: UserRole.COMPANY_ADMIN,
+          status: UserStatus.ACTIVE,
+          tenantId: techCorp ? techCorp.id : null,
+          isEmailVerified: true,
+          avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
+        }),
+      );
+
       candidateUser = await this.userRepo.save(
+        this.userRepo.create({
+          email: 'candidate@camzyjobs.com',
+          passwordHash: 'password123',
+          firstName: 'Alex',
+          lastName: 'Candidate',
+          role: UserRole.CANDIDATE,
+          status: UserStatus.ACTIVE,
+          isEmailVerified: true,
+          avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+        }),
+      );
+
+      await this.userRepo.save(
         this.userRepo.create({
           email: 'candidate@example.com',
           passwordHash: 'candidate123',
@@ -237,9 +264,44 @@ export class SeedService implements OnModuleInit {
         }),
       );
     } else {
+      // Ensure candidate@camzyjobs.com and employer@techcorp.com exist even if db was already initialized
+      const existingCand = await this.userRepo.findOne({ where: { email: 'candidate@camzyjobs.com' } });
+      if (!existingCand) {
+        candidateUser = await this.userRepo.save(
+          this.userRepo.create({
+            email: 'candidate@camzyjobs.com',
+            passwordHash: 'password123',
+            firstName: 'Alex',
+            lastName: 'Candidate',
+            role: UserRole.CANDIDATE,
+            status: UserStatus.ACTIVE,
+            isEmailVerified: true,
+            avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+          }),
+        );
+      } else {
+        candidateUser = existingCand;
+      }
+
+      const existingEmp = await this.userRepo.findOne({ where: { email: 'employer@techcorp.com' } });
+      if (!existingEmp && techCorp) {
+        await this.userRepo.save(
+          this.userRepo.create({
+            email: 'employer@techcorp.com',
+            passwordHash: 'password123',
+            firstName: 'TechCorp',
+            lastName: 'Hiring Manager',
+            role: UserRole.COMPANY_ADMIN,
+            status: UserStatus.ACTIVE,
+            tenantId: techCorp.id,
+            isEmailVerified: true,
+            avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
+          }),
+        );
+      }
+
       superAdminUser = await this.userRepo.findOne({ where: { email: 'admin@camzyjobs.com' } });
       employerUser = await this.userRepo.findOne({ where: { email: 'recruiter@techcorp.com' } });
-      candidateUser = await this.userRepo.findOne({ where: { email: 'candidate@example.com' } });
     }
 
     // 4. Seed Candidate Profile
