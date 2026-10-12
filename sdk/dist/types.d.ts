@@ -5,6 +5,11 @@ export interface User {
     firstName: string;
     lastName: string;
     role: UserRole;
+    phoneNumber?: string;
+    isEmailVerified?: boolean;
+    isPhoneVerified?: boolean;
+    lastLoginAt?: string;
+    createdAt?: string;
     tenantId?: string;
     tenantName?: string;
     tenantType?: 'COMPANY' | 'CONSULTANCY';
@@ -14,6 +19,56 @@ export interface User {
 export interface AuthResponse {
     accessToken: string;
     user: User;
+    isNewAccount?: boolean;
+    message?: string;
+}
+export interface CandidateProfile {
+    id: string;
+    userId: string;
+    headline: string;
+    summary: string;
+    currentTitle: string;
+    experienceYears: number;
+    currentSalary?: number;
+    expectedSalary?: number;
+    noticePeriod?: string;
+    preferredLocations?: string[];
+    resumeUrl?: string;
+    resumes?: Array<{
+        id: string;
+        title: string;
+        resumeUrl: string;
+        isDefault?: boolean;
+        uploadedAt?: string;
+    }>;
+    skills: string[];
+    user?: {
+        email: string;
+        firstName: string;
+        lastName: string;
+        phoneNumber?: string;
+        avatarUrl?: string;
+        isEmailVerified?: boolean;
+        isPhoneVerified?: boolean;
+        lastLoginAt?: string;
+        createdAt?: string;
+    };
+    experience?: Array<any>;
+    education?: Array<any>;
+    certifications?: Array<any>;
+    projects?: Array<any>;
+    languages?: Array<any>;
+    socialLinks?: Record<string, string>;
+    visibility?: 'PUBLIC' | 'ANONYMOUS' | 'PRIVATE';
+}
+export interface UploadResumeResponse {
+    success: boolean;
+    filename: string;
+    originalName: string;
+    size: number;
+    mimeType: string;
+    url: string;
+    fullUrl: string;
 }
 export interface ThemeConfig {
     id: string;
@@ -88,7 +143,60 @@ export interface JobListing {
     isFeatured: boolean;
     applyType?: 'INTERNAL' | 'EXTERNAL';
     applyUrl?: string;
+    skills?: string[];
+    benefits?: string[];
+    genderPreference?: 'ANY' | 'MALE' | 'FEMALE';
     screeningQuestions?: ScreeningQuestion[];
+    createdAt: string;
+}
+export interface QuotaProgress {
+    used: number;
+    limit: number;
+    remaining: number;
+    percentUsed: number;
+}
+export interface TenantSubscriptionOverview {
+    id: string;
+    tenantId: string;
+    tenantName: string;
+    status: string;
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+    plan: {
+        id: string;
+        name: string;
+        code: string;
+        priceMonthly: number;
+        priceYearly: number;
+        maxActiveJobs: number;
+        maxResumeDownloads: number;
+        maxTeamSeats: number;
+    };
+    quotas: {
+        activeJobs: QuotaProgress;
+        resumeDownloads: QuotaProgress;
+        teamSeats: QuotaProgress;
+    };
+}
+export interface BillingTransaction {
+    id: string;
+    invoiceNumber: string;
+    tenantId?: string;
+    tenantName: string;
+    description: string;
+    amount: number;
+    currency: string;
+    type: 'SUBSCRIPTION' | 'QUOTA_TOPUP' | 'SEAT_ADDON';
+    status: 'PAID' | 'PENDING' | 'FAILED' | 'REFUNDED';
+    paymentMethod: string;
+    planCode?: string;
+    quotaDetails?: {
+        activeJobs?: number;
+        resumeDownloads?: number;
+        teamSeats?: number;
+    };
+    periodStart?: string;
+    periodEnd?: string;
     createdAt: string;
 }
 export interface DashboardMetrics {
@@ -98,5 +206,8 @@ export interface DashboardMetrics {
     totalCandidates: number;
     totalApplications: number;
     activeSubscriptions: number;
+    totalResumeDownloads?: number;
+    totalTeamSeats?: number;
+    totalRevenue?: number;
     monthlyRevenue: number;
 }

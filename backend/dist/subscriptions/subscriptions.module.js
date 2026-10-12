@@ -14,12 +14,25 @@ const subscriptions_service_1 = require("./subscriptions.service");
 const stripe_service_1 = require("./stripe.service");
 const subscription_plan_entity_1 = require("./entities/subscription-plan.entity");
 const tenant_subscription_entity_1 = require("./entities/tenant-subscription.entity");
+const billing_transaction_entity_1 = require("./entities/billing-transaction.entity");
+const tenant_entity_1 = require("../tenants/entities/tenant.entity");
+const job_posting_entity_1 = require("../jobs/entities/job-posting.entity");
+const user_entity_1 = require("../users/entities/user.entity");
 let SubscriptionsModule = class SubscriptionsModule {
 };
 exports.SubscriptionsModule = SubscriptionsModule;
 exports.SubscriptionsModule = SubscriptionsModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([subscription_plan_entity_1.SubscriptionPlan, tenant_subscription_entity_1.TenantSubscription])],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([
+                subscription_plan_entity_1.SubscriptionPlan,
+                tenant_subscription_entity_1.TenantSubscription,
+                billing_transaction_entity_1.BillingTransaction,
+                tenant_entity_1.Tenant,
+                job_posting_entity_1.JobPosting,
+                user_entity_1.User,
+            ]),
+        ],
         controllers: [subscriptions_controller_1.SubscriptionsController],
         providers: [subscriptions_service_1.SubscriptionsService, stripe_service_1.StripeService],
         exports: [subscriptions_service_1.SubscriptionsService, stripe_service_1.StripeService],

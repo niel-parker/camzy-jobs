@@ -2,9 +2,27 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import * as express from 'express';
+import * as path from 'path';
+import * as fs from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Serve uploaded files statically at /uploads
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  const resumesDir = path.join(uploadsDir, 'resumes');
+  if (!fs.existsSync(resumesDir)) {
+    fs.mkdirSync(resumesDir, { recursive: true });
+  }
+  const avatarsDir = path.join(uploadsDir, 'avatars');
+  if (!fs.existsSync(avatarsDir)) {
+    fs.mkdirSync(avatarsDir, { recursive: true });
+  }
+  app.use('/uploads', express.static(uploadsDir));
 
   // Enable CORS for Next.js frontend (production domain https://jobs.camzytech.com + local + credentials support)
   app.enableCors({

@@ -20,5 +20,38 @@ export declare class AuthController {
         accessToken: string;
         user: import("./auth.service").UserDto;
     }>;
+    requestOtp(body: {
+        identifier?: string;
+        email?: string;
+        phone?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+        expiresInSeconds: number;
+        isEmail: boolean;
+        otpCode: string;
+    }>;
+    verifyOtp(body: {
+        identifier?: string;
+        email?: string;
+        phone?: string;
+        otp: string;
+    }): Promise<{
+        accessToken: string;
+        user: import("./auth.service").UserDto;
+        isNewAccount: boolean;
+        message: string;
+    }>;
+    shareJob(body: {
+        toEmail: string;
+        senderName?: string;
+        jobTitle: string;
+        companyName?: string;
+        jobUrl: string;
+        personalNote?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+    }>;
     getCurrentUser(authHeader?: string): Promise<import("./auth.service").UserDto>;
 }

@@ -1,6 +1,7 @@
 # website/frontend/Dockerfile
 FROM node:20-alpine AS builder
 
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy and build shared SDK first so file:../sdk dependency resolves

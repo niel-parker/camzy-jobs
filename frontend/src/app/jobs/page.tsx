@@ -203,8 +203,47 @@ export default function JobDirectoryPage() {
     loadBackendJobs();
   }, [sdk]);
 
-  const toggleBookmark = (id: string) => {
-    setSavedJobsMap((prev) => ({ ...prev, [id]: !prev[id] }));
+  useEffect(() => {
+    async function loadCandidateSavedJobs() {
+      if (!user) {
+        setSavedJobsMap({});
+        return;
+      }
+      try {
+        const candidateId = user.candidateId || user.id;
+        const profile = await sdk.getCandidateProfile(candidateId);
+        if (profile && Array.isArray(profile.savedJobIds)) {
+          const map: Record<string, boolean> = {};
+          profile.savedJobIds.forEach((jid: string) => {
+            map[jid] = true;
+          });
+          setSavedJobsMap(map);
+        }
+      } catch (err) {
+        console.warn('Could not fetch candidate saved jobs:', err);
+      }
+    }
+    loadCandidateSavedJobs();
+  }, [user, sdk]);
+
+  const toggleBookmark = async (id: string) => {
+    if (!user) {
+      router.push('/auth/login?redirect=/jobs');
+      return;
+    }
+    const nextState = !savedJobsMap[id];
+    setSavedJobsMap((prev) => ({ ...prev, [id]: nextState }));
+
+    try {
+      const candidateId = user.candidateId || user.id;
+      const res = await sdk.toggleSaveJob(candidateId, id);
+      if (res && typeof res.saved === 'boolean') {
+        setSavedJobsMap((prev) => ({ ...prev, [id]: res.saved }));
+      }
+    } catch (err) {
+      console.error('Failed to toggle bookmark:', err);
+      setSavedJobsMap((prev) => ({ ...prev, [id]: !nextState }));
+    }
   };
 
   const handleApplyClick = (jobId: string) => {
@@ -271,11 +310,11 @@ export default function JobDirectoryPage() {
           </div>
 
           <a
-            href="/auth/register/candidate"
+            href="/auth/login"
             className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center space-x-1"
           >
             <Award className="h-4 w-4 mr-1" />
-            <span>Create Candidate Profile</span>
+            <span>Sign In / Create Profile</span>
           </a>
         </div>
 

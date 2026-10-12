@@ -7,28 +7,42 @@ import { useTheme } from '../../../context/ThemeContext';
 import { JobListing } from '@job-portal/sdk';
 
 export default function CandidateSavedJobsPage() {
-  const { sdk } = useTheme();
+  const { sdk, user } = useTheme();
   const [savedJobs, setSavedJobs] = useState<JobListing[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadSavedJobs() {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
-        const jobs = await sdk.getJobListings();
-        setSavedJobs(jobs.filter((j) => j.isFeatured));
+        const candidateId = user.candidateId || user.id;
+        const jobs = await sdk.getSavedJobs(candidateId);
+        setSavedJobs(Array.isArray(jobs) ? jobs : []);
       } catch (err) {
-        console.error('Error fetching saved jobs:', err);
+        console.error('Error fetching saved jobs from API:', err);
         setSavedJobs([]);
       } finally {
         setLoading(false);
       }
     }
     loadSavedJobs();
-  }, [sdk]);
+  }, [user, sdk]);
 
-  const removeSavedJob = (id: string) => {
-    setSavedJobs(savedJobs.filter((job) => job.id !== id));
+  const removeSavedJob = async (id: string) => {
+    // Optimistic removal
+    setSavedJobs((prev) => prev.filter((job) => job.id !== id));
+    if (user) {
+      try {
+        const candidateId = user.candidateId || user.id;
+        await sdk.toggleSaveJob(candidateId, id);
+      } catch (err) {
+        console.error('Failed to remove bookmark on backend:', err);
+      }
+    }
   };
 
   return (

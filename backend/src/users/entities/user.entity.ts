@@ -45,6 +45,12 @@ export class User {
   @Column({ default: false })
   isEmailVerified: boolean;
 
+  @Column({ default: false })
+  isPhoneVerified: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastLoginAt: Date;
+
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.ACTIVE })
   status: UserStatus;
 

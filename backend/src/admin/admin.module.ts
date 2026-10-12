@@ -8,6 +8,8 @@ import { Candidate } from '../candidates/entities/candidate.entity';
 import { JobApplication } from '../applications/entities/job-application.entity';
 import { TenantSubscription } from '../subscriptions/entities/tenant-subscription.entity';
 import { SubscriptionPlan } from '../subscriptions/entities/subscription-plan.entity';
+import { BillingTransaction } from '../subscriptions/entities/billing-transaction.entity';
+import { User } from '../users/entities/user.entity';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { SubscriptionPlan } from '../subscriptions/entities/subscription-plan.en
       JobApplication,
       TenantSubscription,
       SubscriptionPlan,
+      BillingTransaction,
+      User,
     ]),
   ],
   controllers: [AdminController],

@@ -67,6 +67,14 @@ __decorate([
     __metadata("design:type", Boolean)
 ], User.prototype, "isEmailVerified", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ default: false }),
+    __metadata("design:type", Boolean)
+], User.prototype, "isPhoneVerified", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'timestamp', nullable: true }),
+    __metadata("design:type", Date)
+], User.prototype, "lastLoginAt", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'enum', enum: UserStatus, default: UserStatus.ACTIVE }),
     __metadata("design:type", String)
 ], User.prototype, "status", void 0);

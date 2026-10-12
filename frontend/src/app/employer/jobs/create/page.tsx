@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from '../../../../context/ThemeContext';
 import { SearchableSelect } from '../../../../components/SearchableSelect';
 import { DashboardLayout } from '../../../../components/DashboardLayout';
-import { ArrowLeft, Sparkles, AlertCircle, Plus, Trash2, HelpCircle, ExternalLink, FileText } from 'lucide-react';
+import { ArrowLeft, Sparkles, AlertCircle, Plus, Trash2, HelpCircle, ExternalLink, FileText, EyeOff, Eye, Gift, Calendar, UserCheck } from 'lucide-react';
 
 interface ScreeningQItem {
   id: string;
@@ -31,15 +31,43 @@ export default function CreateJobPage() {
     salaryMax: '160000',
     currency: 'USD',
     isSalaryVisible: true,
+    skillsInput: 'TypeScript, Next.js, NestJS',
+    genderPreference: 'ANY' as 'ANY' | 'MALE' | 'FEMALE',
+    expiresAt: new Date(Date.now() + 60 * 86400000).toISOString().split('T')[0],
     description: '',
     isFeatured: false,
     applyType: 'INTERNAL' as 'INTERNAL' | 'EXTERNAL',
     applyUrl: '',
   });
 
+  const [selectedBenefits, setSelectedBenefits] = useState<string[]>([
+    'Health Insurance',
+    'Work From Home / Remote',
+    'Performance Bonus',
+  ]);
+
   const [screeningQuestions, setScreeningQuestions] = useState<ScreeningQItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const availableBenefits = [
+    'Health Insurance',
+    'Work From Home / Remote',
+    'Performance Bonus',
+    'Paid Time Off & Holidays',
+    'Flexible Working Hours',
+    'Stock Options & Equity',
+    'Learning & Education Allowance',
+    'Gym & Wellness Stipend',
+  ];
+
+  const toggleBenefit = (b: string) => {
+    if (selectedBenefits.includes(b)) {
+      setSelectedBenefits(selectedBenefits.filter((x) => x !== b));
+    } else {
+      setSelectedBenefits([...selectedBenefits, b]);
+    }
+  };
 
   const addScreeningQuestion = () => {
     setScreeningQuestions([
@@ -102,10 +130,26 @@ export default function CreateJobPage() {
           isRequired: q.isRequired,
         }));
 
+      const parsedSkills = formData.skillsInput.split(',').map((s) => s.trim()).filter(Boolean);
+
       await sdk.createJob({
-        ...formData,
+        title: formData.title,
+        category: formData.category,
+        employmentType: formData.employmentType,
+        experienceLevel: formData.experienceLevel,
+        location: formData.location,
+        isRemote: formData.isRemote,
         salaryMin: Number(formData.salaryMin),
         salaryMax: Number(formData.salaryMax),
+        currency: formData.currency,
+        isSalaryVisible: formData.isSalaryVisible,
+        description: formData.description,
+        isFeatured: formData.isFeatured,
+        applyType: formData.applyType,
+        applyUrl: formData.applyUrl,
+        skills: parsedSkills,
+        benefits: selectedBenefits,
+        genderPreference: formData.genderPreference,
         companyName: user?.tenantName || 'Company Tenant',
         isConsultancy: false,
         screeningQuestions: formattedQuestions,
@@ -129,7 +173,7 @@ export default function CreateJobPage() {
         <div className="p-6 rounded-xl border theme-border theme-surface space-y-6 shadow-sm">
           <div>
             <h1 className="text-2xl font-extrabold theme-text tracking-tight">Post a New Job Opening</h1>
-            <p className="text-xs theme-muted">Fill out company posting details to start receiving candidate applications</p>
+            <p className="text-xs theme-muted">Configure job requirements, salary visibility, skill badges, perks, and screening questions</p>
           </div>
 
           {errorMsg && (
@@ -148,7 +192,7 @@ export default function CreateJobPage() {
                 required
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="e.g. Senior Software Engineer"
+                placeholder="e.g. Senior Full Stack Engineer"
                 className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-500"
               />
             </div>
@@ -201,7 +245,70 @@ export default function CreateJobPage() {
               </div>
             </div>
 
-            {/* Application Mode Selection (Naukri Style) */}
+            {/* Gender Preference & Job Expiry */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5 flex items-center gap-1">
+                  <UserCheck className="w-3.5 h-3.5 text-indigo-500" /> Gender Preference
+                </label>
+                <select
+                  value={formData.genderPreference}
+                  onChange={(e) => setFormData({ ...formData, genderPreference: e.target.value as any })}
+                  className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs theme-text outline-none focus:border-indigo-500 font-bold"
+                >
+                  <option value="ANY">Any Gender (No Preference)</option>
+                  <option value="MALE">Male Preference</option>
+                  <option value="FEMALE">Female Preference</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-indigo-500" /> Job Expiry Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.expiresAt}
+                  onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                  className="w-full px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs theme-text outline-none focus:border-indigo-500 font-medium"
+                />
+              </div>
+            </div>
+
+            {/* Required Skills Input */}
+            <div>
+              <label className="text-xs font-bold theme-text block mb-1.5">Required Skills & Tech Badges (Comma Separated) *</label>
+              <input
+                type="text"
+                required
+                value={formData.skillsInput}
+                onChange={(e) => setFormData({ ...formData, skillsInput: e.target.value })}
+                placeholder="TypeScript, Next.js, NestJS, MySQL, Docker"
+                className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs theme-text focus:border-indigo-500 outline-none"
+              />
+            </div>
+
+            {/* Perks & Benefits Selector */}
+            <div className="space-y-2 p-4 rounded-xl border theme-border theme-surface">
+              <label className="text-xs font-bold theme-text block flex items-center gap-1.5">
+                <Gift className="w-4 h-4 text-emerald-500" /> Key Company Benefits & Job Perks
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                {availableBenefits.map((benefit) => (
+                  <label key={benefit} className="flex items-center space-x-2 cursor-pointer theme-text font-medium">
+                    <input
+                      type="checkbox"
+                      checked={selectedBenefits.includes(benefit)}
+                      onChange={() => toggleBenefit(benefit)}
+                      className="accent-indigo-600 rounded"
+                    />
+                    <span>{benefit}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Application Mode Selection */}
             <div className="p-4 rounded-xl border theme-border theme-surface space-y-3">
               <label className="text-xs font-bold theme-text block">Application Apply Mode *</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -217,9 +324,9 @@ export default function CreateJobPage() {
                   />
                   <div>
                     <span className="text-xs font-bold theme-text flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-indigo-500" /> Camzy Jobs Internal Apply
+                      <FileText className="w-4 h-4 text-indigo-500" /> Apply on Camzy Jobs
                     </span>
-                    <p className="text-[11px] theme-muted mt-0.5">Candidates submit profiles, resumes, and screening answers directly on portal.</p>
+                    <p className="text-[11px] theme-muted mt-0.5">Candidates submit profiles, resumes, and screening answers on portal.</p>
                   </div>
                 </label>
 
@@ -257,26 +364,44 @@ export default function CreateJobPage() {
               )}
             </div>
 
-            {/* Salary Range */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">Min Annual Salary ($)</label>
-                <input
-                  type="number"
-                  value={formData.salaryMin}
-                  onChange={(e) => setFormData({ ...formData, salaryMin: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs theme-text outline-none focus:border-indigo-500"
-                />
+            {/* Salary Range & Hide Salary Toggle */}
+            <div className="p-4 rounded-xl border theme-border theme-surface space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold theme-text block">Annual Salary Range ($)</label>
+                <label className="flex items-center space-x-2 text-xs font-bold theme-text cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!formData.isSalaryVisible}
+                    onChange={(e) => setFormData({ ...formData, isSalaryVisible: !e.target.checked })}
+                    className="accent-indigo-600 rounded"
+                  />
+                  <span className="flex items-center gap-1">
+                    {formData.isSalaryVisible ? <Eye className="w-3.5 h-3.5 text-indigo-500" /> : <EyeOff className="w-3.5 h-3.5 text-rose-500" />}
+                    {formData.isSalaryVisible ? 'Salary Disclosed' : 'Hide Salary (Show Negotiable)'}
+                  </span>
+                </label>
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">Max Annual Salary ($)</label>
-                <input
-                  type="number"
-                  value={formData.salaryMax}
-                  onChange={(e) => setFormData({ ...formData, salaryMax: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs theme-text outline-none focus:border-indigo-500"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] font-semibold theme-muted block mb-1">Min Salary ($)</label>
+                  <input
+                    type="number"
+                    value={formData.salaryMin}
+                    onChange={(e) => setFormData({ ...formData, salaryMin: e.target.value })}
+                    className="w-full px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs theme-text outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-semibold theme-muted block mb-1">Max Salary ($)</label>
+                  <input
+                    type="number"
+                    value={formData.salaryMax}
+                    onChange={(e) => setFormData({ ...formData, salaryMax: e.target.value })}
+                    className="w-full px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs theme-text outline-none focus:border-indigo-500"
+                  />
+                </div>
               </div>
             </div>
 
@@ -312,75 +437,30 @@ export default function CreateJobPage() {
                   </button>
                 </div>
 
-                {screeningQuestions.length === 0 ? (
-                  <p className="text-xs theme-muted italic text-center py-4 border border-dashed theme-border rounded-xl">
-                    No custom screening questions added yet. Click &quot;Add Question&quot; to qualify candidates.
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {screeningQuestions.map((q, idx) => (
-                      <div key={q.id} className="p-3.5 rounded-xl theme-surface border theme-border space-y-3 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <span className="text-xs font-bold text-indigo-500 font-mono">Q{idx + 1}.</span>
-                          <div className="flex-1 space-y-2">
-                            <input
-                              type="text"
-                              required
-                              placeholder="e.g. How many years of Next.js experience do you have?"
-                              value={q.questionText}
-                              onChange={(e) => updateScreeningQuestion(q.id, 'questionText', e.target.value)}
-                              className="w-full px-3 py-1.5 rounded-lg border theme-border theme-input theme-text text-xs focus:ring-2 focus:ring-indigo-500"
-                            />
-
-                            <div className="flex flex-wrap items-center gap-3 text-xs">
-                              <label className="flex items-center space-x-1 theme-muted">
-                                <span>Type:</span>
-                                <select
-                                  value={q.questionType}
-                                  onChange={(e) => updateScreeningQuestion(q.id, 'questionType', e.target.value)}
-                                  className="px-2 py-1 rounded border theme-border theme-input theme-text text-xs font-bold"
-                                >
-                                  <option value="TEXT">Short Text Input</option>
-                                  <option value="YES_NO">Yes / No Radio</option>
-                                  <option value="CHOICE">Multiple Choice Dropdown</option>
-                                </select>
-                              </label>
-
-                              {q.questionType === 'CHOICE' && (
-                                <input
-                                  type="text"
-                                  placeholder="Options (comma separated, e.g. 1-2 Yrs, 3-5 Yrs, 5+ Yrs)"
-                                  value={q.options}
-                                  onChange={(e) => updateScreeningQuestion(q.id, 'options', e.target.value)}
-                                  className="flex-1 px-3 py-1 rounded border theme-border theme-input theme-text text-xs"
-                                />
-                              )}
-
-                              <label className="flex items-center space-x-1.5 cursor-pointer theme-text font-semibold">
-                                <input
-                                  type="checkbox"
-                                  checked={q.isRequired}
-                                  onChange={(e) => updateScreeningQuestion(q.id, 'isRequired', e.target.checked)}
-                                  className="accent-indigo-600 rounded"
-                                />
-                                <span>Required</span>
-                              </label>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => removeScreeningQuestion(q.id)}
-                            className="p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
-                            title="Remove Question"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                {screeningQuestions.map((q, idx) => (
+                  <div key={q.id} className="p-3.5 rounded-xl theme-surface border theme-border space-y-3 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-xs font-bold text-indigo-500 font-mono">Q{idx + 1}.</span>
+                      <div className="flex-1 space-y-2">
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. How many years of Next.js experience do you have?"
+                          value={q.questionText}
+                          onChange={(e) => updateScreeningQuestion(q.id, 'questionText', e.target.value)}
+                          className="w-full px-3 py-1.5 rounded-lg border theme-border theme-input theme-text text-xs focus:ring-2 focus:ring-indigo-500"
+                        />
                       </div>
-                    ))}
+                      <button
+                        type="button"
+                        onClick={() => removeScreeningQuestion(q.id)}
+                        className="p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             )}
 
@@ -394,7 +474,7 @@ export default function CreateJobPage() {
                 className="w-4 h-4 text-indigo-600 rounded cursor-pointer"
               />
               <label htmlFor="isFeatured" className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5 cursor-pointer">
-                <Sparkles className="w-4 h-4 text-amber-500" /> Burn 1 Featured Job Boost Credit (Promote to top of search)
+                <Sparkles className="w-4 h-4 text-amber-500" /> Promote Job as Featured Listing
               </label>
             </div>
 

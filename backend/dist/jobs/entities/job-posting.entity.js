@@ -129,6 +129,18 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({ type: 'json', nullable: true }),
     __metadata("design:type", Array)
+], JobPosting.prototype, "skills", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], JobPosting.prototype, "benefits", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ length: 20, default: 'ANY' }),
+    __metadata("design:type", String)
+], JobPosting.prototype, "genderPreference", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
 ], JobPosting.prototype, "screeningQuestions", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'enum', enum: JobStatus, default: JobStatus.PUBLISHED }),

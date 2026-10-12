@@ -12,8 +12,19 @@ export declare class Candidate {
     summary: string;
     currentTitle: string;
     experienceYears: number;
+    currentSalary: number;
     expectedSalary: number;
+    noticePeriod: string;
+    preferredLocations: string[];
     resumeUrl: string;
+    resumes: Array<{
+        id: string;
+        title: string;
+        resumeUrl: string;
+        isDefault?: boolean;
+        uploadedAt?: string;
+    }>;
+    savedJobIds: string[];
     resumeParsedText: string;
     skills: string[];
     experience: Array<{
@@ -26,6 +37,7 @@ export declare class Candidate {
         noticePeriod?: string;
         location?: string;
         jobSummary?: string;
+        rolesAndResponsibilities?: string;
     }>;
     education: Array<{
         id?: string;

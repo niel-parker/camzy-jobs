@@ -6,6 +6,8 @@ import { Candidate } from '../candidates/entities/candidate.entity';
 import { JobApplication } from '../applications/entities/job-application.entity';
 import { TenantSubscription } from '../subscriptions/entities/tenant-subscription.entity';
 import { SubscriptionPlan, PlanCode } from '../subscriptions/entities/subscription-plan.entity';
+import { User } from '../users/entities/user.entity';
+import { BillingTransaction } from '../subscriptions/entities/billing-transaction.entity';
 export declare class AdminController {
     private readonly appConfigService;
     private readonly jobRepo;
@@ -14,7 +16,9 @@ export declare class AdminController {
     private readonly appRepo;
     private readonly subRepo;
     private readonly planRepo;
-    constructor(appConfigService: AppConfigService, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>);
+    private readonly txnRepo;
+    private readonly userRepo;
+    constructor(appConfigService: AppConfigService, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, txnRepo: Repository<BillingTransaction>, userRepo: Repository<User>);
     getDashboardMetrics(): Promise<{
         totalJobs: number;
         totalCompanies: number;
@@ -22,8 +26,12 @@ export declare class AdminController {
         totalCandidates: number;
         totalApplications: number;
         activeSubscriptions: number;
+        totalResumeDownloads: number;
+        totalTeamSeats: number;
+        totalRevenue: number;
         monthlyRevenue: number;
     }>;
+    getTransactions(): Promise<BillingTransaction[]>;
     getAllTenants(): Promise<{
         id: string;
         name: string;

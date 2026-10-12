@@ -4,25 +4,32 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from '../../../context/ThemeContext';
 import { DashboardLayout } from '../../../components/DashboardLayout';
-import { Building2, Plus, Download, Users, Briefcase, ArrowUpRight, Loader2 } from 'lucide-react';
+import { Building2, Plus, Download, Users, Briefcase, ArrowUpRight, Loader2, Search, Sparkles, CreditCard } from 'lucide-react';
 import { JobListing } from '@job-portal/sdk';
 
 export default function EmployerDashboardPage() {
   const { user, sdk } = useTheme();
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [applicationsCount, setApplicationsCount] = useState(0);
+  const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  const tenantId = user?.tenantId;
 
   useEffect(() => {
     async function loadEmployerData() {
       setLoading(true);
       try {
-        const [jobList, appsingsings] = await Promise.all([
+        const [jobList, appsings, subOverview] = await Promise.all([
           sdk.getJobs().catch(() => []),
           sdk.request<any[]>('/applications').catch(() => []),
+          sdk.getCurrentSubscription(tenantId).catch(() => null),
         ]);
         setJobs(jobList);
-        setApplicationsCount(appsingsings.length);
+        setApplicationsCount(appsings.length);
+        if (subOverview) {
+          setSubscription(subOverview);
+        }
       } catch (err) {
         console.error('Error loading employer dashboard data:', err);
       } finally {
@@ -31,10 +38,25 @@ export default function EmployerDashboardPage() {
     }
 
     loadEmployerData();
-  }, [sdk]);
+  }, [sdk, tenantId]);
 
-  const companyName = user?.tenantName || 'TechCorp Global';
-  const activeJobsCount = jobs.length;
+  const companyName = user?.tenantName || subscription?.tenantName || 'TechCorp Global';
+  const planName = subscription?.plan?.name || 'Professional Employer';
+
+  // Live Quota Metrics
+  const activeJobsUsed = subscription?.quotas?.activeJobs?.used ?? jobs.length;
+  const activeJobsLimit = subscription?.quotas?.activeJobs?.limit ?? 15;
+  const activeJobsPercent = subscription?.quotas?.activeJobs?.percentUsed ?? Math.min(100, Math.round((activeJobsUsed / activeJobsLimit) * 100));
+
+  const resumeDownloadsUsed = subscription?.quotas?.resumeDownloads?.used ?? 0;
+  const resumeDownloadsLimit = subscription?.quotas?.resumeDownloads?.limit ?? 150;
+  const resumeDownloadsRemaining = subscription?.quotas?.resumeDownloads?.remaining ?? Math.max(0, resumeDownloadsLimit - resumeDownloadsUsed);
+  const resumeDownloadsPercent = subscription?.quotas?.resumeDownloads?.percentUsed ?? Math.min(100, Math.round((resumeDownloadsUsed / resumeDownloadsLimit) * 100));
+
+  const teamSeatsUsed = subscription?.quotas?.teamSeats?.used ?? 2;
+  const teamSeatsLimit = subscription?.quotas?.teamSeats?.limit ?? 5;
+  const teamSeatsRemaining = subscription?.quotas?.teamSeats?.remaining ?? Math.max(0, teamSeatsLimit - teamSeatsUsed);
+  const teamSeatsPercent = subscription?.quotas?.teamSeats?.percentUsed ?? Math.min(100, Math.round((teamSeatsUsed / teamSeatsLimit) * 100));
 
   return (
     <DashboardLayout role="EMPLOYER">
@@ -44,19 +66,35 @@ export default function EmployerDashboardPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-extrabold theme-text tracking-tight">{companyName}</h1>
-              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 font-bold uppercase">
-                Enterprise Active Employer
+              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 font-bold uppercase border border-indigo-500/20">
+                {planName}
               </span>
             </div>
             <p className="text-xs theme-muted mt-1">Manage active company postings, applicant pipelines, and quota consumption</p>
           </div>
 
-          <Link
-            href="/employer/jobs/create"
-            className="px-5 py-2.5 rounded-xl font-bold text-xs text-white shadow-lg bg-indigo-600 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
-          >
-            <Plus className="w-4 h-4" /> Post New Job
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/employer/billing"
+              className="px-4 py-2.5 rounded-xl font-bold text-xs border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+            >
+              <CreditCard className="w-4 h-4 text-emerald-500" /> Plan Billing & Invoices
+            </Link>
+
+            <Link
+              href="/employer/candidates/search"
+              className="px-4 py-2.5 rounded-xl font-bold text-xs border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+            >
+              <Search className="w-4 h-4 text-indigo-500" /> Candidate Search
+            </Link>
+
+            <Link
+              href="/employer/jobs/create"
+              className="px-5 py-2.5 rounded-xl font-bold text-xs text-white shadow-lg bg-indigo-600 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> Post New Job
+            </Link>
+          </div>
         </div>
 
         {/* Quota Progress Meters Grid */}
@@ -67,15 +105,15 @@ export default function EmployerDashboardPage() {
               <span className="text-xs font-semibold theme-muted flex items-center gap-1.5">
                 <Briefcase className="w-4 h-4 text-indigo-500" /> Active Job Quota
               </span>
-              <span className="text-xs font-bold theme-text">{activeJobsCount} / 15 Used</span>
+              <span className="text-xs font-bold theme-text">{activeJobsUsed} / {activeJobsLimit} Used</span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
               <div
                 className="bg-indigo-600 h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, Math.round((activeJobsCount / 15) * 100))}%` }}
+                style={{ width: `${activeJobsPercent}%` }}
               />
             </div>
-            <p className="text-[11px] theme-muted">{Math.max(0, 15 - activeJobsCount)} job posting slots available this period</p>
+            <p className="text-[11px] theme-muted">{Math.max(0, activeJobsLimit - activeJobsUsed)} job posting slots available this period</p>
           </div>
 
           {/* Resume Downloads Quota Card */}
@@ -84,12 +122,20 @@ export default function EmployerDashboardPage() {
               <span className="text-xs font-semibold theme-muted flex items-center gap-1.5">
                 <Download className="w-4 h-4 text-emerald-500" /> Resume DB Downloads
               </span>
-              <span className="text-xs font-bold theme-text">12 / 150 Used</span>
+              <span className="text-xs font-bold theme-text">{resumeDownloadsUsed} / {resumeDownloadsLimit} Used</span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: '8%' }} />
+              <div
+                className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                style={{ width: `${resumeDownloadsPercent}%` }}
+              />
             </div>
-            <p className="text-[11px] theme-muted">138 candidate resume downloads remaining</p>
+            <div className="flex items-center justify-between pt-1">
+              <p className="text-[11px] theme-muted">{resumeDownloadsRemaining} candidate resume downloads remaining</p>
+              <Link href="/employer/candidates/search" className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5">
+                Search Talent DB →
+              </Link>
+            </div>
           </div>
 
           {/* Recruiter Seats Card */}
@@ -98,12 +144,20 @@ export default function EmployerDashboardPage() {
               <span className="text-xs font-semibold theme-muted flex items-center gap-1.5">
                 <Users className="w-4 h-4 text-amber-500" /> Recruiter Seats
               </span>
-              <span className="text-xs font-bold theme-text">1 / 5 Seats</span>
+              <span className="text-xs font-bold theme-text">{teamSeatsUsed} / {teamSeatsLimit} Seats</span>
             </div>
             <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div className="bg-amber-500 h-full rounded-full transition-all duration-500" style={{ width: '20%' }} />
+              <div
+                className="bg-amber-500 h-full rounded-full transition-all duration-500"
+                style={{ width: `${teamSeatsPercent}%` }}
+              />
             </div>
-            <p className="text-[11px] theme-muted">4 sub-account seats open for team members</p>
+            <div className="flex items-center justify-between pt-1">
+              <p className="text-[11px] theme-muted">{teamSeatsRemaining} sub-account seats open for team members</p>
+              <Link href="/employer/seats" className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-0.5">
+                Manage Team →
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -124,19 +178,37 @@ export default function EmployerDashboardPage() {
               No active job postings found for {companyName}. Click &apos;Post New Job&apos; above to create one.
             </div>
           ) : (
-            <div className="space-y-3">
-              {jobs.map((j) => (
-                <div key={j.id} className="flex items-center justify-between p-4 rounded-xl theme-surface border theme-border text-xs">
+            <div className="divide-y theme-border">
+              {jobs.map((job) => (
+                <div key={job.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <h4 className="font-bold theme-text">{j.title}</h4>
-                    <p className="theme-muted">{j.location} {j.isRemote && '(Remote)'}</p>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-extrabold text-sm theme-text">{job.title}</h4>
+                      {job.isFeatured && (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
+                          Featured
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs theme-muted">
+                      {job.location} • {job.employmentType} • {job.category}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold">
-                      {applicationsCount} Applicants
-                    </span>
-                    <Link href={`/jobs/${j.id}`} className="text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-semibold">
-                      View <ArrowUpRight className="w-3.5 h-3.5" />
+
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/jobs/${job.id}`}
+                      target="_blank"
+                      className="px-3 py-1.5 rounded-lg border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center gap-1"
+                    >
+                      View Live <ArrowUpRight className="w-3.5 h-3.5" />
+                    </Link>
+
+                    <Link
+                      href="/employer/candidates/kanban"
+                      className="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 text-xs font-bold hover:bg-indigo-100 transition-all"
+                    >
+                      Pipeline Kanban
                     </Link>
                   </div>
                 </div>

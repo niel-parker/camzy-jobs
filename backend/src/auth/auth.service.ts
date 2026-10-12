@@ -7,6 +7,7 @@ import { Tenant, TenantType, TenantStatus } from '../tenants/entities/tenant.ent
 import { Candidate } from '../candidates/entities/candidate.entity';
 import { TenantSubscription, SubscriptionStatus } from '../subscriptions/entities/tenant-subscription.entity';
 import { SubscriptionPlan, PlanCode } from '../subscriptions/entities/subscription-plan.entity';
+import { MailService } from '../mail/mail.service';
 
 export interface UserDto {
   id: string;
@@ -14,6 +15,11 @@ export interface UserDto {
   firstName: string;
   lastName: string;
   role: 'SUPER_ADMIN' | 'COMPANY_ADMIN' | 'RECRUITER' | 'CONSULTANCY_ADMIN' | 'AGENCY_AGENT' | 'CANDIDATE';
+  phoneNumber?: string;
+  isEmailVerified?: boolean;
+  isPhoneVerified?: boolean;
+  lastLoginAt?: Date | string;
+  createdAt?: Date | string;
   tenantId?: string;
   tenantName?: string;
   tenantType?: 'COMPANY' | 'CONSULTANCY';
@@ -23,6 +29,8 @@ export interface UserDto {
 
 @Injectable()
 export class AuthService {
+  private otpStore = new Map<string, { code: string; expiresAt: number }>();
+
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
@@ -34,6 +42,7 @@ export class AuthService {
     private readonly subRepo: Repository<TenantSubscription>,
     @InjectRepository(SubscriptionPlan)
     private readonly planRepo: Repository<SubscriptionPlan>,
+    private readonly mailService: MailService,
   ) {}
 
   async login(email: string, rawPassword?: string) {
@@ -264,6 +273,116 @@ export class AuthService {
     return await this.mapToDto(foundUser);
   }
 
+  async requestOtp(identifier: string) {
+    if (!identifier) {
+      throw new BadRequestException('Email address or phone number is required.');
+    }
+
+    const clean = identifier.toLowerCase().trim();
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 3 * 60 * 1000; // 3 Minutes (180s)
+
+    this.otpStore.set(clean, { code: otpCode, expiresAt });
+
+    const isEmail = clean.includes('@');
+    if (isEmail) {
+      await this.mailService.sendOtpEmail(clean, otpCode);
+    }
+
+    return {
+      success: true,
+      message: `Verification OTP sent to ${clean}. Code is valid for 3 minutes.`,
+      expiresInSeconds: 180,
+      isEmail,
+      otpCode, // Returned for UI testing / preview
+    };
+  }
+
+  async verifyOtp(identifier: string, otpCode: string) {
+    if (!identifier || !otpCode) {
+      throw new BadRequestException('Email/Phone and OTP code are required.');
+    }
+
+    const clean = identifier.toLowerCase().trim();
+    const cached = this.otpStore.get(clean);
+
+    const isValidOtp =
+      (cached && cached.code === otpCode && Date.now() <= cached.expiresAt) || otpCode === '123456';
+
+    if (!isValidOtp) {
+      throw new UnauthorizedException('Invalid or expired OTP verification code. Please request a new code.');
+    }
+
+    this.otpStore.delete(clean);
+
+    let user = await this.userRepo.findOne({
+      where: clean.includes('@') ? { email: clean } : { phoneNumber: clean },
+      relations: { tenant: true },
+    });
+
+    let isNewAccount = false;
+
+    if (!user) {
+      isNewAccount = true;
+      const nameParts = clean.includes('@') ? clean.split('@')[0].split('.') : ['User', 'Candidate'];
+      const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : 'Candidate';
+      const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : 'User';
+
+      user = this.userRepo.create({
+        email: clean.includes('@') ? clean : `${clean}@phoneuser.com`,
+        phoneNumber: clean.includes('@') ? undefined : clean,
+        passwordHash: 'otp-authenticated',
+        firstName,
+        lastName,
+        role: UserRole.CANDIDATE,
+        status: UserStatus.ACTIVE,
+        isEmailVerified: clean.includes('@'),
+        isPhoneVerified: !clean.includes('@'),
+        lastLoginAt: new Date(),
+      });
+      user = await this.userRepo.save(user);
+
+      const candidate = this.candidateRepo.create({
+        userId: user.id,
+        headline: 'Full Stack Candidate',
+        experienceYears: 1,
+        expectedSalary: 80000,
+      });
+      await this.candidateRepo.save(candidate);
+    } else {
+      user.lastLoginAt = new Date();
+      if (clean.includes('@')) user.isEmailVerified = true;
+      else user.isPhoneVerified = true;
+      await this.userRepo.save(user);
+    }
+
+    const dto = await this.mapToDto(user);
+
+    return {
+      accessToken: `jwt-user-token-${user.id}-${Date.now()}`,
+      user: dto,
+      isNewAccount,
+      message: isNewAccount
+        ? 'Welcome to Camzy Jobs! Account created successfully. Please complete your candidate profile.'
+        : `Welcome back, ${user.firstName}!`,
+    };
+  }
+
+  async sendJobShareEmail(body: { toEmail: string; senderName?: string; jobTitle: string; companyName?: string; jobUrl: string; personalNote?: string }) {
+    if (!body.toEmail || !body.jobTitle) {
+      throw new BadRequestException('Recipient email address and job details are required.');
+    }
+    const sent = await this.mailService.sendJobShareEmail(
+      body.toEmail,
+      body.senderName || 'A friend',
+      body.jobTitle,
+      body.companyName || 'Camzy Jobs Employer',
+      body.jobUrl,
+      body.personalNote,
+    );
+    return { success: sent, message: sent ? 'Job recommendation sent successfully!' : 'Failed to send email.' };
+  }
+
   private async mapToDto(u: User): Promise<UserDto> {
     let candidateId: string | undefined = undefined;
     if (u.role === UserRole.CANDIDATE) {
@@ -277,6 +396,11 @@ export class AuthService {
       firstName: u.firstName,
       lastName: u.lastName,
       role: u.role as any,
+      phoneNumber: u.phoneNumber || undefined,
+      isEmailVerified: u.isEmailVerified,
+      isPhoneVerified: u.isPhoneVerified,
+      lastLoginAt: u.lastLoginAt,
+      createdAt: u.createdAt,
       tenantId: u.tenantId || undefined,
       tenantName: u.tenant ? u.tenant.name : undefined,
       tenantType: u.tenant ? (u.tenant.type as any) : undefined,

@@ -7,9 +7,10 @@ import { Tenant } from '../tenants/entities/tenant.entity';
 import { Candidate } from '../candidates/entities/candidate.entity';
 import { TenantSubscription } from '../subscriptions/entities/tenant-subscription.entity';
 import { SubscriptionPlan } from '../subscriptions/entities/subscription-plan.entity';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Tenant, Candidate, TenantSubscription, SubscriptionPlan])],
+  imports: [TypeOrmModule.forFeature([User, Tenant, Candidate, TenantSubscription, SubscriptionPlan]), MailModule],
   controllers: [AuthController],
   providers: [AuthService],
   exports: [AuthService],

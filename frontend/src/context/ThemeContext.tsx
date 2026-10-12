@@ -14,6 +14,7 @@ interface ThemeContextType {
   applyPreset: (presetId: string) => Promise<void>;
   updateAppConfig: (partial: Partial<AppConfig>) => Promise<void>;
   login: (email: string, password: string) => Promise<User>;
+  setUser: (user: User | null) => void;
   logout: () => void;
 }
 
@@ -160,6 +161,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         applyPreset,
         updateAppConfig,
         login,
+        setUser,
         logout,
       }}
     >

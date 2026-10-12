@@ -30,6 +30,17 @@ let AuthController = class AuthController {
     async registerCandidate(body) {
         return await this.authService.registerCandidate(body);
     }
+    async requestOtp(body) {
+        const target = body.identifier || body.email || body.phone || '';
+        return await this.authService.requestOtp(target);
+    }
+    async verifyOtp(body) {
+        const target = body.identifier || body.email || body.phone || '';
+        return await this.authService.verifyOtp(target, body.otp);
+    }
+    async shareJob(body) {
+        return await this.authService.sendJobShareEmail(body);
+    }
     async getCurrentUser(authHeader) {
         const token = authHeader ? authHeader.replace('Bearer ', '') : undefined;
         return await this.authService.getCurrentUser(token);
@@ -60,6 +71,30 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "registerCandidate", null);
+__decorate([
+    (0, common_1.Post)('request-otp'),
+    (0, swagger_1.ApiOperation)({ summary: 'Request OTP verification code for login/registration via Email or Phone' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "requestOtp", null);
+__decorate([
+    (0, common_1.Post)('verify-otp'),
+    (0, swagger_1.ApiOperation)({ summary: 'Verify OTP code and log in or register user' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "verifyOtp", null);
+__decorate([
+    (0, common_1.Post)('share-job'),
+    (0, swagger_1.ApiOperation)({ summary: 'Share job recommendation with a friend via email' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "shareJob", null);
 __decorate([
     (0, common_1.Get)('me'),
     (0, swagger_1.ApiOperation)({ summary: 'Get profile of current authenticated user' }),

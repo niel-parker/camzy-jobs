@@ -17,6 +17,7 @@ const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-s
 const job_posting_entity_1 = require("../jobs/entities/job-posting.entity");
 const candidate_entity_1 = require("../candidates/entities/candidate.entity");
 const job_application_entity_1 = require("../applications/entities/job-application.entity");
+const billing_transaction_entity_1 = require("../subscriptions/entities/billing-transaction.entity");
 let SeedsModule = class SeedsModule {
 };
 exports.SeedsModule = SeedsModule;
@@ -28,6 +29,7 @@ exports.SeedsModule = SeedsModule = __decorate([
                 tenant_entity_1.Tenant,
                 subscription_plan_entity_1.SubscriptionPlan,
                 tenant_subscription_entity_1.TenantSubscription,
+                billing_transaction_entity_1.BillingTransaction,
                 job_posting_entity_1.JobPosting,
                 candidate_entity_1.Candidate,
                 job_application_entity_1.JobApplication,

@@ -25,6 +25,21 @@ let SubscriptionsController = class SubscriptionsController {
     async findAllPlans() {
         return await this.subscriptionsService.findAllPlans();
     }
+    async getCurrentSubscription(tenantId) {
+        return await this.subscriptionsService.getCurrentSubscription(tenantId);
+    }
+    async getTransactions(tenantId) {
+        return await this.subscriptionsService.getTransactions(tenantId);
+    }
+    async upgradePlan(body) {
+        return await this.subscriptionsService.upgradePlan(body.tenantId || 'techcorp-global', body.planCode, body.billingCycle || 'monthly');
+    }
+    async purchaseTopup(body) {
+        return await this.subscriptionsService.purchaseTopup(body.tenantId || 'techcorp-global', body.topupType);
+    }
+    async trackResumeDownload(body) {
+        return await this.subscriptionsService.trackResumeDownload(body.tenantId || 'techcorp-global', body.candidateId);
+    }
     createCheckoutSession(body) {
         return this.stripeService.createCheckoutSession(body.tenantId, body.planId);
     }
@@ -40,6 +55,46 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], SubscriptionsController.prototype, "findAllPlans", null);
+__decorate([
+    (0, common_1.Get)('current'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get live subscription status, limits, and real-time quota consumption for tenant' }),
+    __param(0, (0, common_1.Query)('tenantId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], SubscriptionsController.prototype, "getCurrentSubscription", null);
+__decorate([
+    (0, common_1.Get)('transactions'),
+    (0, swagger_1.ApiOperation)({ summary: 'Fetch billing transaction history and invoices for tenant or platform' }),
+    __param(0, (0, common_1.Query)('tenantId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], SubscriptionsController.prototype, "getTransactions", null);
+__decorate([
+    (0, common_1.Post)('upgrade'),
+    (0, swagger_1.ApiOperation)({ summary: 'Upgrade company subscription plan and generate paid invoice' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SubscriptionsController.prototype, "upgradePlan", null);
+__decorate([
+    (0, common_1.Post)('topup'),
+    (0, swagger_1.ApiOperation)({ summary: 'Purchase extra quota pack (resumes, job slots, recruiter seats) and generate invoice' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SubscriptionsController.prototype, "purchaseTopup", null);
+__decorate([
+    (0, common_1.Post)('consume-download'),
+    (0, swagger_1.ApiOperation)({ summary: 'Record and decrement resume download from company monthly quota' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SubscriptionsController.prototype, "trackResumeDownload", null);
 __decorate([
     (0, common_1.Post)('checkout'),
     (0, swagger_1.ApiOperation)({ summary: 'Create Stripe Checkout Session for company plan upgrade' }),

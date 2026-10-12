@@ -4,8 +4,24 @@ require("dotenv/config");
 const core_1 = require("@nestjs/core");
 const swagger_1 = require("@nestjs/swagger");
 const app_module_1 = require("./app.module");
+const express = require("express");
+const path = require("path");
+const fs = require("fs");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    const resumesDir = path.join(uploadsDir, 'resumes');
+    if (!fs.existsSync(resumesDir)) {
+        fs.mkdirSync(resumesDir, { recursive: true });
+    }
+    const avatarsDir = path.join(uploadsDir, 'avatars');
+    if (!fs.existsSync(avatarsDir)) {
+        fs.mkdirSync(avatarsDir, { recursive: true });
+    }
+    app.use('/uploads', express.static(uploadsDir));
     app.enableCors({
         origin: (origin, callback) => {
             callback(null, true);

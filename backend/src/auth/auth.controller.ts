@@ -26,6 +26,26 @@ export class AuthController {
     return await this.authService.registerCandidate(body);
   }
 
+  @Post('request-otp')
+  @ApiOperation({ summary: 'Request OTP verification code for login/registration via Email or Phone' })
+  async requestOtp(@Body() body: { identifier?: string; email?: string; phone?: string }) {
+    const target = body.identifier || body.email || body.phone || '';
+    return await this.authService.requestOtp(target);
+  }
+
+  @Post('verify-otp')
+  @ApiOperation({ summary: 'Verify OTP code and log in or register user' })
+  async verifyOtp(@Body() body: { identifier?: string; email?: string; phone?: string; otp: string }) {
+    const target = body.identifier || body.email || body.phone || '';
+    return await this.authService.verifyOtp(target, body.otp);
+  }
+
+  @Post('share-job')
+  @ApiOperation({ summary: 'Share job recommendation with a friend via email' })
+  async shareJob(@Body() body: { toEmail: string; senderName?: string; jobTitle: string; companyName?: string; jobUrl: string; personalNote?: string }) {
+    return await this.authService.sendJobShareEmail(body);
+  }
+
   @Get('me')
   @ApiOperation({ summary: 'Get profile of current authenticated user' })
   async getCurrentUser(@Headers('authorization') authHeader?: string) {

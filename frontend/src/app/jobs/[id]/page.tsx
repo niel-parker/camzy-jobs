@@ -7,7 +7,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { JobListing } from '@job-portal/sdk';
 import { 
   Building2, MapPin, DollarSign, ArrowLeft, CheckCircle2, ShieldCheck, 
-  AlertCircle, Loader2, Sparkles, FileText, Send, User, Upload, Clock, X, ChevronRight, AlertTriangle, Briefcase, Check
+  AlertCircle, Loader2, Sparkles, FileText, Send, User, Upload, Clock, X, ChevronRight, AlertTriangle, Briefcase, Check, Share2, Mail, Gift, Bookmark
 } from 'lucide-react';
 
 export default function JobDetailPage() {
@@ -22,9 +22,21 @@ export default function JobDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
 
+  // Bookmark / Save Job State
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSavingBookmark, setIsSavingBookmark] = useState(false);
+
   // Naukri-style Apply Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
+
+  // Share Job Modal State
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareFriendEmail, setShareFriendEmail] = useState('');
+  const [shareSenderName, setShareSenderName] = useState(user ? `${user.firstName} ${user.lastName}` : '');
+  const [shareMessage, setShareMessage] = useState('');
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState<string | null>(null);
 
   // Candidate Profile & Resume Completeness State
   const [candidateProfile, setCandidateProfile] = useState<{
@@ -78,6 +90,45 @@ export default function JobDetailPage() {
       }
     }
   }, [searchParams, user, id]);
+
+  // Check if job is saved by current candidate
+  useEffect(() => {
+    async function checkSavedStatus() {
+      if (!user || !id) return;
+      try {
+        const candidateId = user.candidateId || user.id;
+        const profile = await sdk.getCandidateProfile(candidateId);
+        if (profile?.savedJobIds?.includes(id as string)) {
+          setIsSaved(true);
+        }
+      } catch (err) {
+        console.warn('Could not check saved job status:', err);
+      }
+    }
+    checkSavedStatus();
+  }, [user, id, sdk]);
+
+  const handleToggleSaveJob = async () => {
+    if (!user) {
+      router.push(`/auth/login?redirect=/jobs/${id}`);
+      return;
+    }
+    setIsSavingBookmark(true);
+    const prev = isSaved;
+    setIsSaved(!prev);
+    try {
+      const candidateId = user.candidateId || user.id;
+      const res = await sdk.toggleSaveJob(candidateId, id as string);
+      if (res && typeof res.saved === 'boolean') {
+        setIsSaved(res.saved);
+      }
+    } catch (err) {
+      console.error('Failed to toggle save job:', err);
+      setIsSaved(prev);
+    } finally {
+      setIsSavingBookmark(false);
+    }
+  };
 
   // Load Candidate Profile to check completeness & resume
   useEffect(() => {
@@ -140,6 +191,10 @@ export default function JobDetailPage() {
     // 3. External Apply URL Mode
     if (job?.applyType === 'EXTERNAL' && job?.applyUrl) {
       try {
+        const resumeSnapshot = candidateProfile?.resumeUrl 
+          ? (candidateProfile.resumeUrl.includes('example.com') ? 'http://localhost:4000/uploads/resumes/sample-resume.pdf' : candidateProfile.resumeUrl)
+          : 'http://localhost:4000/uploads/resumes/sample-resume.pdf';
+
         await sdk.request('/applications', {
           method: 'POST',
           body: JSON.stringify({
@@ -147,7 +202,7 @@ export default function JobDetailPage() {
             candidateId: user.candidateId || user.id,
             candidateName: `${user.firstName} ${user.lastName}`,
             candidateEmail: user.email,
-            resumeUrlSnapshot: `https://example.com/resumes/${resumeFileName || 'candidate-resume.pdf'}`,
+            resumeUrlSnapshot: resumeSnapshot,
             answersJson: { externalRedirect: true, applyUrl: job.applyUrl },
           }),
         });
@@ -161,6 +216,37 @@ export default function JobDetailPage() {
 
     // Open Naukri-style internal apply modal
     setIsModalOpen(true);
+  };
+
+  const handleSendShareJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!job || !shareFriendEmail) return;
+    setShareLoading(true);
+    setShareSuccess(null);
+
+    try {
+      const jobUrl = typeof window !== 'undefined' ? window.location.href : `https://jobs.camzytech.com/jobs/${job.id}`;
+      const res = await sdk.shareJob({
+        toEmail: shareFriendEmail,
+        senderName: shareSenderName || (user ? `${user.firstName} ${user.lastName}` : 'A friend'),
+        jobTitle: job.title,
+        companyName: job.companyName,
+        jobUrl,
+        personalNote: shareMessage,
+      });
+
+      setShareSuccess(res.message || 'Job recommendation sent successfully via Mailgun SMTP!');
+      setTimeout(() => {
+        setIsShareModalOpen(false);
+        setShareSuccess(null);
+        setShareFriendEmail('');
+        setShareMessage('');
+      }, 2000);
+    } catch (err: any) {
+      setShareSuccess(err.message || 'Failed to dispatch email.');
+    } finally {
+      setShareLoading(false);
+    }
   };
 
   const handleSaveInlineProfile = async () => {
@@ -221,7 +307,9 @@ export default function JobDetailPage() {
           candidateName: `${user.firstName} ${user.lastName}`,
           candidateEmail: user.email,
           coverLetter,
-          resumeUrlSnapshot: `https://example.com/resumes/${resumeFileName}`,
+          resumeUrlSnapshot: candidateProfile?.resumeUrl && !candidateProfile.resumeUrl.includes('example.com')
+            ? candidateProfile.resumeUrl
+            : 'http://localhost:4000/uploads/resumes/sample-resume.pdf',
           answersJson,
         }),
       });
@@ -273,15 +361,45 @@ export default function JobDetailPage() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{job.companyName}</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 font-medium flex items-center gap-1 border border-emerald-500/20">
-                  <ShieldCheck className="w-3 h-3 text-emerald-500" /> Direct Verified Employer
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 font-bold flex items-center gap-1 border border-emerald-500/20">
+                  <ShieldCheck className="w-3 h-3 text-emerald-500" /> Verified Employer
                 </span>
+                {job.applyType === 'INTERNAL' ? (
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/20">
+                    Apply on Camzy Jobs
+                  </span>
+                ) : (
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold border border-purple-500/20">
+                    External Site Apply ↗
+                  </span>
+                )}
               </div>
               <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{job.title}</h1>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleToggleSaveJob}
+              disabled={isSavingBookmark}
+              className={`px-4 py-3 rounded-xl border font-bold text-xs transition-all flex items-center gap-1.5 ${
+                isSaved
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
+                  : 'theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+              title={isSaved ? 'Job Bookmarked' : 'Save Job'}
+            >
+              <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-amber-500 text-amber-500' : 'text-slate-400'}`} />
+              <span>{isSaved ? 'Saved' : 'Save Job'}</span>
+            </button>
+
+            <button
+              onClick={() => setIsShareModalOpen(true)}
+              className="px-4 py-3 rounded-xl border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center gap-1.5"
+            >
+              <Share2 className="w-4 h-4 text-indigo-500" /> Share Job
+            </button>
+
             <button
               onClick={handleOpenApplyModal}
               disabled={isApplied}
@@ -298,14 +416,14 @@ export default function JobDetailPage() {
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" /> Apply Now
+                  <Send className="w-4 h-4" /> Apply on Camzy Jobs
                 </>
               )}
             </button>
           </div>
         </div>
 
-        {/* Naukri Style Key Job Details Pill Grid */}
+        {/* Key Job Details Pill Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-xs">
           <div>
             <span className="text-[11px] text-slate-400 block mb-0.5">Location</span>
@@ -315,12 +433,12 @@ export default function JobDetailPage() {
           </div>
 
           <div>
-            <span className="text-[11px] text-slate-400 block mb-0.5">Salary Range</span>
+            <span className="text-[11px] text-slate-400 block mb-0.5">Salary Disclosure</span>
             <span className="font-semibold text-slate-900 dark:text-white flex items-center gap-1">
               <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
               {job.isSalaryVisible && job.salaryMin
                 ? `$${job.salaryMin.toLocaleString()} - $${job.salaryMax?.toLocaleString()}`
-                : 'Competitive'}
+                : 'Salary Hidden / Negotiable'}
             </span>
           </div>
 
@@ -334,6 +452,39 @@ export default function JobDetailPage() {
             <span className="font-semibold text-slate-900 dark:text-white">{job.experienceLevel}</span>
           </div>
         </div>
+
+        {/* Required Skills & Benefits */}
+        {((job.skills && job.skills.length > 0) || (job.benefits && job.benefits.length > 0)) && (
+          <div className="space-y-3 pt-2 border-t theme-border">
+            {job.skills && job.skills.length > 0 && (
+              <div>
+                <span className="text-[11px] font-bold theme-muted uppercase tracking-wider block mb-1.5">Required Skills & Tech Stack:</span>
+                <div className="flex flex-wrap gap-2">
+                  {job.skills.map((skill, idx) => (
+                    <span key={idx} className="px-3 py-1 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-xs font-bold">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {job.benefits && job.benefits.length > 0 && (
+              <div>
+                <span className="text-[11px] font-bold theme-muted uppercase tracking-wider block mb-1.5 flex items-center gap-1">
+                  <Gift className="w-3.5 h-3.5 text-emerald-500" /> Key Perks & Job Benefits:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {job.benefits.map((benefit, idx) => (
+                    <span key={idx} className="px-3 py-1 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold">
+                      ✓ {benefit}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Description Content Card */}
@@ -344,13 +495,81 @@ export default function JobDetailPage() {
         </div>
       </div>
 
+      {/* SHARE JOB MODAL (Email to Friend via Mailgun) */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 theme-modal animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b theme-border pb-3">
+              <h3 className="text-base font-extrabold theme-text flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-indigo-500" /> Share Job with a Friend
+              </h3>
+              <button onClick={() => setIsShareModalOpen(null as any)} className="p-1 theme-muted hover:theme-text">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {shareSuccess && (
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                {shareSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleSendShareJob} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold theme-text mb-1">Friend&apos;s Email Address *</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 theme-muted" />
+                  <input
+                    type="email"
+                    required
+                    placeholder="friend@example.com"
+                    value={shareFriendEmail}
+                    onChange={(e) => setShareFriendEmail(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold theme-text mb-1">Your Name</label>
+                <input
+                  type="text"
+                  value={shareSenderName}
+                  onChange={(e) => setShareSenderName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold theme-text mb-1">Personal Message / Note (Optional)</label>
+                <textarea
+                  rows={2}
+                  placeholder="Hey, check out this job opening at Camzy Jobs!"
+                  value={shareMessage}
+                  onChange={(e) => setShareMessage(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={shareLoading || !shareFriendEmail}
+                className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2"
+              >
+                {shareLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Send Job Email via Mailgun
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* NAUKRI.COM STYLE APPLY MODAL */}
       {isModalOpen && user && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 theme-modal animate-in fade-in zoom-in-95 duration-200 relative z-50">
             
             {showSuccessScreen ? (
-              /* Success Screen */
               <div className="text-center py-6 space-y-5">
                 <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto border border-emerald-500/20 animate-bounce">
                   <CheckCircle2 className="w-10 h-10" />
@@ -381,13 +600,11 @@ export default function JobDetailPage() {
                 </div>
               </div>
             ) : (
-              /* Naukri Apply Form & Completeness Check */
               <form onSubmit={handleFinalSubmitApplication} className="space-y-5">
-                {/* Modal Header */}
                 <div className="flex items-center justify-between border-b theme-border pb-4">
                   <div>
                     <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                      Naukri Apply Portal
+                      Apply on Camzy Jobs
                     </span>
                     <h3 className="text-lg font-black theme-text mt-1">{job.title}</h3>
                     <p className="text-xs theme-muted">{job.companyName} • {job.location}</p>
@@ -423,123 +640,15 @@ export default function JobDetailPage() {
                     </div>
                   </div>
 
-                  {/* Profile Progress Bar */}
                   <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all duration-500 ${profileScore >= 80 ? 'bg-emerald-500' : 'bg-amber-500'}`}
                       style={{ width: `${profileScore}%` }}
                     />
                   </div>
-
-                  {/* Incomplete Profile Alert / Resume Requirement Notice */}
-                  {!isProfileComplete && (
-                    <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs space-y-2">
-                      <div className="flex items-center gap-2 font-extrabold">
-                        <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                        <span>Resume & Profile Completion Required Before Applying</span>
-                      </div>
-                      <p className="text-[11px] leading-relaxed opacity-90">
-                        Employers on Camzy Jobs review full candidate profiles and resumes. Please attach a resume and update your headline to submit your application.
-                      </p>
-
-                      {/* Inline Profile Quick-Fill Form */}
-                      <div className="pt-2 border-t border-amber-500/20 space-y-3">
-                        <div>
-                          <label className="block text-[11px] font-bold mb-1">Resume File (PDF / DOCX) <span className="text-rose-500">*</span></label>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="file"
-                              accept=".pdf,.doc,.docx"
-                              onChange={(e) => {
-                                if (e.target.files && e.target.files[0]) {
-                                  setResumeFileName(e.target.files[0].name);
-                                }
-                              }}
-                              className="text-xs theme-text file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer"
-                            />
-                            {resumeFileName && (
-                              <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
-                                <Check className="w-3.5 h-3.5" /> Attached
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-[11px] font-bold mb-1">Professional Headline</label>
-                            <input
-                              type="text"
-                              placeholder="e.g. Senior Full Stack Engineer"
-                              value={inlineHeadline}
-                              onChange={(e) => setInlineHeadline(e.target.value)}
-                              className="w-full px-2.5 py-1.5 text-xs rounded-lg border theme-border theme-surface theme-text focus:outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-[11px] font-bold mb-1">Key Skills (Comma Separated)</label>
-                            <input
-                              type="text"
-                              placeholder="React, TypeScript, Node.js"
-                              value={inlineSkills}
-                              onChange={(e) => setInlineSkills(e.target.value)}
-                              className="w-full px-2.5 py-1.5 text-xs rounded-lg border theme-border theme-surface theme-text focus:outline-none"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-1">
-                          <Link
-                            href="/candidate/profile"
-                            target="_blank"
-                            className="text-[11px] font-bold text-indigo-500 hover:underline"
-                          >
-                            Open Full Profile Builder →
-                          </Link>
-
-                          <button
-                            type="button"
-                            onClick={handleSaveInlineProfile}
-                            disabled={isSavingInlineProfile}
-                            className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-[11px] flex items-center gap-1 transition-all"
-                          >
-                            {isSavingInlineProfile ? <Loader2 className="w-3 h-3 animate-spin" /> : <SaveIcon className="w-3 h-3" />}
-                            Save & Enable Apply
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Attached Resume Display */}
-                  {isResumePresent && (
-                    <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border theme-border flex items-center justify-between text-xs shadow-sm">
-                      <div className="flex items-center space-x-2">
-                        <FileText className="w-4 h-4 text-indigo-500" />
-                        <div>
-                          <span className="font-bold theme-text">{resumeFileName || 'candidate-resume.pdf'}</span>
-                          <span className="text-[10px] theme-muted block">Attached PDF Resume</span>
-                        </div>
-                      </div>
-                      <label className="text-[11px] font-bold text-indigo-500 hover:underline cursor-pointer">
-                        Change Resume
-                        <input
-                          type="file"
-                          accept=".pdf,.doc,.docx"
-                          className="hidden"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              setResumeFileName(e.target.files[0].name);
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
-                  )}
                 </div>
 
-                {/* Screening Questionnaire Grid (Naukri style) */}
+                {/* Screening Questionnaire Grid */}
                 <div className="space-y-4 pt-1">
                   <h4 className="text-xs font-black theme-text uppercase tracking-wider flex items-center gap-1.5">
                     <Clock className="w-4 h-4 text-indigo-500" /> Recruiter Screening Questions
@@ -551,7 +660,7 @@ export default function JobDetailPage() {
                       <select
                         value={noticePeriod}
                         onChange={(e) => setNoticePeriod(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl theme-surface border theme-border theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        className="w-full px-3 py-2 rounded-xl theme-surface border theme-border theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none font-bold"
                       >
                         <option value="Immediate / 15 Days">Immediate / 15 Days</option>
                         <option value="30 Days">30 Days</option>
@@ -569,59 +678,6 @@ export default function JobDetailPage() {
                         className="w-full px-3 py-2 rounded-xl theme-surface border theme-border theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                       />
                     </div>
-
-                    <div>
-                      <label className="block font-bold theme-text mb-1">Expected Annual CTC ($)</label>
-                      <input
-                        type="text"
-                        value={expectedCtc}
-                        onChange={(e) => setExpectedCtc(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl theme-surface border theme-border theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold theme-text mb-1">Current City / Location</label>
-                      <input
-                        type="text"
-                        value={currentLocation}
-                        onChange={(e) => setCurrentLocation(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl theme-surface border theme-border theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Custom Job Screening Questions (if specified by employer) */}
-                  {job.screeningQuestions && job.screeningQuestions.length > 0 && (
-                    <div className="space-y-3 pt-2 border-t theme-border">
-                      {job.screeningQuestions.map((q) => (
-                        <div key={q.id}>
-                          <label className="block font-bold theme-text text-xs mb-1">
-                            {q.questionText} {q.isRequired && <span className="text-rose-500">*</span>}
-                          </label>
-                          <input
-                            type="text"
-                            required={q.isRequired}
-                            placeholder="Your answer..."
-                            value={customAnswers[q.id] || ''}
-                            onChange={(e) => setCustomAnswers({ ...customAnswers, [q.id]: e.target.value })}
-                            className="w-full px-3 py-2 rounded-xl theme-surface border theme-border theme-text focus:ring-2 focus:ring-indigo-500 text-xs focus:outline-none"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Cover Letter Note */}
-                  <div>
-                    <label className="block font-bold theme-text text-xs mb-1">Message to Hiring Manager (Optional)</label>
-                    <textarea
-                      rows={3}
-                      placeholder="Briefly state why you are a great fit for this role..."
-                      value={coverLetter}
-                      onChange={(e) => setCoverLetter(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl theme-surface border theme-border theme-text focus:ring-2 focus:ring-indigo-500 text-xs focus:outline-none"
-                    />
                   </div>
                 </div>
 
@@ -642,8 +698,8 @@ export default function JobDetailPage() {
 
                     <button
                       type="submit"
-                      disabled={isSubmitting || !isProfileComplete}
-                      className="px-7 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-md transition-all disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                      disabled={isSubmitting}
+                      className="px-7 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-md transition-all disabled:opacity-50 cursor-pointer"
                     >
                       {isSubmitting ? (
                         <>
@@ -663,15 +719,5 @@ export default function JobDetailPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function SaveIcon(props: any) {
-  return (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-      <polyline points="17 21 17 13 7 13 7 21"/>
-      <polyline points="7 3 7 8 15 8"/>
-    </svg>
   );
 }

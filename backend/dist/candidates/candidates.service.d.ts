@@ -1,5 +1,7 @@
 import { Repository } from 'typeorm';
 import { Candidate, ProfileVisibility } from './entities/candidate.entity';
+import { User } from '../users/entities/user.entity';
+import { JobPosting } from '../jobs/entities/job-posting.entity';
 export interface CandidateProfileDto {
     id: string;
     userId: string;
@@ -7,9 +9,31 @@ export interface CandidateProfileDto {
     summary: string;
     currentTitle: string;
     experienceYears: number;
-    expectedSalary: number;
+    currentSalary?: number;
+    expectedSalary?: number;
+    noticePeriod?: string;
+    preferredLocations?: string[];
     resumeUrl?: string;
+    resumes?: Array<{
+        id: string;
+        title: string;
+        resumeUrl: string;
+        isDefault?: boolean;
+        uploadedAt?: string;
+    }>;
+    savedJobIds?: string[];
     skills: string[];
+    user?: {
+        email: string;
+        firstName: string;
+        lastName: string;
+        phoneNumber?: string;
+        avatarUrl?: string;
+        isEmailVerified?: boolean;
+        isPhoneVerified?: boolean;
+        lastLoginAt?: Date | string;
+        createdAt?: Date | string;
+    };
     experience?: Array<{
         id?: string;
         designation: string;
@@ -20,6 +44,7 @@ export interface CandidateProfileDto {
         noticePeriod?: string;
         location?: string;
         jobSummary?: string;
+        rolesAndResponsibilities?: string;
     }>;
     education?: Array<{
         id?: string;
@@ -60,9 +85,22 @@ export interface CandidateProfileDto {
 }
 export declare class CandidatesService {
     private readonly candidateRepo;
-    constructor(candidateRepo: Repository<Candidate>);
-    findAll(skill?: string): Promise<CandidateProfileDto[]>;
+    private readonly userRepo;
+    private readonly jobRepo;
+    constructor(candidateRepo: Repository<Candidate>, userRepo: Repository<User>, jobRepo: Repository<JobPosting>);
+    findAll(params?: {
+        skill?: string;
+        noticePeriod?: string;
+        city?: string;
+        minExp?: number;
+        maxSalary?: number;
+    }): Promise<CandidateProfileDto[]>;
     findOne(id: string): Promise<CandidateProfileDto>;
     updateProfile(id: string, partial: Partial<CandidateProfileDto>): Promise<CandidateProfileDto>;
+    toggleSaveJob(candidateOrUserId: string, jobId: string): Promise<{
+        saved: boolean;
+        savedJobIds: string[];
+    }>;
+    getSavedJobs(candidateOrUserId: string): Promise<any[]>;
     private mapToDto;
 }

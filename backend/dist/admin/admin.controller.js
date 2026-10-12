@@ -24,8 +24,10 @@ const candidate_entity_1 = require("../candidates/entities/candidate.entity");
 const job_application_entity_1 = require("../applications/entities/job-application.entity");
 const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-subscription.entity");
 const subscription_plan_entity_1 = require("../subscriptions/entities/subscription-plan.entity");
+const user_entity_1 = require("../users/entities/user.entity");
+const billing_transaction_entity_1 = require("../subscriptions/entities/billing-transaction.entity");
 let AdminController = class AdminController {
-    constructor(appConfigService, jobRepo, tenantRepo, candidateRepo, appRepo, subRepo, planRepo) {
+    constructor(appConfigService, jobRepo, tenantRepo, candidateRepo, appRepo, subRepo, planRepo, txnRepo, userRepo) {
         this.appConfigService = appConfigService;
         this.jobRepo = jobRepo;
         this.tenantRepo = tenantRepo;
@@ -33,6 +35,8 @@ let AdminController = class AdminController {
         this.appRepo = appRepo;
         this.subRepo = subRepo;
         this.planRepo = planRepo;
+        this.txnRepo = txnRepo;
+        this.userRepo = userRepo;
     }
     async getDashboardMetrics() {
         const totalJobs = await this.jobRepo.count();
@@ -41,6 +45,18 @@ let AdminController = class AdminController {
         const totalCandidates = await this.candidateRepo.count();
         const totalApplications = await this.appRepo.count();
         const activeSubscriptions = await this.subRepo.count({ where: { status: tenant_subscription_entity_1.SubscriptionStatus.ACTIVE } });
+        const allSubs = await this.subRepo.find();
+        const totalResumeDownloads = allSubs.reduce((acc, s) => acc + (s.resumeDownloadsUsed || 0), 0);
+        const totalTeamSeats = await this.userRepo.count({
+            where: [
+                { role: user_entity_1.UserRole.COMPANY_ADMIN },
+                { role: user_entity_1.UserRole.RECRUITER },
+                { role: user_entity_1.UserRole.CONSULTANCY_ADMIN },
+                { role: user_entity_1.UserRole.AGENCY_AGENT },
+            ],
+        });
+        const allTxns = await this.txnRepo.find();
+        const totalRevenue = allTxns.reduce((acc, t) => acc + Number(t.amount || 0), 0);
         return {
             totalJobs,
             totalCompanies,
@@ -48,8 +64,16 @@ let AdminController = class AdminController {
             totalCandidates,
             totalApplications,
             activeSubscriptions,
+            totalResumeDownloads,
+            totalTeamSeats,
+            totalRevenue: totalRevenue || activeSubscriptions * 199,
             monthlyRevenue: activeSubscriptions * 199,
         };
+    }
+    async getTransactions() {
+        return await this.txnRepo.find({
+            order: { createdAt: 'DESC' },
+        });
     }
     async getAllTenants() {
         const tenants = await this.tenantRepo.find({
@@ -138,6 +162,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "getDashboardMetrics", null);
 __decorate([
+    (0, common_1.Get)('transactions'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Fetch global transactions and billing invoices for all companies' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getTransactions", null);
+__decorate([
     (0, common_1.Get)('tenants'),
     (0, swagger_1.ApiOperation)({ summary: 'Super Admin: List all registered company tenants with live subscription plans & quotas' }),
     __metadata("design:type", Function),
@@ -188,7 +219,11 @@ exports.AdminController = AdminController = __decorate([
     __param(4, (0, typeorm_1.InjectRepository)(job_application_entity_1.JobApplication)),
     __param(5, (0, typeorm_1.InjectRepository)(tenant_subscription_entity_1.TenantSubscription)),
     __param(6, (0, typeorm_1.InjectRepository)(subscription_plan_entity_1.SubscriptionPlan)),
+    __param(7, (0, typeorm_1.InjectRepository)(billing_transaction_entity_1.BillingTransaction)),
+    __param(8, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __metadata("design:paramtypes", [app_config_service_1.AppConfigService,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

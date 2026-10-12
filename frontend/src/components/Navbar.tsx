@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '../context/ThemeContext';
-import { Briefcase, Building2, Palette, ShieldCheck, User, LogOut, Menu, X, ChevronDown, Sparkles, LayoutDashboard, Bookmark, FileText, Settings, Users, LogIn } from 'lucide-react';
-import { SuperAdminThemeCustomizer } from './SuperAdminThemeCustomizer';
+import { Briefcase, Building2, ShieldCheck, User, LogOut, Menu, X, ChevronDown, Sparkles, LayoutDashboard, Bookmark, FileText, Settings, Users, LogIn } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
@@ -16,7 +15,6 @@ export const Navbar: React.FC = () => {
   }, []);
 
   const { theme, user, appConfig, logout } = useTheme();
-  const [isThemePanelOpen, setIsThemePanelOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
@@ -78,57 +76,177 @@ export const Navbar: React.FC = () => {
 
             {/* Right Action Controls */}
             <div className="hidden lg:flex items-center gap-3">
-              {/* Theme Customizer Trigger Button */}
-              <button
-                onClick={() => setIsThemePanelOpen(true)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold theme-surface theme-text border theme-border shadow-sm hover:scale-105 transition-all"
-                title="Open Theme Engine Drawer"
-              >
-                <Palette className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-                <span>Theme Engine</span>
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: theme.primaryColor }} />
-              </button>
+              {user ? (
+                /* Authenticated User Profile Pill & Dropdown */
+                <div className="relative">
+                  <button
+                    onClick={() => setActiveDropdown(activeDropdown === 'user' ? null : 'user')}
+                    className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-2xl border theme-border theme-surface hover:shadow-md transition-all group"
+                  >
+                    <div className="relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 font-extrabold text-xs border border-indigo-200 dark:border-indigo-800">
+                      {user.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:4000${user.avatarUrl}`}
+                          alt={user.firstName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span>{user.firstName ? user.firstName[0].toUpperCase() : 'U'}</span>
+                      )}
+                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />
+                    </div>
 
-              <Link
-                href="/auth/login"
-                className="px-3 py-1.5 rounded-lg border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center space-x-1"
-              >
-                <LogIn className="w-3.5 h-3.5 mr-1" />
-                <span>Sign In</span>
-              </Link>
+                    <div className="text-left flex flex-col">
+                      <span className="text-xs font-extrabold theme-text leading-tight group-hover:text-indigo-600 transition-colors">
+                        {user.firstName} {user.lastName || ''}
+                      </span>
+                      <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">
+                        {user.role === 'CANDIDATE' ? 'Candidate' : user.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Employer'}
+                      </span>
+                    </div>
 
-              {/* Register Dropdown */}
-              <div
-                className="relative"
-                onMouseEnter={() => setActiveDropdown('register')}
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
-                <button className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all flex items-center space-x-1">
-                  <span>Register</span>
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </button>
+                    <ChevronDown className={`w-3.5 h-3.5 theme-muted transition-transform duration-200 ${activeDropdown === 'user' ? 'rotate-180' : ''}`} />
+                  </button>
 
-                {activeDropdown === 'register' && (
-                  <div className="absolute right-0 w-60 py-2 theme-surface border theme-border rounded-xl shadow-xl z-50 text-xs font-medium space-y-1">
-                    <Link href="/auth/register/candidate" className="flex items-center px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 theme-text">
-                      <User className="w-4 h-4 mr-2 text-purple-500" /> Register as Candidate
-                    </Link>
-                    <Link href="/auth/register/company" className="flex items-center px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 theme-text">
-                      <Building2 className="w-4 h-4 mr-2 text-indigo-500" /> Register as Employer / Company
-                    </Link>
-                  </div>
-                )}
-              </div>
+                  {/* Dropdown Menu */}
+                  {activeDropdown === 'user' && (
+                    <div className="absolute right-0 mt-2 w-64 rounded-2xl theme-surface border theme-border shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="p-3 border-b theme-border flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 font-bold text-sm border theme-border">
+                          {user.avatarUrl ? (
+                            <img
+                              src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:4000${user.avatarUrl}`}
+                              alt={user.firstName}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span>{user.firstName ? user.firstName[0].toUpperCase() : 'U'}</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-extrabold theme-text truncate">{user.firstName} {user.lastName}</p>
+                          <p className="text-[11px] theme-muted truncate">{user.email}</p>
+                          <span className="inline-block mt-1 text-[9px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 font-extrabold uppercase">
+                            {user.role}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="py-1 text-xs font-semibold">
+                        {user.role === 'CANDIDATE' ? (
+                          <>
+                            <Link
+                              href="/candidate/profile"
+                              onClick={() => setActiveDropdown(null)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl theme-text hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition-colors"
+                            >
+                              <User className="w-4 h-4 text-indigo-500" />
+                              <span>My Resume & Profile</span>
+                            </Link>
+                            <Link
+                              href="/candidate/saved"
+                              onClick={() => setActiveDropdown(null)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl theme-text hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition-colors"
+                            >
+                              <Bookmark className="w-4 h-4 text-amber-500" />
+                              <span>Saved Jobs</span>
+                            </Link>
+                            <Link
+                              href="/candidate/applications"
+                              onClick={() => setActiveDropdown(null)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl theme-text hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition-colors"
+                            >
+                              <FileText className="w-4 h-4 text-blue-500" />
+                              <span>My Applications</span>
+                            </Link>
+                          </>
+                        ) : user.role === 'SUPER_ADMIN' ? (
+                          <>
+                            <Link
+                              href="/admin/dashboard"
+                              onClick={() => setActiveDropdown(null)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl theme-text hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition-colors"
+                            >
+                              <ShieldCheck className="w-4 h-4 text-indigo-500" />
+                              <span>Control Center</span>
+                            </Link>
+                            <Link
+                              href="/admin/tenants"
+                              onClick={() => setActiveDropdown(null)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl theme-text hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition-colors"
+                            >
+                              <Building2 className="w-4 h-4 text-purple-500" />
+                              <span>Tenant Directory</span>
+                            </Link>
+                          </>
+                        ) : (
+                          <>
+                            <Link
+                              href="/employer/dashboard"
+                              onClick={() => setActiveDropdown(null)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl theme-text hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition-colors"
+                            >
+                              <LayoutDashboard className="w-4 h-4 text-indigo-500" />
+                              <span>Employer Dashboard</span>
+                            </Link>
+                            <Link
+                              href="/employer/candidates/search"
+                              onClick={() => setActiveDropdown(null)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl theme-text hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition-colors"
+                            >
+                              <Users className="w-4 h-4 text-emerald-500" />
+                              <span>Search Talent & Resumes</span>
+                            </Link>
+                            <Link
+                              href="/employer/jobs/create"
+                              onClick={() => setActiveDropdown(null)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl theme-text hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition-colors"
+                            >
+                              <Briefcase className="w-4 h-4 text-blue-500" />
+                              <span>Post New Job</span>
+                            </Link>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="pt-2 border-t theme-border">
+                        <button
+                          onClick={() => {
+                            setActiveDropdown(null);
+                            logout();
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <Link
+                    href="/auth/login"
+                    className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md transition-all flex items-center space-x-1.5"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>Sign In / Register</span>
+                  </Link>
+
+                  <Link
+                    href="/auth/register/company"
+                    className="px-3 py-1.5 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center space-x-1"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>For Employers</span>
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Toggle */}
             <div className="lg:hidden flex items-center gap-2">
-              <button
-                onClick={() => setIsThemePanelOpen(true)}
-                className="p-2 rounded-lg theme-surface text-amber-500 border theme-border"
-              >
-                <Palette className="w-5 h-5" />
-              </button>
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="p-2 theme-text"
@@ -142,22 +260,69 @@ export const Navbar: React.FC = () => {
         {/* Mobile Navigation Drawer */}
         {isMobileMenuOpen && (
           <div className="lg:hidden border-t theme-border p-4 theme-surface space-y-3 text-xs font-bold">
-            <Link href="/" className="block py-1.5 theme-text hover:text-indigo-500">Home</Link>
-            <Link href="/jobs" className="block py-1.5 theme-text hover:text-indigo-500">Jobs</Link>
-            <Link href="/companies" className="block py-1.5 theme-text hover:text-indigo-500">Companies</Link>
-            <Link href="/blogs" className="block py-1.5 theme-text hover:text-indigo-500">Blogs</Link>
-            <Link href="/about" className="block py-1.5 theme-text hover:text-indigo-500">About</Link>
-            <Link href="/contact" className="block py-1.5 theme-text hover:text-indigo-500">Contacts</Link>
+            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="block py-1.5 theme-text hover:text-indigo-500">Home</Link>
+            <Link href="/jobs" onClick={() => setIsMobileMenuOpen(false)} className="block py-1.5 theme-text hover:text-indigo-500">Jobs</Link>
+            <Link href="/companies" onClick={() => setIsMobileMenuOpen(false)} className="block py-1.5 theme-text hover:text-indigo-500">Companies</Link>
+            <Link href="/blogs" onClick={() => setIsMobileMenuOpen(false)} className="block py-1.5 theme-text hover:text-indigo-500">Blogs</Link>
+            <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="block py-1.5 theme-text hover:text-indigo-500">About</Link>
+            <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="block py-1.5 theme-text hover:text-indigo-500">Contacts</Link>
+            
             <div className="border-t theme-border pt-3 space-y-2">
-              <Link href="/auth/login" className="block py-2 rounded-lg text-center border theme-border theme-text">Sign In</Link>
-              <Link href="/auth/register/candidate" className="block py-2 rounded-lg text-center bg-indigo-600 text-white">Register</Link>
+              {user ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-100 dark:bg-slate-900/60 border theme-border">
+                    <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 font-bold text-xs">
+                      {user.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:4000${user.avatarUrl}`}
+                          alt={user.firstName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span>{user.firstName ? user.firstName[0].toUpperCase() : 'U'}</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-extrabold theme-text truncate">{user.firstName} {user.lastName}</p>
+                      <p className="text-[10px] theme-muted truncate">{user.email}</p>
+                    </div>
+                  </div>
+
+                  {user.role === 'CANDIDATE' ? (
+                    <>
+                      <Link href="/candidate/profile" onClick={() => setIsMobileMenuOpen(false)} className="block py-2 px-3 rounded-lg bg-indigo-600 text-white font-extrabold text-center">My Resume & Profile</Link>
+                      <Link href="/candidate/saved" onClick={() => setIsMobileMenuOpen(false)} className="block py-2 px-3 rounded-lg border theme-border theme-text font-bold text-center">Saved Jobs</Link>
+                      <Link href="/candidate/applications" onClick={() => setIsMobileMenuOpen(false)} className="block py-2 px-3 rounded-lg border theme-border theme-text font-bold text-center">My Applications</Link>
+                    </>
+                  ) : user.role === 'SUPER_ADMIN' ? (
+                    <Link href="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="block py-2 px-3 rounded-lg bg-indigo-600 text-white font-extrabold text-center">Super Admin Center</Link>
+                  ) : (
+                    <>
+                      <Link href="/employer/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="block py-2 px-3 rounded-lg bg-indigo-600 text-white font-extrabold text-center">Employer Dashboard</Link>
+                      <Link href="/employer/candidates/search" onClick={() => setIsMobileMenuOpen(false)} className="block py-2 px-3 rounded-lg border theme-border theme-text font-bold text-center">Search Talent DB</Link>
+                    </>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full py-2 rounded-lg text-center font-bold text-rose-600 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-50"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="block py-2 rounded-lg text-center bg-indigo-600 text-white font-extrabold">Sign In / Register</Link>
+                  <Link href="/auth/register/company" onClick={() => setIsMobileMenuOpen(false)} className="block py-2 rounded-lg text-center border theme-border theme-text font-bold">For Employers</Link>
+                </>
+              )}
             </div>
           </div>
         )}
       </header>
-
-      {/* Theme Drawer Panel */}
-      <SuperAdminThemeCustomizer isOpen={isThemePanelOpen} onClose={() => setIsThemePanelOpen(false)} />
     </>
   );
 };

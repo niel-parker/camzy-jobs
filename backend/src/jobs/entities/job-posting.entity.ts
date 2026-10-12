@@ -94,6 +94,15 @@ export class JobPosting {
   applyUrl: string;
 
   @Column({ type: 'json', nullable: true })
+  skills: string[]; // Required skills badges e.g. ["TypeScript", "NestJS"]
+
+  @Column({ type: 'json', nullable: true })
+  benefits: string[]; // Perks e.g. ["Health Insurance", "Work From Home", "Performance Bonus"]
+
+  @Column({ length: 20, default: 'ANY' })
+  genderPreference: 'ANY' | 'MALE' | 'FEMALE';
+
+  @Column({ type: 'json', nullable: true })
   screeningQuestions: Array<{
     id: string;
     questionText: string;

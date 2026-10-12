@@ -24,12 +24,14 @@ const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-s
 const job_posting_entity_1 = require("../jobs/entities/job-posting.entity");
 const candidate_entity_1 = require("../candidates/entities/candidate.entity");
 const job_application_entity_1 = require("../applications/entities/job-application.entity");
+const billing_transaction_entity_1 = require("../subscriptions/entities/billing-transaction.entity");
 let SeedService = SeedService_1 = class SeedService {
-    constructor(userRepo, tenantRepo, planRepo, subRepo, jobRepo, candidateRepo, appRepo) {
+    constructor(userRepo, tenantRepo, planRepo, subRepo, txnRepo, jobRepo, candidateRepo, appRepo) {
         this.userRepo = userRepo;
         this.tenantRepo = tenantRepo;
         this.planRepo = planRepo;
         this.subRepo = subRepo;
+        this.txnRepo = txnRepo;
         this.jobRepo = jobRepo;
         this.candidateRepo = candidateRepo;
         this.appRepo = appRepo;
@@ -402,6 +404,120 @@ let SeedService = SeedService_1 = class SeedService {
                 rating: 5,
             }));
         }
+        const txnCount = await this.txnRepo.count();
+        if (txnCount === 0) {
+            this.logger.log('Seeding Initial Billing Transactions...');
+            const techCorpTenant = await this.tenantRepo.findOne({ where: { slug: 'techcorp-global' } });
+            const finTechTenant = await this.tenantRepo.findOne({ where: { slug: 'fintech-dynamics' } });
+            const designCraftTenant = await this.tenantRepo.findOne({ where: { slug: 'designcraft-studio' } });
+            const neuralMindTenant = await this.tenantRepo.findOne({ where: { slug: 'neural-mind-ai' } });
+            const txnsToSeed = [];
+            if (techCorpTenant) {
+                txnsToSeed.push(this.txnRepo.create({
+                    invoiceNumber: 'INV-2026-1001',
+                    tenantId: techCorpTenant.id,
+                    tenantName: techCorpTenant.name,
+                    description: 'Professional Employer Tier (Annual Plan)',
+                    amount: 1908.00,
+                    currency: 'USD',
+                    type: billing_transaction_entity_1.TransactionType.SUBSCRIPTION,
+                    status: billing_transaction_entity_1.TransactionStatus.PAID,
+                    paymentMethod: 'Stripe Card (•••• 4242)',
+                    planCode: 'PRO',
+                    quotaDetails: { activeJobs: 15, resumeDownloads: 150, teamSeats: 5 },
+                    periodStart: new Date(Date.now() - 5 * 86400000),
+                    periodEnd: new Date(Date.now() + 360 * 86400000),
+                    createdAt: new Date(Date.now() - 5 * 86400000),
+                }), this.txnRepo.create({
+                    invoiceNumber: 'INV-2026-1045',
+                    tenantId: techCorpTenant.id,
+                    tenantName: techCorpTenant.name,
+                    description: '+50 Candidate Resume Downloads Quota Pack',
+                    amount: 29.00,
+                    currency: 'USD',
+                    type: billing_transaction_entity_1.TransactionType.QUOTA_TOPUP,
+                    status: billing_transaction_entity_1.TransactionStatus.PAID,
+                    paymentMethod: 'Stripe Card (•••• 4242)',
+                    planCode: 'PRO',
+                    quotaDetails: { resumeDownloads: 50 },
+                    periodStart: new Date(Date.now() - 3 * 86400000),
+                    periodEnd: new Date(Date.now() + 27 * 86400000),
+                    createdAt: new Date(Date.now() - 3 * 86400000),
+                }), this.txnRepo.create({
+                    invoiceNumber: 'INV-2026-1089',
+                    tenantId: techCorpTenant.id,
+                    tenantName: techCorpTenant.name,
+                    description: '+2 Extra Team Recruiter Seats Add-on',
+                    amount: 39.00,
+                    currency: 'USD',
+                    type: billing_transaction_entity_1.TransactionType.SEAT_ADDON,
+                    status: billing_transaction_entity_1.TransactionStatus.PAID,
+                    paymentMethod: 'Corporate Visa (•••• 8821)',
+                    planCode: 'PRO',
+                    quotaDetails: { teamSeats: 2 },
+                    periodStart: new Date(Date.now() - 1 * 86400000),
+                    periodEnd: new Date(Date.now() + 29 * 86400000),
+                    createdAt: new Date(Date.now() - 1 * 86400000),
+                }));
+            }
+            if (finTechTenant) {
+                txnsToSeed.push(this.txnRepo.create({
+                    invoiceNumber: 'INV-2026-1002',
+                    tenantId: finTechTenant.id,
+                    tenantName: finTechTenant.name,
+                    description: 'Professional Employer Tier (Monthly Subscription)',
+                    amount: 199.00,
+                    currency: 'USD',
+                    type: billing_transaction_entity_1.TransactionType.SUBSCRIPTION,
+                    status: billing_transaction_entity_1.TransactionStatus.PAID,
+                    paymentMethod: 'Corporate Mastercard (•••• 5510)',
+                    planCode: 'PRO',
+                    quotaDetails: { activeJobs: 15, resumeDownloads: 150, teamSeats: 5 },
+                    periodStart: new Date(Date.now() - 4 * 86400000),
+                    periodEnd: new Date(Date.now() + 26 * 86400000),
+                    createdAt: new Date(Date.now() - 4 * 86400000),
+                }));
+            }
+            if (neuralMindTenant) {
+                txnsToSeed.push(this.txnRepo.create({
+                    invoiceNumber: 'INV-2026-1003',
+                    tenantId: neuralMindTenant.id,
+                    tenantName: neuralMindTenant.name,
+                    description: 'Enterprise Scale Tier (Monthly Subscription)',
+                    amount: 499.00,
+                    currency: 'USD',
+                    type: billing_transaction_entity_1.TransactionType.SUBSCRIPTION,
+                    status: billing_transaction_entity_1.TransactionStatus.PAID,
+                    paymentMethod: 'Stripe Corporate (•••• 9940)',
+                    planCode: 'ENTERPRISE',
+                    quotaDetails: { activeJobs: 50, resumeDownloads: 500, teamSeats: 15 },
+                    periodStart: new Date(Date.now() - 6 * 86400000),
+                    periodEnd: new Date(Date.now() + 24 * 86400000),
+                    createdAt: new Date(Date.now() - 6 * 86400000),
+                }));
+            }
+            if (designCraftTenant) {
+                txnsToSeed.push(this.txnRepo.create({
+                    invoiceNumber: 'INV-2026-1004',
+                    tenantId: designCraftTenant.id,
+                    tenantName: designCraftTenant.name,
+                    description: 'Growth Employer Tier (Monthly Subscription)',
+                    amount: 99.00,
+                    currency: 'USD',
+                    type: billing_transaction_entity_1.TransactionType.SUBSCRIPTION,
+                    status: billing_transaction_entity_1.TransactionStatus.PAID,
+                    paymentMethod: 'Stripe Card (•••• 1123)',
+                    planCode: 'GROWTH',
+                    quotaDetails: { activeJobs: 5, resumeDownloads: 50, teamSeats: 3 },
+                    periodStart: new Date(Date.now() - 2 * 86400000),
+                    periodEnd: new Date(Date.now() + 28 * 86400000),
+                    createdAt: new Date(Date.now() - 2 * 86400000),
+                }));
+            }
+            if (txnsToSeed.length > 0) {
+                await this.txnRepo.save(txnsToSeed);
+            }
+        }
         this.logger.log('🎉 Database seeding verified successfully!');
     }
 };
@@ -412,10 +528,12 @@ exports.SeedService = SeedService = SeedService_1 = __decorate([
     __param(1, (0, typeorm_1.InjectRepository)(tenant_entity_1.Tenant)),
     __param(2, (0, typeorm_1.InjectRepository)(subscription_plan_entity_1.SubscriptionPlan)),
     __param(3, (0, typeorm_1.InjectRepository)(tenant_subscription_entity_1.TenantSubscription)),
-    __param(4, (0, typeorm_1.InjectRepository)(job_posting_entity_1.JobPosting)),
-    __param(5, (0, typeorm_1.InjectRepository)(candidate_entity_1.Candidate)),
-    __param(6, (0, typeorm_1.InjectRepository)(job_application_entity_1.JobApplication)),
+    __param(4, (0, typeorm_1.InjectRepository)(billing_transaction_entity_1.BillingTransaction)),
+    __param(5, (0, typeorm_1.InjectRepository)(job_posting_entity_1.JobPosting)),
+    __param(6, (0, typeorm_1.InjectRepository)(candidate_entity_1.Candidate)),
+    __param(7, (0, typeorm_1.InjectRepository)(job_application_entity_1.JobApplication)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

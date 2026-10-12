@@ -16,6 +16,14 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Current Database: `job_portal_db`
+--
+
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `job_portal_db` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+
+USE `job_portal_db`;
+
+--
 -- Table structure for table `candidates`
 --
 
@@ -42,6 +50,10 @@ CREATE TABLE `candidates` (
   `projects` json DEFAULT NULL,
   `languages` json DEFAULT NULL,
   `socialLinks` json DEFAULT NULL,
+  `currentSalary` decimal(12,2) DEFAULT NULL,
+  `noticePeriod` varchar(100) DEFAULT NULL,
+  `preferredLocations` json DEFAULT NULL,
+  `resumes` json DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `IDX_94a5fe85e7f5bd0221fa7d6f19` (`user_id`),
   UNIQUE KEY `REL_94a5fe85e7f5bd0221fa7d6f19` (`user_id`),
@@ -55,7 +67,7 @@ CREATE TABLE `candidates` (
 
 LOCK TABLES `candidates` WRITE;
 /*!40000 ALTER TABLE `candidates` DISABLE KEYS */;
-INSERT INTO `candidates` VALUES ('4148109f-c29f-4913-9c97-b39d76783463','fec2474b-2956-4e02-ad92-db25a44cf6af','Senior Full Stack Engineer | Next.js & NestJS Expert','Passionate developer with 6+ years building enterprise web applications, microservices, and design systems.','Senior Full Stack Developer',6,160000.00,'https://example.com/resumes/john-doe-resume.pdf',NULL,'[\"TypeScript\", \"Next.js\", \"NestJS\", \"React\", \"Tailwind CSS\", \"TypeORM\", \"MySQL\", \"Redis\"]','PUBLIC','2026-10-07 05:55:39.404304','2026-10-07 05:55:39.404304',NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO `candidates` VALUES ('1a17d555-6454-4102-aa12-ae743946ab85','3fce7599-2ec2-43be-ad31-b0940749ee59','Lead Full Stack & Cloud Architect',NULL,NULL,1,3000000.00,NULL,NULL,NULL,'PUBLIC','2026-10-11 05:33:13.830741','2026-10-11 09:45:26.000000',NULL,NULL,NULL,NULL,NULL,NULL,2200000.00,'Immediate','[\"Bengaluru\", \"Pune\", \"Remote\"]','[{\"id\": \"res-verified-1\", \"title\": \"Priya_Sharma_Principal_Resume.pdf\", \"isDefault\": true, \"resumeUrl\": \"http://localhost:4000/uploads/resumes/sample-resume.pdf\", \"uploadedAt\": \"2026-10-11T12:00:00.000Z\"}]'),('4148109f-c29f-4913-9c97-b39d76783463','fec2474b-2956-4e02-ad92-db25a44cf6af','Senior Full Stack Engineer | Next.js & NestJS Expert','Passionate developer with 6+ years building enterprise web applications, microservices, and design systems.','Senior Full Stack Developer',6,160000.00,'https://example.com/resumes/john-doe-resume.pdf',NULL,'[\"TypeScript\", \"Next.js\", \"NestJS\", \"React\", \"Tailwind CSS\", \"TypeORM\", \"MySQL\", \"Redis\"]','PUBLIC','2026-10-07 05:55:39.404304','2026-10-07 05:55:39.404304',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),('5ab9031f-57fa-46bf-8068-330a427a59c6','aa073c1c-560d-4f03-8723-5e42f59c0d12','Full Stack Candidate',NULL,NULL,1,80000.00,NULL,NULL,NULL,'PUBLIC','2026-10-11 06:07:49.932054','2026-10-11 06:07:49.932054',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `candidates` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -129,6 +141,9 @@ CREATE TABLE `job_postings` (
   `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
   `applyType` varchar(20) NOT NULL DEFAULT 'INTERNAL',
   `applyUrl` varchar(500) DEFAULT NULL,
+  `skills` json DEFAULT NULL,
+  `benefits` json DEFAULT NULL,
+  `genderPreference` varchar(20) NOT NULL DEFAULT 'ANY',
   PRIMARY KEY (`id`),
   KEY `FK_71549ebdaf6647e51de711396c3` (`tenant_id`),
   KEY `FK_e24ab7cffe7b1ecfd256441581a` (`posted_by_user_id`),
@@ -143,7 +158,7 @@ CREATE TABLE `job_postings` (
 
 LOCK TABLES `job_postings` WRITE;
 /*!40000 ALTER TABLE `job_postings` DISABLE KEYS */;
-INSERT INTO `job_postings` VALUES ('0059dc7a-255b-4feb-9e20-992894e624c4','3ec4391c-d7e6-4810-9ac1-64f6e207fd8d','537b19b2-0785-46b6-9899-ed1f166a0469','SDE 3 Wipro','sde-3-wipro','gr','Engineering','Full-time','Senior',120000.00,160000.00,'USD',1,'United States','Pune',1,0,'[]','PUBLISHED','2026-12-08 03:40:15',0,0,'2026-10-09 03:40:15.308615','2026-10-09 03:40:15.308615','INTERNAL',NULL),('318d73f0-bdf2-4ad8-b661-1d0bb93c76b1','b0c543fb-d25b-401e-a84d-1ef897f004ad','537b19b2-0785-46b6-9899-ed1f166a0469','AI / Machine Learning Engineer (LLMs & Agents)','ai-machine-learning-engineer','Build agentic AI workflows, vector search indexes, and custom fine-tuned models for enterprise talent sourcing.','Artificial Intelligence','Full-time','Senior',160000.00,210000.00,'USD',1,'United States','Boston, MA',1,1,NULL,'PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.413943','2026-10-07 05:55:39.413943','INTERNAL',NULL),('381fb878-a4a8-414b-8783-a6fec014411d','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','537b19b2-0785-46b6-9899-ed1f166a0469','Senior Full Stack Engineer (Next.js & NestJS)','senior-full-stack-engineer-nextjs-nestjs','Lead design and development of enterprise multi-tenant web applications using Next.js App Router and NestJS microservices.','Engineering','Full-time','Senior',140000.00,180000.00,'USD',1,'United States','San Francisco, CA',1,1,'[{\"id\": \"q1\", \"options\": [\"1-2 Years\", \"3-5 Years\", \"5+ Years\"], \"isRequired\": true, \"questionText\": \"How many years of commercial experience do you have with Next.js & NestJS?\", \"questionType\": \"CHOICE\"}, {\"id\": \"q2\", \"isRequired\": true, \"questionText\": \"Are you legally authorized to work in the US or work remotely?\", \"questionType\": \"YES_NO\"}]','PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.407215','2026-10-07 05:55:39.407215','INTERNAL',NULL),('39ba1728-227c-4512-bc96-d66a9d146afe','3ec4391c-d7e6-4810-9ac1-64f6e207fd8d','537b19b2-0785-46b6-9899-ed1f166a0469','SDE 2','sde-2','dsfd','Engineering','Full-time','Senior',120000.00,160000.00,'USD',1,'United States','PUNE',1,0,'[]','PUBLISHED','2026-12-07 22:23:52',0,0,'2026-10-08 22:23:52.407412','2026-10-08 22:23:52.407412','INTERNAL',NULL),('55dc8600-f612-4f28-869f-21b7f1dd5260','9e1edcde-e34d-45da-a0cd-a660c1670714','537b19b2-0785-46b6-9899-ed1f166a0469','Senior Product Designer (UI/UX & Design Systems)','senior-product-designer','Craft beautiful responsive UI components, design tokens, and dark/light mode themes for scalable SaaS platforms.','Design & Creative','Contract','Mid',110000.00,140000.00,'USD',1,'United States','Austin, TX',1,0,NULL,'PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.411698','2026-10-07 05:55:39.411698','INTERNAL',NULL),('a4902b5a-3cd9-4b11-848e-6b7f174df2a5','3ec4391c-d7e6-4810-9ac1-64f6e207fd8d','537b19b2-0785-46b6-9899-ed1f166a0469','Principal Cloud Architect (AWS & Microservices)','principal-cloud-architect-aws','Architect high-throughput financial transaction infrastructure with zero downtime and sub-millisecond latencies.','DevOps & Architecture','Full-time','Lead',190000.00,240000.00,'USD',1,'United States','New York, NY',0,1,NULL,'PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.409590','2026-10-07 05:55:39.409590','INTERNAL',NULL);
+INSERT INTO `job_postings` VALUES ('0059dc7a-255b-4feb-9e20-992894e624c4','3ec4391c-d7e6-4810-9ac1-64f6e207fd8d','537b19b2-0785-46b6-9899-ed1f166a0469','SDE 3 Wipro','sde-3-wipro','gr','Engineering','Full-time','Senior',120000.00,160000.00,'USD',1,'United States','Pune',1,0,'[]','PUBLISHED','2026-12-08 03:40:15',0,0,'2026-10-09 03:40:15.308615','2026-10-09 03:40:15.308615','INTERNAL',NULL,NULL,NULL,'ANY'),('318d73f0-bdf2-4ad8-b661-1d0bb93c76b1','b0c543fb-d25b-401e-a84d-1ef897f004ad','537b19b2-0785-46b6-9899-ed1f166a0469','AI / Machine Learning Engineer (LLMs & Agents)','ai-machine-learning-engineer','Build agentic AI workflows, vector search indexes, and custom fine-tuned models for enterprise talent sourcing.','Artificial Intelligence','Full-time','Senior',160000.00,210000.00,'USD',1,'United States','Boston, MA',1,1,NULL,'PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.413943','2026-10-07 05:55:39.413943','INTERNAL',NULL,NULL,NULL,'ANY'),('381fb878-a4a8-414b-8783-a6fec014411d','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','537b19b2-0785-46b6-9899-ed1f166a0469','Senior Full Stack Engineer (Next.js & NestJS)','senior-full-stack-engineer-nextjs-nestjs','Lead design and development of enterprise multi-tenant web applications using Next.js App Router and NestJS microservices.','Engineering','Full-time','Senior',140000.00,180000.00,'USD',1,'United States','San Francisco, CA',1,1,'[{\"id\": \"q1\", \"options\": [\"1-2 Years\", \"3-5 Years\", \"5+ Years\"], \"isRequired\": true, \"questionText\": \"How many years of commercial experience do you have with Next.js & NestJS?\", \"questionType\": \"CHOICE\"}, {\"id\": \"q2\", \"isRequired\": true, \"questionText\": \"Are you legally authorized to work in the US or work remotely?\", \"questionType\": \"YES_NO\"}]','PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.407215','2026-10-07 05:55:39.407215','INTERNAL',NULL,NULL,NULL,'ANY'),('39ba1728-227c-4512-bc96-d66a9d146afe','3ec4391c-d7e6-4810-9ac1-64f6e207fd8d','537b19b2-0785-46b6-9899-ed1f166a0469','SDE 2','sde-2','dsfd','Engineering','Full-time','Senior',120000.00,160000.00,'USD',1,'United States','PUNE',1,0,'[]','PUBLISHED','2026-12-07 22:23:52',0,0,'2026-10-08 22:23:52.407412','2026-10-08 22:23:52.407412','INTERNAL',NULL,NULL,NULL,'ANY'),('55dc8600-f612-4f28-869f-21b7f1dd5260','9e1edcde-e34d-45da-a0cd-a660c1670714','537b19b2-0785-46b6-9899-ed1f166a0469','Senior Product Designer (UI/UX & Design Systems)','senior-product-designer','Craft beautiful responsive UI components, design tokens, and dark/light mode themes for scalable SaaS platforms.','Design & Creative','Contract','Mid',110000.00,140000.00,'USD',1,'United States','Austin, TX',1,0,NULL,'PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.411698','2026-10-07 05:55:39.411698','INTERNAL',NULL,NULL,NULL,'ANY'),('5625a984-bd02-4897-9bf5-dd42893c27b8','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','537b19b2-0785-46b6-9899-ed1f166a0469','Lead Cloud & DevOps Architect','lead-cloud-devops-architect','Looking for an expert Kubernetes and AWS Cloud Architect to lead infrastructure scalability.','Engineering','Full-time','Mid',3000000.00,4500000.00,'USD',1,'United States','Bengaluru',1,0,'[]','PUBLISHED','2026-12-10 05:37:56',0,0,'2026-10-11 05:37:56.492787','2026-10-11 05:37:56.492787','INTERNAL','https://careers.camzytech.com/jobs/devops-lead',NULL,NULL,'ANY'),('a4902b5a-3cd9-4b11-848e-6b7f174df2a5','3ec4391c-d7e6-4810-9ac1-64f6e207fd8d','537b19b2-0785-46b6-9899-ed1f166a0469','Principal Cloud Architect (AWS & Microservices)','principal-cloud-architect-aws','Architect high-throughput financial transaction infrastructure with zero downtime and sub-millisecond latencies.','DevOps & Architecture','Full-time','Lead',190000.00,240000.00,'USD',1,'United States','New York, NY',0,1,NULL,'PUBLISHED','2026-12-06 05:55:39',0,0,'2026-10-07 05:55:39.409590','2026-10-07 05:55:39.409590','INTERNAL',NULL,NULL,NULL,'ANY');
 /*!40000 ALTER TABLE `job_postings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -275,6 +290,8 @@ CREATE TABLE `users` (
   `tenant_id` varchar(255) DEFAULT NULL,
   `createdAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   `updatedAt` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+  `isPhoneVerified` tinyint NOT NULL DEFAULT '0',
+  `lastLoginAt` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `IDX_97672ac88f789774dd47f7c8be` (`email`),
   KEY `FK_109638590074998bb72a2f2cf08` (`tenant_id`),
@@ -288,7 +305,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES ('537b19b2-0785-46b6-9899-ed1f166a0469','recruiter@techcorp.com','recruiter123','Sarah','Jenkins','COMPANY_ADMIN',NULL,'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',1,'ACTIVE','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','2026-10-07 05:55:39.399753','2026-10-07 05:55:39.399753'),('83354815-6239-4c33-950b-20d3a63d0cbd','employer@techcorp.com','password123','TechCorp','Hiring Manager','COMPANY_ADMIN',NULL,'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',1,'ACTIVE','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','2026-10-09 07:24:08.455823','2026-10-09 07:24:08.455823'),('a55b9ce1-5257-4618-90f6-b79bd16dca0c','admin@camzyjobs.com','admin123','Super','Admin','SUPER_ADMIN',NULL,'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',1,'ACTIVE',NULL,'2026-10-07 05:55:39.397892','2026-10-07 05:55:39.397892'),('cad78692-81b7-4f7c-b251-f845eb446bd8','candidate@camzyjobs.com','password123','Alex','Candidate','CANDIDATE',NULL,'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',1,'ACTIVE',NULL,'2026-10-09 07:24:08.416729','2026-10-09 07:24:08.416729'),('fec2474b-2956-4e02-ad92-db25a44cf6af','candidate@example.com','candidate123','John','Doe','CANDIDATE',NULL,'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',1,'ACTIVE',NULL,'2026-10-07 05:55:39.401850','2026-10-07 05:55:39.401850');
+INSERT INTO `users` VALUES ('3fce7599-2ec2-43be-ad31-b0940749ee59','priya.sharma@example.com','otp-authenticated','Priya','Sharma','CANDIDATE','+91 98765 12345','https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',1,'ACTIVE',NULL,'2026-10-11 05:33:13.813125','2026-10-11 09:45:26.000000',0,'2026-10-11 05:33:14'),('537b19b2-0785-46b6-9899-ed1f166a0469','recruiter@techcorp.com','recruiter123','Sarah','Jenkins','COMPANY_ADMIN',NULL,'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',1,'ACTIVE','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','2026-10-07 05:55:39.399753','2026-10-07 05:55:39.399753',0,NULL),('83354815-6239-4c33-950b-20d3a63d0cbd','employer@techcorp.com','password123','TechCorp','Hiring Manager','COMPANY_ADMIN',NULL,'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',1,'ACTIVE','5c88e4d2-4e38-4e15-817b-a19fe3090e8c','2026-10-09 07:24:08.455823','2026-10-09 07:24:08.455823',0,NULL),('a55b9ce1-5257-4618-90f6-b79bd16dca0c','admin@camzyjobs.com','admin123','Super','Admin','SUPER_ADMIN',NULL,'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',1,'ACTIVE',NULL,'2026-10-07 05:55:39.397892','2026-10-07 05:55:39.397892',0,NULL),('aa073c1c-560d-4f03-8723-5e42f59c0d12','mercymafia17@gmail.com','otp-authenticated','Mercymafia17','User','CANDIDATE',NULL,NULL,1,'ACTIVE',NULL,'2026-10-11 06:07:49.901879','2026-10-11 06:07:49.901879',0,'2026-10-11 06:07:50'),('cad78692-81b7-4f7c-b251-f845eb446bd8','candidate@camzyjobs.com','password123','Alex','Candidate','CANDIDATE',NULL,'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',1,'ACTIVE',NULL,'2026-10-09 07:24:08.416729','2026-10-11 05:31:44.000000',0,'2026-10-11 05:31:45'),('fec2474b-2956-4e02-ad92-db25a44cf6af','candidate@example.com','candidate123','John','Doe','CANDIDATE',NULL,'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',1,'ACTIVE',NULL,'2026-10-07 05:55:39.401850','2026-10-07 05:55:39.401850',0,NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -301,4 +318,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-09  7:27:26
+-- Dump completed on 2026-10-11  9:45:38

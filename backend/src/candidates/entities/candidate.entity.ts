@@ -32,10 +32,31 @@ export class Candidate {
   experienceYears: number;
 
   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
+  currentSalary: number;
+
+  @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   expectedSalary: number;
+
+  @Column({ nullable: true, length: 100 })
+  noticePeriod: string; // e.g. "Immediate", "15 Days", "30 Days", "60 Days", "90 Days"
+
+  @Column({ type: 'json', nullable: true })
+  preferredLocations: string[]; // Up to 3 preferred cities e.g. ["Bangalore", "Mumbai", "Delhi NCR"]
 
   @Column({ nullable: true, length: 500 })
   resumeUrl: string;
+
+  @Column({ type: 'json', nullable: true })
+  resumes: Array<{
+    id: string;
+    title: string;
+    resumeUrl: string;
+    isDefault?: boolean;
+    uploadedAt?: string;
+  }>;
+
+  @Column({ type: 'json', nullable: true })
+  savedJobIds: string[];
 
   @Column({ type: 'longtext', nullable: true })
   resumeParsedText: string;
@@ -54,6 +75,7 @@ export class Candidate {
     noticePeriod?: string;
     location?: string;
     jobSummary?: string;
+    rolesAndResponsibilities?: string;
   }>;
 
   @Column({ type: 'json', nullable: true })

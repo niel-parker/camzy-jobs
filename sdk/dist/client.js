@@ -51,8 +51,97 @@ class JobPortalSdk {
         this.setToken(data.accessToken);
         return data;
     }
+    async requestOtp(identifier) {
+        return this.request('/auth/request-otp', {
+            method: 'POST',
+            body: JSON.stringify({ identifier }),
+        });
+    }
+    async verifyOtp(identifier, otp) {
+        const data = await this.request('/auth/verify-otp', {
+            method: 'POST',
+            body: JSON.stringify({ identifier, otp }),
+        });
+        this.setToken(data.accessToken);
+        return data;
+    }
+    async shareJob(shareData) {
+        return this.request('/auth/share-job', {
+            method: 'POST',
+            body: JSON.stringify(shareData),
+        });
+    }
     async getCurrentUser() {
         return this.request('/auth/me');
+    }
+    // Candidate Profile Methods
+    async getCandidateProfile(id) {
+        return this.request(`/candidates/${id}`);
+    }
+    async updateCandidateProfile(id, profileData) {
+        return this.request(`/candidates/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(profileData),
+        });
+    }
+    async uploadResume(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const headers = {};
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        const res = await fetch(`${this.baseUrl}/candidates/upload-resume`, {
+            method: 'POST',
+            headers,
+            body: formData,
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Failed to upload resume file.');
+        }
+        return res.json();
+    }
+    async uploadAvatar(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const headers = {};
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        const res = await fetch(`${this.baseUrl}/candidates/upload-avatar`, {
+            method: 'POST',
+            headers,
+            body: formData,
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Failed to upload avatar picture.');
+        }
+        return res.json();
+    }
+    async searchCandidates(params) {
+        const searchParams = new URLSearchParams();
+        if (params?.skill)
+            searchParams.append('skill', params.skill);
+        if (params?.noticePeriod)
+            searchParams.append('noticePeriod', params.noticePeriod);
+        if (params?.city)
+            searchParams.append('city', params.city);
+        if (params?.minExp)
+            searchParams.append('minExp', params.minExp.toString());
+        if (params?.maxSalary)
+            searchParams.append('maxSalary', params.maxSalary.toString());
+        const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+        return this.request(`/candidates${queryString}`);
+    }
+    async toggleSaveJob(candidateId, jobId) {
+        return this.request(`/candidates/${candidateId}/saved-jobs/${jobId}`, {
+            method: 'POST',
+        });
+    }
+    async getSavedJobs(candidateId) {
+        return this.request(`/candidates/${candidateId}/saved-jobs`);
     }
     // Theme Management Methods (Super Admin & Public Theme sync)
     async getActiveTheme() {
@@ -119,6 +208,36 @@ class JobPortalSdk {
     // Admin Dashboard Metrics
     async getDashboardMetrics() {
         return this.request('/admin/metrics');
+    }
+    // Subscriptions, Quota Consumption & Billing Transactions
+    async getCurrentSubscription(tenantId) {
+        const q = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : '';
+        return this.request(`/subscriptions/current${q}`);
+    }
+    async getBillingTransactions(tenantId) {
+        const q = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : '';
+        return this.request(`/subscriptions/transactions${q}`);
+    }
+    async upgradeSubscriptionPlan(planCode, billingCycle = 'monthly', tenantId) {
+        return this.request('/subscriptions/upgrade', {
+            method: 'POST',
+            body: JSON.stringify({ planCode, billingCycle, tenantId }),
+        });
+    }
+    async purchaseQuotaTopup(topupType, tenantId) {
+        return this.request('/subscriptions/topup', {
+            method: 'POST',
+            body: JSON.stringify({ topupType, tenantId }),
+        });
+    }
+    async trackResumeDownload(candidateId, tenantId) {
+        return this.request('/subscriptions/consume-download', {
+            method: 'POST',
+            body: JSON.stringify({ candidateId, tenantId }),
+        });
+    }
+    async getAdminTransactions() {
+        return this.request('/admin/transactions');
     }
 }
 exports.JobPortalSdk = JobPortalSdk;

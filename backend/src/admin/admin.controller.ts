@@ -10,6 +10,9 @@ import { JobApplication } from '../applications/entities/job-application.entity'
 import { TenantSubscription, SubscriptionStatus } from '../subscriptions/entities/tenant-subscription.entity';
 import { SubscriptionPlan, PlanCode } from '../subscriptions/entities/subscription-plan.entity';
 
+import { User, UserRole } from '../users/entities/user.entity';
+import { BillingTransaction } from '../subscriptions/entities/billing-transaction.entity';
+
 @ApiTags('Super Admin Governance')
 @Controller('api/v1/admin')
 export class AdminController {
@@ -21,6 +24,8 @@ export class AdminController {
     @InjectRepository(JobApplication) private readonly appRepo: Repository<JobApplication>,
     @InjectRepository(TenantSubscription) private readonly subRepo: Repository<TenantSubscription>,
     @InjectRepository(SubscriptionPlan) private readonly planRepo: Repository<SubscriptionPlan>,
+    @InjectRepository(BillingTransaction) private readonly txnRepo: Repository<BillingTransaction>,
+    @InjectRepository(User) private readonly userRepo: Repository<User>,
   ) {}
 
   @Get('metrics')
@@ -33,6 +38,24 @@ export class AdminController {
     const totalApplications = await this.appRepo.count();
     const activeSubscriptions = await this.subRepo.count({ where: { status: SubscriptionStatus.ACTIVE } });
 
+    // Calculate total resume downloads consumed platform-wide
+    const allSubs = await this.subRepo.find();
+    const totalResumeDownloads = allSubs.reduce((acc, s) => acc + (s.resumeDownloadsUsed || 0), 0);
+
+    // Calculate total recruiter team seats platform-wide
+    const totalTeamSeats = await this.userRepo.count({
+      where: [
+        { role: UserRole.COMPANY_ADMIN },
+        { role: UserRole.RECRUITER },
+        { role: UserRole.CONSULTANCY_ADMIN },
+        { role: UserRole.AGENCY_AGENT },
+      ],
+    });
+
+    // Calculate total revenue from transactions
+    const allTxns = await this.txnRepo.find();
+    const totalRevenue = allTxns.reduce((acc, t) => acc + Number(t.amount || 0), 0);
+
     return {
       totalJobs,
       totalCompanies,
@@ -40,8 +63,19 @@ export class AdminController {
       totalCandidates,
       totalApplications,
       activeSubscriptions,
+      totalResumeDownloads,
+      totalTeamSeats,
+      totalRevenue: totalRevenue || activeSubscriptions * 199,
       monthlyRevenue: activeSubscriptions * 199,
     };
+  }
+
+  @Get('transactions')
+  @ApiOperation({ summary: 'Super Admin: Fetch global transactions and billing invoices for all companies' })
+  async getTransactions() {
+    return await this.txnRepo.find({
+      order: { createdAt: 'DESC' },
+    });
   }
 
   @Get('tenants')

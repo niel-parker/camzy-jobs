@@ -22,6 +22,8 @@ export declare class User {
     phoneNumber: string;
     avatarUrl: string;
     isEmailVerified: boolean;
+    isPhoneVerified: boolean;
+    lastLoginAt: Date;
     status: UserStatus;
     tenant: Tenant;
     tenantId: string;

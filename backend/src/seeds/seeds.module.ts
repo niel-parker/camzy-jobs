@@ -8,6 +8,7 @@ import { TenantSubscription } from '../subscriptions/entities/tenant-subscriptio
 import { JobPosting } from '../jobs/entities/job-posting.entity';
 import { Candidate } from '../candidates/entities/candidate.entity';
 import { JobApplication } from '../applications/entities/job-application.entity';
+import { BillingTransaction } from '../subscriptions/entities/billing-transaction.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { JobApplication } from '../applications/entities/job-application.entity'
       Tenant,
       SubscriptionPlan,
       TenantSubscription,
+      BillingTransaction,
       JobPosting,
       Candidate,
       JobApplication,

@@ -53,11 +53,31 @@ __decorate([
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 12, scale: 2, nullable: true }),
     __metadata("design:type", Number)
+], Candidate.prototype, "currentSalary", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 12, scale: 2, nullable: true }),
+    __metadata("design:type", Number)
 ], Candidate.prototype, "expectedSalary", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ nullable: true, length: 100 }),
+    __metadata("design:type", String)
+], Candidate.prototype, "noticePeriod", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], Candidate.prototype, "preferredLocations", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true, length: 500 }),
     __metadata("design:type", String)
 ], Candidate.prototype, "resumeUrl", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], Candidate.prototype, "resumes", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], Candidate.prototype, "savedJobIds", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'longtext', nullable: true }),
     __metadata("design:type", String)

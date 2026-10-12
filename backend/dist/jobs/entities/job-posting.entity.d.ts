@@ -43,6 +43,9 @@ export declare class JobPosting {
     isFeatured: boolean;
     applyType: 'INTERNAL' | 'EXTERNAL';
     applyUrl: string;
+    skills: string[];
+    benefits: string[];
+    genderPreference: 'ANY' | 'MALE' | 'FEMALE';
     screeningQuestions: Array<{
         id: string;
         questionText: string;
