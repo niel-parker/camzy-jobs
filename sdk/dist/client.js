@@ -174,6 +174,8 @@ class JobPortalSdk {
             searchParams.append('category', params.category);
         if (params?.query)
             searchParams.append('query', params.query);
+        if (params?.tenantId)
+            searchParams.append('tenantId', params.tenantId);
         const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
         return this.request(`/jobs${queryString}`);
     }

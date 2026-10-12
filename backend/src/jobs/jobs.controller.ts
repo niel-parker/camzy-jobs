@@ -12,11 +12,13 @@ export class JobsController {
   @ApiOperation({ summary: 'Search and filter active job postings' })
   @ApiQuery({ name: 'category', required: false })
   @ApiQuery({ name: 'query', required: false })
+  @ApiQuery({ name: 'tenantId', required: false })
   async findAll(
     @Query('category') category?: string,
     @Query('query') query?: string,
+    @Query('tenantId') tenantId?: string,
   ): Promise<JobListingDto[]> {
-    return await this.jobsService.findAll(category, query);
+    return await this.jobsService.findAll(category, query, tenantId);
   }
 
   @Get(':id')

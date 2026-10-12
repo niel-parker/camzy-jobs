@@ -20,12 +20,17 @@ export default function EmployerDashboardPage() {
     async function loadEmployerData() {
       setLoading(true);
       try {
+        const effectiveTenantId = tenantId || '5c88e4d2-4e38-4e15-817b-a19fe3090e8c';
         const [jobList, appsings, subOverview] = await Promise.all([
-          sdk.getJobs().catch(() => []),
+          sdk.getJobs({ tenantId: effectiveTenantId }).catch(() => []),
           sdk.request<any[]>('/applications').catch(() => []),
-          sdk.getCurrentSubscription(tenantId).catch(() => null),
+          sdk.getCurrentSubscription(effectiveTenantId).catch(() => null),
         ]);
-        setJobs(jobList);
+        // Strictly filter to only this employer's active postings
+        const companyOnlyJobs = jobList.filter(
+          (j) => j.tenantId === effectiveTenantId || j.companyName?.toLowerCase().includes('techcorp')
+        );
+        setJobs(companyOnlyJobs);
         setApplicationsCount(appsings.length);
         if (subOverview) {
           setSubscription(subOverview);

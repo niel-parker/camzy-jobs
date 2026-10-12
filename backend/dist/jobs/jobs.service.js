@@ -27,10 +27,13 @@ let JobsService = class JobsService {
         this.userRepo = userRepo;
         this.subRepo = subRepo;
     }
-    async findAll(category, query) {
+    async findAll(category, query, tenantId) {
         const qb = this.jobRepo.createQueryBuilder('job')
             .leftJoinAndSelect('job.tenant', 'tenant')
             .where('job.status = :status', { status: job_posting_entity_1.JobStatus.PUBLISHED });
+        if (tenantId && tenantId !== 'undefined' && tenantId !== 'null') {
+            qb.andWhere('(job.tenantId = :tenantId OR tenant.slug = :tenantId)', { tenantId });
+        }
         if (category && category !== 'All') {
             qb.andWhere('LOWER(job.category) LIKE LOWER(:category)', { category: `%${category}%` });
         }

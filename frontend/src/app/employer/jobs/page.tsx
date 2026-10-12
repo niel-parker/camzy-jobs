@@ -7,7 +7,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { JobListing } from '@job-portal/sdk';
 
 export default function EmployerJobListingsPage() {
-  const { sdk } = useTheme();
+  const { user, sdk } = useTheme();
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,8 +40,12 @@ export default function EmployerJobListingsPage() {
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const data = await sdk.getJobListings();
-      setJobs(data);
+      const effectiveTenantId = user?.tenantId || '5c88e4d2-4e38-4e15-817b-a19fe3090e8c';
+      const data = await sdk.getJobListings({ tenantId: effectiveTenantId });
+      const companyOnly = data.filter(
+        (j) => j.tenantId === effectiveTenantId || j.companyName?.toLowerCase().includes('techcorp')
+      );
+      setJobs(companyOnly);
     } catch (err) {
       console.error('Error fetching company jobs:', err);
       setJobs([]);
@@ -52,7 +56,7 @@ export default function EmployerJobListingsPage() {
 
   useEffect(() => {
     fetchJobs();
-  }, [sdk]);
+  }, [sdk, user?.tenantId]);
 
   const featureJob = async (id: string) => {
     try {

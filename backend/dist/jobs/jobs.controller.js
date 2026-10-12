@@ -21,8 +21,8 @@ let JobsController = class JobsController {
     constructor(jobsService) {
         this.jobsService = jobsService;
     }
-    async findAll(category, query) {
-        return await this.jobsService.findAll(category, query);
+    async findAll(category, query, tenantId) {
+        return await this.jobsService.findAll(category, query, tenantId);
     }
     async findOne(id) {
         return await this.jobsService.findOne(id);
@@ -46,10 +46,12 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Search and filter active job postings' }),
     (0, swagger_1.ApiQuery)({ name: 'category', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'query', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'tenantId', required: false }),
     __param(0, (0, common_1.Query)('category')),
     __param(1, (0, common_1.Query)('query')),
+    __param(2, (0, common_1.Query)('tenantId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], JobsController.prototype, "findAll", null);
 __decorate([

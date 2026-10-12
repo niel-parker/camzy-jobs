@@ -51,10 +51,14 @@ export class JobsService {
     private readonly subRepo: Repository<TenantSubscription>,
   ) {}
 
-  async findAll(category?: string, query?: string): Promise<JobListingDto[]> {
+  async findAll(category?: string, query?: string, tenantId?: string): Promise<JobListingDto[]> {
     const qb = this.jobRepo.createQueryBuilder('job')
       .leftJoinAndSelect('job.tenant', 'tenant')
       .where('job.status = :status', { status: JobStatus.PUBLISHED });
+
+    if (tenantId && tenantId !== 'undefined' && tenantId !== 'null') {
+      qb.andWhere('(job.tenantId = :tenantId OR tenant.slug = :tenantId)', { tenantId });
+    }
 
     if (category && category !== 'All') {
       qb.andWhere('LOWER(job.category) LIKE LOWER(:category)', { category: `%${category}%` });

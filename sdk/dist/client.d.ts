@@ -59,10 +59,12 @@ export declare class JobPortalSdk {
     getJobs(params?: {
         category?: string;
         query?: string;
+        tenantId?: string;
     }): Promise<JobListing[]>;
     getJobListings(params?: {
         category?: string;
         query?: string;
+        tenantId?: string;
     }): Promise<JobListing[]>;
     getJobById(id: string): Promise<JobListing>;
     createJob(jobData: Partial<JobListing>): Promise<JobListing>;

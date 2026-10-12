@@ -189,15 +189,16 @@ export class JobPortalSdk {
     });
   }
 
-  async getJobs(params?: { category?: string; query?: string }): Promise<JobListing[]> {
+  async getJobs(params?: { category?: string; query?: string; tenantId?: string }): Promise<JobListing[]> {
     const searchParams = new URLSearchParams();
     if (params?.category) searchParams.append('category', params.category);
     if (params?.query) searchParams.append('query', params.query);
+    if (params?.tenantId) searchParams.append('tenantId', params.tenantId);
     const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
     return this.request<JobListing[]>(`/jobs${queryString}`);
   }
 
-  async getJobListings(params?: { category?: string; query?: string }): Promise<JobListing[]> {
+  async getJobListings(params?: { category?: string; query?: string; tenantId?: string }): Promise<JobListing[]> {
     return this.getJobs(params);
   }
 

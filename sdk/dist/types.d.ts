@@ -124,6 +124,7 @@ export interface ScreeningAnswer {
 }
 export interface JobListing {
     id: string;
+    tenantId?: string;
     title: string;
     companyName: string;
     companyLogoUrl?: string;

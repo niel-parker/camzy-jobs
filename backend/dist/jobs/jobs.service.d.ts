@@ -40,7 +40,7 @@ export declare class JobsService {
     private readonly userRepo;
     private readonly subRepo;
     constructor(jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, userRepo: Repository<User>, subRepo: Repository<TenantSubscription>);
-    findAll(category?: string, query?: string): Promise<JobListingDto[]>;
+    findAll(category?: string, query?: string, tenantId?: string): Promise<JobListingDto[]>;
     findOne(id: string): Promise<JobListingDto>;
     getActiveJobsCountForTenant(tenantId: string): Promise<number>;
     getPlanJobLimitForTenant(tenantId: string): Promise<number>;
