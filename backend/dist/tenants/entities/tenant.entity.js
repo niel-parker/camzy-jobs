@@ -69,6 +69,10 @@ __decorate([
     __metadata("design:type", String)
 ], Tenant.prototype, "status", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ default: true }),
+    __metadata("design:type", Boolean)
+], Tenant.prototype, "isVerified", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => user_entity_1.User, (user) => user.tenant),
     __metadata("design:type", Array)
 ], Tenant.prototype, "users", void 0);

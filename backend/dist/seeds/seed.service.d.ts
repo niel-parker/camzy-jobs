@@ -8,6 +8,15 @@ import { JobPosting } from '../jobs/entities/job-posting.entity';
 import { Candidate } from '../candidates/entities/candidate.entity';
 import { JobApplication } from '../applications/entities/job-application.entity';
 import { BillingTransaction } from '../subscriptions/entities/billing-transaction.entity';
+import { Location } from '../admin/entities/location.entity';
+import { SkillKeyword } from '../admin/entities/skill-keyword.entity';
+import { ExperienceRange } from '../admin/entities/experience-range.entity';
+import { SystemTaxonomy } from '../admin/entities/system-taxonomy.entity';
+import { CmsPage } from '../admin/entities/cms-page.entity';
+import { BlogPost, BlogCategory } from '../admin/entities/blog-post.entity';
+import { SeoConfig } from '../admin/entities/seo-config.entity';
+import { FaqItem } from '../admin/entities/faq-item.entity';
+import { EmailBroadcast } from '../admin/entities/email-broadcast.entity';
 export declare class SeedService implements OnModuleInit {
     private readonly userRepo;
     private readonly tenantRepo;
@@ -17,8 +26,20 @@ export declare class SeedService implements OnModuleInit {
     private readonly jobRepo;
     private readonly candidateRepo;
     private readonly appRepo;
+    private readonly locationRepo;
+    private readonly skillRepo;
+    private readonly expRangeRepo;
+    private readonly taxonomyRepo;
+    private readonly cmsRepo;
+    private readonly blogPostRepo;
+    private readonly blogCatRepo;
+    private readonly seoRepo;
+    private readonly faqRepo;
+    private readonly broadcastRepo;
     private readonly logger;
-    constructor(userRepo: Repository<User>, tenantRepo: Repository<Tenant>, planRepo: Repository<SubscriptionPlan>, subRepo: Repository<TenantSubscription>, txnRepo: Repository<BillingTransaction>, jobRepo: Repository<JobPosting>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>);
+    constructor(userRepo: Repository<User>, tenantRepo: Repository<Tenant>, planRepo: Repository<SubscriptionPlan>, subRepo: Repository<TenantSubscription>, txnRepo: Repository<BillingTransaction>, jobRepo: Repository<JobPosting>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>);
     onModuleInit(): Promise<void>;
     seedAll(): Promise<void>;
+    seedTaxonomiesAndCms(): Promise<void>;
+    seedBroadcastUsers(): Promise<void>;
 }

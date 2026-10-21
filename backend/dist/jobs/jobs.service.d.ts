@@ -13,6 +13,9 @@ export interface JobListingDto {
     consultancyName?: string;
     clientCompanyName?: string;
     location: string;
+    locationCountry?: string;
+    locationState?: string;
+    locationCity?: string;
     isRemote: boolean;
     employmentType: string;
     salaryMin?: number;
@@ -21,6 +24,9 @@ export interface JobListingDto {
     isSalaryVisible: boolean;
     category: string;
     experienceLevel: string;
+    minExperience?: number;
+    maxExperience?: number;
+    skills?: string[];
     description: string;
     isFeatured: boolean;
     applyType?: 'INTERNAL' | 'EXTERNAL';
@@ -40,7 +46,7 @@ export declare class JobsService {
     private readonly userRepo;
     private readonly subRepo;
     constructor(jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, userRepo: Repository<User>, subRepo: Repository<TenantSubscription>);
-    findAll(category?: string, query?: string, tenantId?: string): Promise<JobListingDto[]>;
+    findAll(category?: string, query?: string, tenantId?: string, location?: string, experienceLevel?: string, minExp?: number, maxExp?: number): Promise<JobListingDto[]>;
     findOne(id: string): Promise<JobListingDto>;
     getActiveJobsCountForTenant(tenantId: string): Promise<number>;
     getPlanJobLimitForTenant(tenantId: string): Promise<number>;

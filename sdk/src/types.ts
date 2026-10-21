@@ -139,6 +139,50 @@ export interface ScreeningAnswer {
   answer: string;
 }
 
+export interface LocationItem {
+  id: string;
+  country: string;
+  countryCode?: string;
+  state?: string;
+  city: string;
+  isPopular?: boolean;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SkillKeywordItem {
+  id: string;
+  name: string;
+  category: string;
+  keywords: string[];
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SkillSuggestionResponse {
+  query: string;
+  suggestions: string[];
+  clusters: Array<{
+    name: string;
+    category: string;
+    matchingKeywords: string[];
+    allKeywords: string[];
+  }>;
+}
+
+export interface ExperienceRangeItem {
+  id: string;
+  label: string;
+  minYears: number;
+  maxYears: number;
+  sortOrder: number;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface JobListing {
   id: string;
   tenantId?: string;
@@ -149,6 +193,9 @@ export interface JobListing {
   consultancyName?: string;
   clientCompanyName?: string;
   location: string;
+  locationCountry?: string;
+  locationState?: string;
+  locationCity?: string;
   isRemote: boolean;
   employmentType: 'Full-time' | 'Part-time' | 'Contract' | 'Remote' | 'Internship';
   salaryMin?: number;
@@ -157,6 +204,8 @@ export interface JobListing {
   isSalaryVisible: boolean;
   category: string;
   experienceLevel: 'Entry' | 'Mid' | 'Senior' | 'Lead' | 'Executive';
+  minExperience?: number;
+  maxExperience?: number;
   description: string;
   isFeatured: boolean;
   applyType?: 'INTERNAL' | 'EXTERNAL';
@@ -233,3 +282,177 @@ export interface DashboardMetrics {
   totalRevenue?: number;
   monthlyRevenue: number;
 }
+
+export interface SystemTaxonomyItem {
+  id: string;
+  type: string;
+  name: string;
+  code?: string;
+  slug?: string;
+  description?: string;
+  orderIndex: number;
+  isActive: boolean;
+  metaData?: Record<string, any>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CmsPageItem {
+  id: string;
+  title: string;
+  slug: string;
+  locale: string;
+  language?: string;
+  contentHtml?: string;
+  content?: string;
+  isPublished: boolean;
+  seoTitle?: string;
+  seoDescription?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface BlogPostItem {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  categorySlug?: string;
+  authorName?: string;
+  summary?: string;
+  content?: string;
+  coverImageUrl?: string;
+  tags?: string[];
+  isPublished: boolean;
+  publishedAt?: string;
+  createdAt?: string;
+}
+
+export interface BlogCategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  isActive: boolean;
+}
+
+export interface SeoConfigItem {
+  id: string;
+  pageKey: string;
+  pageName: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+  canonicalUrl?: string;
+  ogImageUrl?: string;
+}
+
+export interface FaqItemData {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  targetAudience: string;
+  orderIndex: number;
+  isActive: boolean;
+}
+
+export interface BroadcastRecipient {
+  id: string; // display ID (e.g. "12037")
+  realId: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  skills?: string[];
+  companyName?: string;
+  planName?: string;
+  inactiveMonths?: number;
+  lastActive?: string;
+  createdAt: string;
+}
+
+export interface BroadcastRecipientResponse {
+  recipients: BroadcastRecipient[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface EmailBroadcastItem {
+  id: string;
+  campaignName: string;
+  targetSegment: string;
+  subject: string;
+  htmlBody: string;
+  recipientCount: number;
+  status: string;
+  sentAt?: string;
+  createdAt?: string;
+}
+
+export interface SubscriptionPackageItem {
+  id: string;
+  name: string;
+  code: string;
+  priceMonthly: number;
+  priceYearly: number;
+  maxActiveJobs: number;
+  maxResumeDownloads: number;
+  maxTeamSeats: number;
+  features: string[];
+}
+
+export interface AdminUserProfile {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  name: string;
+  role: string;
+  status: string;
+  tenantId?: string;
+  companyName?: string;
+  candidateId?: string;
+  headline?: string;
+  phone?: string;
+  createdAt: string;
+}
+
+export interface CrossCompanyJobItem {
+  id: string;
+  title: string;
+  companyName: string;
+  tenantId: string;
+  category: string;
+  location: string;
+  status: string;
+  isFeatured: boolean;
+  isRemote: boolean;
+  minExperience?: number;
+  maxExperience?: number;
+  salaryMin?: number;
+  salaryMax?: number;
+  skills: string[];
+  applicationCount: number;
+  createdAt: string;
+}
+
+export interface CompanyDirectoryItem {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+  status: string;
+  isVerified: boolean;
+  planName: string;
+  planCode: string;
+  maxJobs: number;
+  activeJobs: number;
+  resumeDownloadsUsed: number;
+  resumeDownloadsLimit: number;
+  createdAt: string;
+}
+

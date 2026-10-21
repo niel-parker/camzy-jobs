@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = exports.UserStatus = exports.UserRole = void 0;
 const typeorm_1 = require("typeorm");
 const tenant_entity_1 = require("../../tenants/entities/tenant.entity");
+const candidate_entity_1 = require("../../candidates/entities/candidate.entity");
 var UserRole;
 (function (UserRole) {
     UserRole["SUPER_ADMIN"] = "SUPER_ADMIN";
@@ -87,6 +88,10 @@ __decorate([
     (0, typeorm_1.Column)({ name: 'tenant_id', nullable: true }),
     __metadata("design:type", String)
 ], User.prototype, "tenantId", void 0);
+__decorate([
+    (0, typeorm_1.OneToOne)(() => candidate_entity_1.Candidate, (candidate) => candidate.user),
+    __metadata("design:type", candidate_entity_1.Candidate)
+], User.prototype, "candidate", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)

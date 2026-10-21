@@ -5,6 +5,9 @@ import { DashboardLayout } from '../../../components/DashboardLayout';
 import { Briefcase, Plus, Sparkles, Users, Loader2, Pencil, Trash2, X, Check } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import { JobListing } from '@job-portal/sdk';
+import { LocationSearchDropdown } from '../../../components/LocationSearchDropdown';
+import { ExperienceRangeSelector } from '../../../components/ExperienceRangeSelector';
+import { SkillKeywordAutocomplete } from '../../../components/SkillKeywordAutocomplete';
 
 export default function EmployerJobListingsPage() {
   const { user, sdk } = useTheme();
@@ -22,6 +25,9 @@ export default function EmployerJobListingsPage() {
     experienceLevel: 'Entry' | 'Mid' | 'Senior' | 'Lead' | 'Executive';
     salaryMin: number;
     salaryMax: number;
+    minExperience: number;
+    maxExperience: number;
+    skills: string[];
     description: string;
   }>({
     title: '',
@@ -32,6 +38,9 @@ export default function EmployerJobListingsPage() {
     experienceLevel: 'Mid',
     salaryMin: 100000,
     salaryMax: 150000,
+    minExperience: 2,
+    maxExperience: 5,
+    skills: [],
     description: '',
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -78,6 +87,9 @@ export default function EmployerJobListingsPage() {
       experienceLevel: (job.experienceLevel as 'Entry' | 'Mid' | 'Senior' | 'Lead' | 'Executive') || 'Mid',
       salaryMin: job.salaryMin || 100000,
       salaryMax: job.salaryMax || 150000,
+      minExperience: job.minExperience ?? 2,
+      maxExperience: job.maxExperience ?? 5,
+      skills: job.skills || [],
       description: job.description || '',
     });
     setActionError(null);
@@ -284,13 +296,37 @@ export default function EmployerJobListingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold theme-text mb-1">Location</label>
-                  <input
-                    type="text"
-                    required
+                  <label className="block text-xs font-bold theme-text mb-1">Location Auto-Dropdown</label>
+                  <LocationSearchDropdown
                     value={editForm.location}
-                    onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
-                    className="w-full px-3 py-2 text-xs rounded-lg theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onChange={(val) => setEditForm({ ...editForm, location: val })}
+                    placeholder="Search city, state, or country..."
+                  />
+                </div>
+              </div>
+
+              {/* Experience Range & Skills */}
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border theme-border space-y-4">
+                <ExperienceRangeSelector
+                  minYears={editForm.minExperience}
+                  maxYears={editForm.maxExperience}
+                  experienceLevel={editForm.experienceLevel}
+                  onChange={(min, max, lvl) => {
+                    setEditForm((prev) => ({
+                      ...prev,
+                      minExperience: min,
+                      maxExperience: max,
+                      experienceLevel: (lvl as any) || prev.experienceLevel,
+                    }));
+                  }}
+                />
+
+                <div className="pt-2 border-t theme-border">
+                  <SkillKeywordAutocomplete
+                    selectedSkills={editForm.skills}
+                    onChange={(newSkills) => setEditForm({ ...editForm, skills: newSkills })}
+                    label="Skills & Tech Badges (Workday-Style Suggestions)"
+                    placeholder="Type 'java', 'spring', 'python'..."
                   />
                 </div>
               </div>

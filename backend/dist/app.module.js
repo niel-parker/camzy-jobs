@@ -26,6 +26,15 @@ const job_posting_entity_1 = require("./jobs/entities/job-posting.entity");
 const candidate_entity_1 = require("./candidates/entities/candidate.entity");
 const job_application_entity_1 = require("./applications/entities/job-application.entity");
 const billing_transaction_entity_1 = require("./subscriptions/entities/billing-transaction.entity");
+const location_entity_1 = require("./admin/entities/location.entity");
+const skill_keyword_entity_1 = require("./admin/entities/skill-keyword.entity");
+const experience_range_entity_1 = require("./admin/entities/experience-range.entity");
+const system_taxonomy_entity_1 = require("./admin/entities/system-taxonomy.entity");
+const cms_page_entity_1 = require("./admin/entities/cms-page.entity");
+const blog_post_entity_1 = require("./admin/entities/blog-post.entity");
+const seo_config_entity_1 = require("./admin/entities/seo-config.entity");
+const faq_item_entity_1 = require("./admin/entities/faq-item.entity");
+const email_broadcast_entity_1 = require("./admin/entities/email-broadcast.entity");
 const mail_module_1 = require("./mail/mail.module");
 let AppModule = class AppModule {
 };
@@ -49,6 +58,16 @@ exports.AppModule = AppModule = __decorate([
                     job_posting_entity_1.JobPosting,
                     candidate_entity_1.Candidate,
                     job_application_entity_1.JobApplication,
+                    location_entity_1.Location,
+                    skill_keyword_entity_1.SkillKeyword,
+                    experience_range_entity_1.ExperienceRange,
+                    system_taxonomy_entity_1.SystemTaxonomy,
+                    cms_page_entity_1.CmsPage,
+                    blog_post_entity_1.BlogPost,
+                    blog_post_entity_1.BlogCategory,
+                    seo_config_entity_1.SeoConfig,
+                    faq_item_entity_1.FaqItem,
+                    email_broadcast_entity_1.EmailBroadcast,
                 ],
                 synchronize: true,
                 logging: false,

@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToOne } from 'typeorm';
 import { Tenant } from '../../tenants/entities/tenant.entity';
+import { Candidate } from '../../candidates/entities/candidate.entity';
 
 export enum UserRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
@@ -60,6 +61,9 @@ export class User {
 
   @Column({ name: 'tenant_id', nullable: true })
   tenantId: string;
+
+  @OneToOne(() => Candidate, (candidate) => candidate.user)
+  candidate: Candidate;
 
   @CreateDateColumn()
   createdAt: Date;

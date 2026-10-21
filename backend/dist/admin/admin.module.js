@@ -19,6 +19,15 @@ const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-s
 const subscription_plan_entity_1 = require("../subscriptions/entities/subscription-plan.entity");
 const billing_transaction_entity_1 = require("../subscriptions/entities/billing-transaction.entity");
 const user_entity_1 = require("../users/entities/user.entity");
+const location_entity_1 = require("./entities/location.entity");
+const skill_keyword_entity_1 = require("./entities/skill-keyword.entity");
+const experience_range_entity_1 = require("./entities/experience-range.entity");
+const system_taxonomy_entity_1 = require("./entities/system-taxonomy.entity");
+const cms_page_entity_1 = require("./entities/cms-page.entity");
+const blog_post_entity_1 = require("./entities/blog-post.entity");
+const seo_config_entity_1 = require("./entities/seo-config.entity");
+const faq_item_entity_1 = require("./entities/faq-item.entity");
+const email_broadcast_entity_1 = require("./entities/email-broadcast.entity");
 let AdminModule = class AdminModule {
 };
 exports.AdminModule = AdminModule;
@@ -34,6 +43,16 @@ exports.AdminModule = AdminModule = __decorate([
                 subscription_plan_entity_1.SubscriptionPlan,
                 billing_transaction_entity_1.BillingTransaction,
                 user_entity_1.User,
+                location_entity_1.Location,
+                skill_keyword_entity_1.SkillKeyword,
+                experience_range_entity_1.ExperienceRange,
+                system_taxonomy_entity_1.SystemTaxonomy,
+                cms_page_entity_1.CmsPage,
+                blog_post_entity_1.BlogPost,
+                blog_post_entity_1.BlogCategory,
+                seo_config_entity_1.SeoConfig,
+                faq_item_entity_1.FaqItem,
+                email_broadcast_entity_1.EmailBroadcast,
             ]),
         ],
         controllers: [admin_controller_1.AdminController],

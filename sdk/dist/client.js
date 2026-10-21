@@ -176,6 +176,14 @@ class JobPortalSdk {
             searchParams.append('query', params.query);
         if (params?.tenantId)
             searchParams.append('tenantId', params.tenantId);
+        if (params?.location)
+            searchParams.append('location', params.location);
+        if (params?.experienceLevel)
+            searchParams.append('experienceLevel', params.experienceLevel);
+        if (params?.minExp !== undefined)
+            searchParams.append('minExp', params.minExp.toString());
+        if (params?.maxExp !== undefined)
+            searchParams.append('maxExp', params.maxExp.toString());
         const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
         return this.request(`/jobs${queryString}`);
     }
@@ -240,6 +248,284 @@ class JobPortalSdk {
     }
     async getAdminTransactions() {
         return this.request('/admin/transactions');
+    }
+    // Master Locations (Cities, States, Countries)
+    async getLocations(params) {
+        const searchParams = new URLSearchParams();
+        if (params?.q)
+            searchParams.append('q', params.q);
+        if (params?.popular !== undefined)
+            searchParams.append('popular', String(params.popular));
+        const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
+        return this.request(`/admin/locations${qs}`);
+    }
+    async createLocation(location) {
+        return this.request('/admin/locations', {
+            method: 'POST',
+            body: JSON.stringify(location),
+        });
+    }
+    async updateLocation(id, location) {
+        return this.request(`/admin/locations/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(location),
+        });
+    }
+    async deleteLocation(id) {
+        return this.request(`/admin/locations/${id}`, {
+            method: 'DELETE',
+        });
+    }
+    // Skills & Workday-style Taxonomy
+    async getSkills() {
+        return this.request('/admin/skills');
+    }
+    async suggestSkills(query) {
+        const q = encodeURIComponent(query || '');
+        return this.request(`/admin/skills/suggest?q=${q}`);
+    }
+    async createSkill(skill) {
+        return this.request('/admin/skills', {
+            method: 'POST',
+            body: JSON.stringify(skill),
+        });
+    }
+    async updateSkill(id, skill) {
+        return this.request(`/admin/skills/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(skill),
+        });
+    }
+    async deleteSkill(id) {
+        return this.request(`/admin/skills/${id}`, {
+            method: 'DELETE',
+        });
+    }
+    // Experience Ranges
+    async getExperienceRanges() {
+        return this.request('/admin/experience-ranges');
+    }
+    async createExperienceRange(range) {
+        return this.request('/admin/experience-ranges', {
+            method: 'POST',
+            body: JSON.stringify(range),
+        });
+    }
+    async updateExperienceRange(id, range) {
+        return this.request(`/admin/experience-ranges/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(range),
+        });
+    }
+    async deleteExperienceRange(id) {
+        return this.request(`/admin/experience-ranges/${id}`, {
+            method: 'DELETE',
+        });
+    }
+    // --- Super Admin User Profiles ---
+    async getAdminProfiles(role, search) {
+        const params = new URLSearchParams();
+        if (role)
+            params.append('role', role);
+        if (search)
+            params.append('search', search);
+        const qs = params.toString() ? `?${params.toString()}` : '';
+        return this.request(`/admin/users/profiles${qs}`);
+    }
+    async createAdminUser(data) {
+        return this.request('/admin/users/create', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+    async updateAdminUserStatus(id, status) {
+        return this.request(`/admin/users/${id}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ status }),
+        });
+    }
+    // --- Super Admin Cross-Company Jobs ---
+    async getAdminJobs(params) {
+        const sp = new URLSearchParams();
+        if (params?.tenantId)
+            sp.append('tenantId', params.tenantId);
+        if (params?.search)
+            sp.append('search', params.search);
+        const qs = sp.toString() ? `?${sp.toString()}` : '';
+        return this.request(`/admin/jobs/all${qs}`);
+    }
+    async postJobAsCompany(jobData) {
+        return this.request('/admin/jobs/post-as-company', {
+            method: 'POST',
+            body: JSON.stringify(jobData),
+        });
+    }
+    async updateAdminJobStatus(id, status) {
+        return this.request(`/admin/jobs/${id}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ status }),
+        });
+    }
+    // --- Super Admin Companies Directory ---
+    async getAdminCompanies() {
+        return this.request('/admin/companies/all');
+    }
+    async registerCompanyDirect(data) {
+        return this.request('/admin/companies/register', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+    async updateAdminCompanyStatus(id, data) {
+        return this.request(`/admin/companies/${id}/status`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+    // --- Super Admin CMS Pages ---
+    async getCmsPages() {
+        return this.request('/admin/cms/pages');
+    }
+    async getCmsPageById(id) {
+        return this.request(`/admin/cms/pages/${id}`);
+    }
+    async saveCmsPage(page) {
+        return this.request('/admin/cms/pages', {
+            method: 'POST',
+            body: JSON.stringify(page),
+        });
+    }
+    async deleteCmsPage(id) {
+        return this.request(`/admin/cms/pages/${id}`, {
+            method: 'DELETE',
+        });
+    }
+    // --- Super Admin Blogs & Categories ---
+    async getBlogPosts(params) {
+        const sp = new URLSearchParams();
+        if (params?.categorySlug)
+            sp.append('categorySlug', params.categorySlug);
+        if (params?.search)
+            sp.append('search', params.search);
+        const qs = sp.toString() ? `?${sp.toString()}` : '';
+        return this.request(`/admin/blogs/posts${qs}`);
+    }
+    async saveBlogPost(post) {
+        return this.request('/admin/blogs/posts', {
+            method: 'POST',
+            body: JSON.stringify(post),
+        });
+    }
+    async deleteBlogPost(id) {
+        return this.request(`/admin/blogs/posts/${id}`, {
+            method: 'DELETE',
+        });
+    }
+    async getBlogCategories() {
+        return this.request('/admin/blogs/categories');
+    }
+    async saveBlogCategory(cat) {
+        return this.request('/admin/blogs/categories', {
+            method: 'POST',
+            body: JSON.stringify(cat),
+        });
+    }
+    // --- Super Admin SEO Configs ---
+    async getSeoConfigs() {
+        return this.request('/admin/seo/configs');
+    }
+    async saveSeoConfig(config) {
+        return this.request('/admin/seo/configs', {
+            method: 'POST',
+            body: JSON.stringify(config),
+        });
+    }
+    // --- Super Admin FAQs ---
+    async getFaqs(audience) {
+        const qs = audience ? `?audience=${encodeURIComponent(audience)}` : '';
+        return this.request(`/admin/faqs${qs}`);
+    }
+    async saveFaq(faq) {
+        return this.request('/admin/faqs', {
+            method: 'POST',
+            body: JSON.stringify(faq),
+        });
+    }
+    async deleteFaq(id) {
+        return this.request(`/admin/faqs/${id}`, {
+            method: 'DELETE',
+        });
+    }
+    // --- Super Admin Email Broadcasting ---
+    async getBroadcasts() {
+        return this.request('/admin/broadcasts');
+    }
+    async getBroadcastStats() {
+        return this.request('/admin/broadcasts/segments/stats');
+    }
+    async getBroadcastRecipients(params) {
+        const sp = new URLSearchParams();
+        if (params.segment)
+            sp.append('segment', params.segment);
+        if (params.months !== undefined)
+            sp.append('months', String(params.months));
+        if (params.skill)
+            sp.append('skill', params.skill);
+        if (params.searchId)
+            sp.append('searchId', params.searchId);
+        if (params.searchName)
+            sp.append('searchName', params.searchName);
+        if (params.searchEmail)
+            sp.append('searchEmail', params.searchEmail);
+        if (params.page !== undefined)
+            sp.append('page', String(params.page));
+        if (params.limit !== undefined)
+            sp.append('limit', String(params.limit));
+        const qs = sp.toString() ? `?${sp.toString()}` : '';
+        return this.request(`/admin/broadcasts/recipients${qs}`);
+    }
+    async sendBroadcast(data) {
+        return this.request('/admin/broadcasts/send', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+    // --- Super Admin Subscription Packages ---
+    async getPackages() {
+        return this.request('/admin/packages');
+    }
+    async savePackage(pkg) {
+        return this.request('/admin/packages', {
+            method: 'POST',
+            body: JSON.stringify(pkg),
+        });
+    }
+    async deletePackage(id) {
+        return this.request(`/admin/packages/${id}`, {
+            method: 'DELETE',
+        });
+    }
+    // --- Super Admin Master System Taxonomies ---
+    async getTaxonomies(type) {
+        const qs = type ? `?type=${encodeURIComponent(type)}` : '';
+        return this.request(`/admin/taxonomies${qs}`);
+    }
+    async saveTaxonomy(item) {
+        return this.request('/admin/taxonomies', {
+            method: 'POST',
+            body: JSON.stringify(item),
+        });
+    }
+    async updateTaxonomy(id, item) {
+        return this.request(`/admin/taxonomies/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(item),
+        });
+    }
+    async deleteTaxonomy(id) {
+        return this.request(`/admin/taxonomies/${id}`, {
+            method: 'DELETE',
+        });
     }
 }
 exports.JobPortalSdk = JobPortalSdk;

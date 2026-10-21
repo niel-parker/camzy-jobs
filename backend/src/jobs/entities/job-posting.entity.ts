@@ -63,6 +63,12 @@ export class JobPosting {
   @Column({ type: 'enum', enum: ExperienceLevel, default: ExperienceLevel.MID })
   experienceLevel: ExperienceLevel;
 
+  @Column({ type: 'int', default: 0 })
+  minExperience: number;
+
+  @Column({ type: 'int', default: 5 })
+  maxExperience: number;
+
   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   salaryMin: number;
 
@@ -77,6 +83,9 @@ export class JobPosting {
 
   @Column({ length: 100 })
   locationCountry: string;
+
+  @Column({ length: 100, nullable: true })
+  locationState: string;
 
   @Column({ length: 100 })
   locationCity: string;

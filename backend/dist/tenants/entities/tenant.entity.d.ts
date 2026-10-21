@@ -21,6 +21,7 @@ export declare class Tenant {
     industry: string;
     description: string;
     status: TenantStatus;
+    isVerified: boolean;
     users: User[];
     jobs: JobPosting[];
     subscriptions: TenantSubscription[];

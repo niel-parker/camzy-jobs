@@ -40,6 +40,9 @@ export class SubscriptionPlan {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ type: 'json', nullable: true })
+  features: string[];
+
   @OneToMany(() => TenantSubscription, (sub) => sub.plan)
   subscriptions: TenantSubscription[];
 

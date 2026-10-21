@@ -16,6 +16,7 @@ export declare class SubscriptionPlan {
     maxFeaturedJobs: number;
     maxTeamSeats: number;
     isActive: boolean;
+    features: string[];
     subscriptions: TenantSubscription[];
     createdAt: Date;
 }

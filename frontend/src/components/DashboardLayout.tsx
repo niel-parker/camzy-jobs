@@ -7,7 +7,8 @@ import { useTheme } from '../context/ThemeContext';
 import { 
   LayoutDashboard, Briefcase, Users, FileText, Bookmark, Settings, 
   ShieldCheck, Palette, Bell, Search, ChevronLeft, ChevronRight, 
-  LogOut, User, Building2, Plus, Sparkles, UserCheck, Lock, LogIn, ChevronDown, Eye, Download 
+  LogOut, User, Building2, Plus, Sparkles, UserCheck, Lock, LogIn, ChevronDown, Eye, Download,
+  Globe, BookOpen, HelpCircle, Send, CreditCard, Receipt, MapPin, Layers
 } from 'lucide-react';
 import { SuperAdminThemeCustomizer } from './SuperAdminThemeCustomizer';
 
@@ -16,11 +17,19 @@ interface DashboardLayoutProps {
   role: 'EMPLOYER' | 'CANDIDATE' | 'SUPER_ADMIN';
 }
 
+interface SubNavItem {
+  label: string;
+  href: string;
+  segmentKey?: string;
+}
+
 interface NavItem {
   label: string;
   href: string;
   icon: any;
   badge?: string;
+  section?: string;
+  subItems?: SubNavItem[];
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role }) => {
@@ -29,6 +38,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isThemePanelOpen, setIsThemePanelOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({ '/admin/broadcast': true });
 
   const roleTitle = role === 'EMPLOYER' ? 'Employer Workspace' : role === 'CANDIDATE' ? 'Candidate Portal' : 'Super Admin Control';
 
@@ -123,9 +133,38 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
     ];
   } else {
     navItems = [
-      { label: 'Control Center', href: '/admin/dashboard', icon: ShieldCheck },
-      { label: 'Tenant Directory', href: '/admin/tenants', icon: Building2 },
-      { label: 'Global Settings', href: '/admin/settings', icon: Settings },
+      { label: 'Control Center', href: '/admin/dashboard', icon: LayoutDashboard, section: 'Operations & Access' },
+      { label: 'Admin Users', href: '/admin/users', icon: ShieldCheck, section: 'Operations & Access' },
+      { label: 'Jobs (All Companies)', href: '/admin/jobs', icon: Briefcase, badge: 'Post/View', section: 'Operations & Access' },
+      { label: 'Companies Directory', href: '/admin/tenants', icon: Building2, section: 'Operations & Access' },
+      { label: 'User Profiles', href: '/admin/profiles', icon: Users, badge: 'Candidates/Employers', section: 'Operations & Access' },
+
+      { label: 'CMS & Translations', href: '/admin/cms', icon: FileText, section: 'Content & Growth' },
+      { label: 'Manage Blogs', href: '/admin/blogs', icon: BookOpen, section: 'Content & Growth' },
+      { label: 'SEO Meta Manager', href: '/admin/seo', icon: Globe, section: 'Content & Growth' },
+      { label: 'FAQs Management', href: '/admin/faqs', icon: HelpCircle, section: 'Content & Growth' },
+      { 
+        label: 'Email Broadcasting', 
+        href: '/admin/broadcast', 
+        icon: Send, 
+        badge: '6 Lists', 
+        section: 'Content & Growth',
+        subItems: [
+          { label: 'Inactive Users', href: '/admin/broadcast?segment=INACTIVE_USERS', segmentKey: 'INACTIVE_USERS' },
+          { label: 'Skills Job Email', href: '/admin/broadcast?segment=SKILLS_JOB_EMAIL', segmentKey: 'SKILLS_JOB_EMAIL' },
+          { label: 'User Adv. Email', href: '/admin/broadcast?segment=USER_ADV_EMAIL', segmentKey: 'USER_ADV_EMAIL' },
+          { label: 'Emp. Adv. Email', href: '/admin/broadcast?segment=EMPLOYER_ADV_EMAIL', segmentKey: 'EMPLOYER_ADV_EMAIL' },
+          { label: 'Emp. Active Companies', href: '/admin/broadcast?segment=EMPLOYER_ACTIVE_COMPANIES', segmentKey: 'EMPLOYER_ACTIVE_COMPANIES' },
+          { label: 'Emp. Expired Companies', href: '/admin/broadcast?segment=EMPLOYER_EXPIRED_COMPANIES', segmentKey: 'EMPLOYER_EXPIRED_COMPANIES' },
+        ],
+      },
+
+      { label: 'Subscription Packages', href: '/admin/packages', icon: CreditCard, section: 'Billing & Locations' },
+      { label: 'Manage Locations', href: '/admin/locations', icon: MapPin, section: 'Billing & Locations' },
+      { label: 'Payment & Invoices', href: '/admin/transactions', icon: Receipt, section: 'Billing & Locations' },
+
+      { label: 'Master Taxonomies', href: '/admin/taxonomies', icon: Layers, badge: '16 Masters', section: 'Master System Data' },
+      { label: 'Global Settings', href: '/admin/settings', icon: Settings, section: 'Master System Data' },
     ];
   }
 
@@ -165,39 +204,108 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
 
         {/* Sidebar Nav Links */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          {navItems.map((item) => {
+          {navItems.map((item, index) => {
             const Icon = item.icon;
+            const prevItem = index > 0 ? navItems[index - 1] : null;
+            const showSection = item.section && (!prevItem || prevItem.section !== item.section);
             const isRecruiterViewItem = item.href.includes('view=recruiter');
             const isActive = isRecruiterViewItem
               ? (typeof window !== 'undefined' && pathname === '/candidate/profile' && window.location.search.includes('view=recruiter'))
               : (pathname === item.href && (item.href !== '/candidate/profile' || typeof window === 'undefined' || !window.location.search.includes('view=recruiter')));
 
+            const isMenuExpanded = expandedMenus[item.href] ?? (pathname.startsWith(item.href));
+
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => {
-                  if (item.href.includes('view=recruiter') && typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('open-recruiter-view'));
-                  }
-                }}
-                className={`flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition-all relative ${
-                  isActive
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'theme-text hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                }`}
-                title={item.label}
-              >
-                <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-indigo-500'}`} />
-                {!isSidebarCollapsed && (
-                  <span className="truncate flex-1">{item.label}</span>
+              <React.Fragment key={item.href}>
+                {showSection && (
+                  <div className={`pt-3 pb-1 px-3 ${index === 0 ? 'pt-0' : ''}`}>
+                    {!isSidebarCollapsed ? (
+                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        {item.section}
+                      </p>
+                    ) : (
+                      <div className="border-t theme-border my-1" />
+                    )}
+                  </div>
                 )}
-                {!isSidebarCollapsed && item.badge && (
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-500 text-slate-950 uppercase">
-                    {item.badge}
-                  </span>
+                {item.subItems ? (
+                  <div>
+                    <div
+                      onClick={() => {
+                        setExpandedMenus(prev => ({ ...prev, [item.href]: !isMenuExpanded }));
+                      }}
+                      className={`flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition-all relative cursor-pointer select-none ${
+                        isActive
+                          ? 'bg-indigo-600 text-white shadow-md'
+                          : 'theme-text hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                      }`}
+                      title={item.label}
+                    >
+                      <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-indigo-500'}`} />
+                      {!isSidebarCollapsed && (
+                        <span className="truncate flex-1">{item.label}</span>
+                      )}
+                      {!isSidebarCollapsed && item.badge && (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-500 text-slate-950 uppercase mr-1">
+                          {item.badge}
+                        </span>
+                      )}
+                      {!isSidebarCollapsed && (
+                        <ChevronDown className={`w-3.5 h-3.5 opacity-70 transition-transform duration-200 ${isMenuExpanded ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
+
+                    {!isSidebarCollapsed && isMenuExpanded && (
+                      <div className="pl-7 pr-1 py-1 space-y-0.5 mt-0.5 animate-fade-in">
+                        {item.subItems.map((sub) => {
+                          const isSubActive = typeof window !== 'undefined'
+                            ? (window.location.search.includes(sub.segmentKey || '') || (sub.segmentKey === 'INACTIVE_USERS' && pathname === '/admin/broadcast' && !window.location.search.includes('segment=')))
+                            : false;
+                          return (
+                            <Link
+                              key={sub.href}
+                              href={sub.href}
+                              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
+                                isSubActive
+                                  ? 'bg-slate-200 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-extrabold shadow-sm'
+                                  : 'theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800/40'
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${isSubActive ? 'bg-indigo-600 dark:bg-indigo-400' : 'bg-slate-400/40'}`} />
+                              <span>{sub.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    href={item.href}
+                    onClick={() => {
+                      if (item.href.includes('view=recruiter') && typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('open-recruiter-view'));
+                      }
+                    }}
+                    className={`flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition-all relative ${
+                      isActive
+                        ? 'bg-indigo-600 text-white shadow-md'
+                        : 'theme-text hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                    title={item.label}
+                  >
+                    <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-indigo-500'}`} />
+                    {!isSidebarCollapsed && (
+                      <span className="truncate flex-1">{item.label}</span>
+                    )}
+                    {!isSidebarCollapsed && item.badge && (
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-500 text-slate-950 uppercase">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
                 )}
-              </Link>
+              </React.Fragment>
             );
           })}
 

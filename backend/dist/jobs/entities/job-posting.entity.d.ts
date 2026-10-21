@@ -33,11 +33,14 @@ export declare class JobPosting {
     category: string;
     employmentType: EmploymentType;
     experienceLevel: ExperienceLevel;
+    minExperience: number;
+    maxExperience: number;
     salaryMin: number;
     salaryMax: number;
     currency: string;
     isSalaryVisible: boolean;
     locationCountry: string;
+    locationState: string;
     locationCity: string;
     isRemote: boolean;
     isFeatured: boolean;

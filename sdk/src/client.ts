@@ -1,4 +1,29 @@
-import { AppConfig, AuthResponse, DashboardMetrics, JobListing, ThemeConfig, UploadResumeResponse, User } from './types';
+import {
+  AdminUserProfile,
+  AppConfig,
+  AuthResponse,
+  BlogCategoryItem,
+  BlogPostItem,
+  BroadcastRecipient,
+  BroadcastRecipientResponse,
+  CmsPageItem,
+  CompanyDirectoryItem,
+  CrossCompanyJobItem,
+  DashboardMetrics,
+  EmailBroadcastItem,
+  ExperienceRangeItem,
+  FaqItemData,
+  JobListing,
+  LocationItem,
+  SeoConfigItem,
+  SkillKeywordItem,
+  SkillSuggestionResponse,
+  SubscriptionPackageItem,
+  SystemTaxonomyItem,
+  ThemeConfig,
+  UploadResumeResponse,
+  User,
+} from './types';
 
 declare const process: any;
 
@@ -189,16 +214,36 @@ export class JobPortalSdk {
     });
   }
 
-  async getJobs(params?: { category?: string; query?: string; tenantId?: string }): Promise<JobListing[]> {
+  async getJobs(params?: {
+    category?: string;
+    query?: string;
+    tenantId?: string;
+    location?: string;
+    experienceLevel?: string;
+    minExp?: number;
+    maxExp?: number;
+  }): Promise<JobListing[]> {
     const searchParams = new URLSearchParams();
     if (params?.category) searchParams.append('category', params.category);
     if (params?.query) searchParams.append('query', params.query);
     if (params?.tenantId) searchParams.append('tenantId', params.tenantId);
+    if (params?.location) searchParams.append('location', params.location);
+    if (params?.experienceLevel) searchParams.append('experienceLevel', params.experienceLevel);
+    if (params?.minExp !== undefined) searchParams.append('minExp', params.minExp.toString());
+    if (params?.maxExp !== undefined) searchParams.append('maxExp', params.maxExp.toString());
     const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
     return this.request<JobListing[]>(`/jobs${queryString}`);
   }
 
-  async getJobListings(params?: { category?: string; query?: string; tenantId?: string }): Promise<JobListing[]> {
+  async getJobListings(params?: {
+    category?: string;
+    query?: string;
+    tenantId?: string;
+    location?: string;
+    experienceLevel?: string;
+    minExp?: number;
+    maxExp?: number;
+  }): Promise<JobListing[]> {
     return this.getJobs(params);
   }
 
@@ -271,5 +316,330 @@ export class JobPortalSdk {
 
   async getAdminTransactions(): Promise<any[]> {
     return this.request('/admin/transactions');
+  }
+
+  // Master Locations (Cities, States, Countries)
+  async getLocations(params?: { q?: string; popular?: boolean }): Promise<LocationItem[]> {
+    const searchParams = new URLSearchParams();
+    if (params?.q) searchParams.append('q', params.q);
+    if (params?.popular !== undefined) searchParams.append('popular', String(params.popular));
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    return this.request<LocationItem[]>(`/admin/locations${qs}`);
+  }
+
+  async createLocation(location: Partial<LocationItem>): Promise<LocationItem> {
+    return this.request<LocationItem>('/admin/locations', {
+      method: 'POST',
+      body: JSON.stringify(location),
+    });
+  }
+
+  async updateLocation(id: string, location: Partial<LocationItem>): Promise<LocationItem> {
+    return this.request<LocationItem>(`/admin/locations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(location),
+    });
+  }
+
+  async deleteLocation(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/admin/locations/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Skills & Workday-style Taxonomy
+  async getSkills(): Promise<SkillKeywordItem[]> {
+    return this.request<SkillKeywordItem[]>('/admin/skills');
+  }
+
+  async suggestSkills(query: string): Promise<SkillSuggestionResponse> {
+    const q = encodeURIComponent(query || '');
+    return this.request<SkillSuggestionResponse>(`/admin/skills/suggest?q=${q}`);
+  }
+
+  async createSkill(skill: { name: string; category?: string; keywords: string[] }): Promise<SkillKeywordItem> {
+    return this.request<SkillKeywordItem>('/admin/skills', {
+      method: 'POST',
+      body: JSON.stringify(skill),
+    });
+  }
+
+  async updateSkill(id: string, skill: Partial<SkillKeywordItem>): Promise<SkillKeywordItem> {
+    return this.request<SkillKeywordItem>(`/admin/skills/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(skill),
+    });
+  }
+
+  async deleteSkill(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/admin/skills/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Experience Ranges
+  async getExperienceRanges(): Promise<ExperienceRangeItem[]> {
+    return this.request<ExperienceRangeItem[]>('/admin/experience-ranges');
+  }
+
+  async createExperienceRange(range: Partial<ExperienceRangeItem>): Promise<ExperienceRangeItem> {
+    return this.request<ExperienceRangeItem>('/admin/experience-ranges', {
+      method: 'POST',
+      body: JSON.stringify(range),
+    });
+  }
+
+  async updateExperienceRange(id: string, range: Partial<ExperienceRangeItem>): Promise<ExperienceRangeItem> {
+    return this.request<ExperienceRangeItem>(`/admin/experience-ranges/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(range),
+    });
+  }
+
+  async deleteExperienceRange(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/admin/experience-ranges/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // --- Super Admin User Profiles ---
+  async getAdminProfiles(role?: string, search?: string): Promise<AdminUserProfile[]> {
+    const params = new URLSearchParams();
+    if (role) params.append('role', role);
+    if (search) params.append('search', search);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return this.request<AdminUserProfile[]>(`/admin/users/profiles${qs}`);
+  }
+
+  async createAdminUser(data: { email: string; password?: string; firstName: string; lastName: string; role: string; tenantId?: string; phoneNumber?: string }): Promise<User> {
+    return this.request<User>('/admin/users/create', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateAdminUserStatus(id: string, status: string): Promise<User> {
+    return this.request<User>(`/admin/users/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // --- Super Admin Cross-Company Jobs ---
+  async getAdminJobs(params?: { tenantId?: string; search?: string }): Promise<CrossCompanyJobItem[]> {
+    const sp = new URLSearchParams();
+    if (params?.tenantId) sp.append('tenantId', params.tenantId);
+    if (params?.search) sp.append('search', params.search);
+    const qs = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<CrossCompanyJobItem[]>(`/admin/jobs/all${qs}`);
+  }
+
+  async postJobAsCompany(jobData: any): Promise<JobListing> {
+    return this.request<JobListing>('/admin/jobs/post-as-company', {
+      method: 'POST',
+      body: JSON.stringify(jobData),
+    });
+  }
+
+  async updateAdminJobStatus(id: string, status: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/admin/jobs/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // --- Super Admin Companies Directory ---
+  async getAdminCompanies(): Promise<CompanyDirectoryItem[]> {
+    return this.request<CompanyDirectoryItem[]>('/admin/companies/all');
+  }
+
+  async registerCompanyDirect(data: { name: string; type?: string; planCode?: string; adminEmail: string; adminFirstName: string; adminLastName: string }): Promise<CompanyDirectoryItem> {
+    return this.request<CompanyDirectoryItem>('/admin/companies/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateAdminCompanyStatus(id: string, data: { isVerified?: boolean; status?: string }): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/admin/companies/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // --- Super Admin CMS Pages ---
+  async getCmsPages(): Promise<CmsPageItem[]> {
+    return this.request<CmsPageItem[]>('/admin/cms/pages');
+  }
+
+  async getCmsPageById(id: string): Promise<CmsPageItem> {
+    return this.request<CmsPageItem>(`/admin/cms/pages/${id}`);
+  }
+
+  async saveCmsPage(page: Partial<CmsPageItem>): Promise<CmsPageItem> {
+    return this.request<CmsPageItem>('/admin/cms/pages', {
+      method: 'POST',
+      body: JSON.stringify(page),
+    });
+  }
+
+  async deleteCmsPage(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/admin/cms/pages/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // --- Super Admin Blogs & Categories ---
+  async getBlogPosts(params?: { categorySlug?: string; search?: string }): Promise<BlogPostItem[]> {
+    const sp = new URLSearchParams();
+    if (params?.categorySlug) sp.append('categorySlug', params.categorySlug);
+    if (params?.search) sp.append('search', params.search);
+    const qs = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<BlogPostItem[]>(`/admin/blogs/posts${qs}`);
+  }
+
+  async saveBlogPost(post: Partial<BlogPostItem>): Promise<BlogPostItem> {
+    return this.request<BlogPostItem>('/admin/blogs/posts', {
+      method: 'POST',
+      body: JSON.stringify(post),
+    });
+  }
+
+  async deleteBlogPost(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/admin/blogs/posts/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getBlogCategories(): Promise<BlogCategoryItem[]> {
+    return this.request<BlogCategoryItem[]>('/admin/blogs/categories');
+  }
+
+  async saveBlogCategory(cat: Partial<BlogCategoryItem>): Promise<BlogCategoryItem> {
+    return this.request<BlogCategoryItem>('/admin/blogs/categories', {
+      method: 'POST',
+      body: JSON.stringify(cat),
+    });
+  }
+
+  // --- Super Admin SEO Configs ---
+  async getSeoConfigs(): Promise<SeoConfigItem[]> {
+    return this.request<SeoConfigItem[]>('/admin/seo/configs');
+  }
+
+  async saveSeoConfig(config: Partial<SeoConfigItem>): Promise<SeoConfigItem> {
+    return this.request<SeoConfigItem>('/admin/seo/configs', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    });
+  }
+
+  // --- Super Admin FAQs ---
+  async getFaqs(audience?: string): Promise<FaqItemData[]> {
+    const qs = audience ? `?audience=${encodeURIComponent(audience)}` : '';
+    return this.request<FaqItemData[]>(`/admin/faqs${qs}`);
+  }
+
+  async saveFaq(faq: Partial<FaqItemData>): Promise<FaqItemData> {
+    return this.request<FaqItemData>('/admin/faqs', {
+      method: 'POST',
+      body: JSON.stringify(faq),
+    });
+  }
+
+  async deleteFaq(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/admin/faqs/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // --- Super Admin Email Broadcasting ---
+  async getBroadcasts(): Promise<EmailBroadcastItem[]> {
+    return this.request<EmailBroadcastItem[]>('/admin/broadcasts');
+  }
+
+  async getBroadcastStats(): Promise<Record<string, number>> {
+    return this.request<Record<string, number>>('/admin/broadcasts/segments/stats');
+  }
+
+  async getBroadcastRecipients(params: {
+    segment?: string;
+    months?: number;
+    skill?: string;
+    searchId?: string;
+    searchName?: string;
+    searchEmail?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<BroadcastRecipientResponse> {
+    const sp = new URLSearchParams();
+    if (params.segment) sp.append('segment', params.segment);
+    if (params.months !== undefined) sp.append('months', String(params.months));
+    if (params.skill) sp.append('skill', params.skill);
+    if (params.searchId) sp.append('searchId', params.searchId);
+    if (params.searchName) sp.append('searchName', params.searchName);
+    if (params.searchEmail) sp.append('searchEmail', params.searchEmail);
+    if (params.page !== undefined) sp.append('page', String(params.page));
+    if (params.limit !== undefined) sp.append('limit', String(params.limit));
+    const qs = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<BroadcastRecipientResponse>(`/admin/broadcasts/recipients${qs}`);
+  }
+
+  async sendBroadcast(data: {
+    campaignName: string;
+    targetSegment: string;
+    subject: string;
+    htmlBody: string;
+    recipientIds?: string[];
+    recipientEmails?: string[];
+  }): Promise<EmailBroadcastItem> {
+    return this.request<EmailBroadcastItem>('/admin/broadcasts/send', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // --- Super Admin Subscription Packages ---
+  async getPackages(): Promise<SubscriptionPackageItem[]> {
+    return this.request<SubscriptionPackageItem[]>('/admin/packages');
+  }
+
+  async savePackage(pkg: Partial<SubscriptionPackageItem>): Promise<SubscriptionPackageItem> {
+    return this.request<SubscriptionPackageItem>('/admin/packages', {
+      method: 'POST',
+      body: JSON.stringify(pkg),
+    });
+  }
+
+  async deletePackage(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/admin/packages/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // --- Super Admin Master System Taxonomies ---
+  async getTaxonomies(type?: string): Promise<SystemTaxonomyItem[]> {
+    const qs = type ? `?type=${encodeURIComponent(type)}` : '';
+    return this.request<SystemTaxonomyItem[]>(`/admin/taxonomies${qs}`);
+  }
+
+  async saveTaxonomy(item: Partial<SystemTaxonomyItem>): Promise<SystemTaxonomyItem> {
+    return this.request<SystemTaxonomyItem>('/admin/taxonomies', {
+      method: 'POST',
+      body: JSON.stringify(item),
+    });
+  }
+
+  async updateTaxonomy(id: string, item: Partial<SystemTaxonomyItem>): Promise<SystemTaxonomyItem> {
+    return this.request<SystemTaxonomyItem>(`/admin/taxonomies/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(item),
+    });
+  }
+
+  async deleteTaxonomy(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/admin/taxonomies/${id}`, {
+      method: 'DELETE',
+    });
   }
 }

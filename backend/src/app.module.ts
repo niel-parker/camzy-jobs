@@ -18,6 +18,15 @@ import { JobPosting } from './jobs/entities/job-posting.entity';
 import { Candidate } from './candidates/entities/candidate.entity';
 import { JobApplication } from './applications/entities/job-application.entity';
 import { BillingTransaction } from './subscriptions/entities/billing-transaction.entity';
+import { Location } from './admin/entities/location.entity';
+import { SkillKeyword } from './admin/entities/skill-keyword.entity';
+import { ExperienceRange } from './admin/entities/experience-range.entity';
+import { SystemTaxonomy } from './admin/entities/system-taxonomy.entity';
+import { CmsPage } from './admin/entities/cms-page.entity';
+import { BlogPost, BlogCategory } from './admin/entities/blog-post.entity';
+import { SeoConfig } from './admin/entities/seo-config.entity';
+import { FaqItem } from './admin/entities/faq-item.entity';
+import { EmailBroadcast } from './admin/entities/email-broadcast.entity';
 
 import { MailModule } from './mail/mail.module';
 
@@ -39,6 +48,16 @@ import { MailModule } from './mail/mail.module';
         JobPosting,
         Candidate,
         JobApplication,
+        Location,
+        SkillKeyword,
+        ExperienceRange,
+        SystemTaxonomy,
+        CmsPage,
+        BlogPost,
+        BlogCategory,
+        SeoConfig,
+        FaqItem,
+        EmailBroadcast,
       ],
       synchronize: true,
       logging: false,

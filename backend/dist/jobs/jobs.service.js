@@ -27,7 +27,7 @@ let JobsService = class JobsService {
         this.userRepo = userRepo;
         this.subRepo = subRepo;
     }
-    async findAll(category, query, tenantId) {
+    async findAll(category, query, tenantId, location, experienceLevel, minExp, maxExp) {
         const qb = this.jobRepo.createQueryBuilder('job')
             .leftJoinAndSelect('job.tenant', 'tenant')
             .where('job.status = :status', { status: job_posting_entity_1.JobStatus.PUBLISHED });
@@ -37,8 +37,21 @@ let JobsService = class JobsService {
         if (category && category !== 'All') {
             qb.andWhere('LOWER(job.category) LIKE LOWER(:category)', { category: `%${category}%` });
         }
-        if (query) {
-            qb.andWhere('(LOWER(job.title) LIKE LOWER(:q) OR LOWER(job.description) LIKE LOWER(:q) OR LOWER(tenant.name) LIKE LOWER(:q))', { q: `%${query}%` });
+        if (location && location !== 'All') {
+            qb.andWhere('(LOWER(job.locationCity) LIKE LOWER(:loc) OR LOWER(job.locationCountry) LIKE LOWER(:loc) OR LOWER(COALESCE(job.locationState, \'\')) LIKE LOWER(:loc))', { loc: `%${location}%` });
+        }
+        if (experienceLevel && experienceLevel !== 'All') {
+            qb.andWhere('job.experienceLevel = :experienceLevel', { experienceLevel });
+        }
+        if (minExp !== undefined && !isNaN(minExp)) {
+            qb.andWhere('job.maxExperience >= :minExp', { minExp });
+        }
+        if (maxExp !== undefined && !isNaN(maxExp)) {
+            qb.andWhere('job.minExperience <= :maxExp', { maxExp });
+        }
+        if (query && query.trim()) {
+            const q = query.trim().toLowerCase();
+            qb.andWhere('(LOWER(job.title) LIKE :q OR LOWER(job.description) LIKE :q OR LOWER(tenant.name) LIKE :q OR LOWER(job.category) LIKE :q OR LOWER(CAST(job.skills AS CHAR)) LIKE :q)', { q: `%${q}%` });
         }
         qb.orderBy('job.createdAt', 'DESC');
         const jobs = await qb.getMany();
@@ -113,8 +126,12 @@ let JobsService = class JobsService {
             salaryMax: jobData.salaryMax || 160000,
             currency: jobData.currency || 'USD',
             isSalaryVisible: jobData.isSalaryVisible ?? true,
-            locationCountry: 'United States',
-            locationCity: jobData.location || 'Remote',
+            locationCountry: jobData.locationCountry || 'United States',
+            locationState: jobData.locationState || null,
+            locationCity: jobData.locationCity || jobData.location || 'Remote',
+            minExperience: jobData.minExperience ?? 0,
+            maxExperience: jobData.maxExperience ?? 5,
+            skills: jobData.skills || [],
             isRemote: jobData.isRemote ?? true,
             isFeatured: jobData.isFeatured ?? false,
             applyType: jobData.applyType || 'INTERNAL',
@@ -153,6 +170,18 @@ let JobsService = class JobsService {
             job.isSalaryVisible = updateData.isSalaryVisible;
         if (updateData.location !== undefined)
             job.locationCity = updateData.location;
+        if (updateData.locationCity !== undefined)
+            job.locationCity = updateData.locationCity;
+        if (updateData.locationState !== undefined)
+            job.locationState = updateData.locationState;
+        if (updateData.locationCountry !== undefined)
+            job.locationCountry = updateData.locationCountry;
+        if (updateData.minExperience !== undefined)
+            job.minExperience = updateData.minExperience;
+        if (updateData.maxExperience !== undefined)
+            job.maxExperience = updateData.maxExperience;
+        if (updateData.skills !== undefined)
+            job.skills = updateData.skills;
         if (updateData.isRemote !== undefined)
             job.isRemote = updateData.isRemote;
         if (updateData.isFeatured !== undefined)
@@ -192,6 +221,9 @@ let JobsService = class JobsService {
             companyLogoUrl: job.tenant ? job.tenant.logoUrl : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=120',
             isConsultancy: false,
             location: job.locationCity || 'Remote',
+            locationCountry: job.locationCountry || 'United States',
+            locationState: job.locationState || undefined,
+            locationCity: job.locationCity || 'Remote',
             isRemote: job.isRemote,
             employmentType: job.employmentType || 'Full-time',
             salaryMin: job.salaryMin ? Number(job.salaryMin) : undefined,
@@ -200,6 +232,9 @@ let JobsService = class JobsService {
             isSalaryVisible: job.isSalaryVisible,
             category: job.category,
             experienceLevel: job.experienceLevel || 'Mid',
+            minExperience: job.minExperience ?? 0,
+            maxExperience: job.maxExperience ?? 5,
+            skills: job.skills || [],
             description: job.description,
             isFeatured: job.isFeatured,
             applyType: job.applyType || 'INTERNAL',

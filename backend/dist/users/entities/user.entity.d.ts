@@ -1,4 +1,5 @@
 import { Tenant } from '../../tenants/entities/tenant.entity';
+import { Candidate } from '../../candidates/entities/candidate.entity';
 export declare enum UserRole {
     SUPER_ADMIN = "SUPER_ADMIN",
     COMPANY_ADMIN = "COMPANY_ADMIN",
@@ -27,6 +28,7 @@ export declare class User {
     status: UserStatus;
     tenant: Tenant;
     tenantId: string;
+    candidate: Candidate;
     createdAt: Date;
     updatedAt: Date;
 }

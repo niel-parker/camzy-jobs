@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation';
 import { useTheme } from '../../../../context/ThemeContext';
 import { SearchableSelect } from '../../../../components/SearchableSelect';
 import { DashboardLayout } from '../../../../components/DashboardLayout';
+import { LocationSearchDropdown } from '../../../../components/LocationSearchDropdown';
+import { SkillKeywordAutocomplete } from '../../../../components/SkillKeywordAutocomplete';
+import { ExperienceRangeSelector } from '../../../../components/ExperienceRangeSelector';
 import { ArrowLeft, Sparkles, AlertCircle, Plus, Trash2, HelpCircle, ExternalLink, FileText, EyeOff, Eye, Gift, Calendar, UserCheck } from 'lucide-react';
 
 interface ScreeningQItem {
@@ -39,6 +42,20 @@ export default function CreateJobPage() {
     applyType: 'INTERNAL' as 'INTERNAL' | 'EXTERNAL',
     applyUrl: '',
   });
+
+  const [minExperience, setMinExperience] = useState<number>(3);
+  const [maxExperience, setMaxExperience] = useState<number>(5);
+  const [locationDetails, setLocationDetails] = useState<{ city: string; state?: string; country: string }>({
+    city: 'San Francisco',
+    state: 'California',
+    country: 'United States',
+  });
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([
+    'TypeScript',
+    'Next.js',
+    'NestJS',
+    'React',
+  ]);
 
   const [selectedBenefits, setSelectedBenefits] = useState<string[]>([
     'Health Insurance',
@@ -92,27 +109,49 @@ export default function CreateJobPage() {
     );
   };
 
-  const categories = [
-    { value: 'Engineering', label: 'Engineering & Software' },
-    { value: 'DevOps & Architecture', label: 'DevOps & Cloud Architecture' },
-    { value: 'Design & Creative', label: 'Design & UI/UX' },
-    { value: 'Artificial Intelligence', label: 'Artificial Intelligence & Data' },
-  ];
+  const [jobTypeTaxonomies, setJobTypeTaxonomies] = useState<any[]>([]);
+  const [careerLevelTaxonomies, setCareerLevelTaxonomies] = useState<any[]>([]);
+  const [functionalAreaTaxonomies, setFunctionalAreaTaxonomies] = useState<any[]>([]);
 
-  const employmentTypes = [
-    { value: 'Full-time', label: 'Full-time Permanent' },
-    { value: 'Part-time', label: 'Part-time Contract' },
-    { value: 'Contract', label: 'Independent Contract' },
-    { value: 'Internship', label: 'Graduate Internship' },
-  ];
+  React.useEffect(() => {
+    Promise.all([
+      sdk.getTaxonomies('job-type').catch(() => []),
+      sdk.getTaxonomies('career-level').catch(() => []),
+      sdk.getTaxonomies('functional-area').catch(() => []),
+    ]).then(([types, levels, areas]) => {
+      if (types?.length) setJobTypeTaxonomies(types);
+      if (levels?.length) setCareerLevelTaxonomies(levels);
+      if (areas?.length) setFunctionalAreaTaxonomies(areas);
+    });
+  }, [sdk]);
 
-  const experienceLevels = [
-    { value: 'Entry', label: 'Entry Level (0-2 Yrs)' },
-    { value: 'Mid', label: 'Mid Level (2-5 Yrs)' },
-    { value: 'Senior', label: 'Senior Level (5-8 Yrs)' },
-    { value: 'Lead', label: 'Lead / Principal (8+ Yrs)' },
-    { value: 'Executive', label: 'Executive Director' },
-  ];
+  const categories = functionalAreaTaxonomies.length > 0
+    ? functionalAreaTaxonomies.map((t) => ({ value: t.name, label: t.name }))
+    : [
+        { value: 'Engineering', label: 'Engineering & Software' },
+        { value: 'DevOps & Architecture', label: 'DevOps & Cloud Architecture' },
+        { value: 'Design & Creative', label: 'Design & UI/UX' },
+        { value: 'Artificial Intelligence', label: 'Artificial Intelligence & Data' },
+      ];
+
+  const employmentTypes = jobTypeTaxonomies.length > 0
+    ? jobTypeTaxonomies.map((t) => ({ value: t.name, label: t.name }))
+    : [
+        { value: 'Full-time', label: 'Full-time Permanent' },
+        { value: 'Part-time', label: 'Part-time Contract' },
+        { value: 'Contract', label: 'Independent Contract' },
+        { value: 'Internship', label: 'Graduate Internship' },
+      ];
+
+  const experienceLevels = careerLevelTaxonomies.length > 0
+    ? careerLevelTaxonomies.map((t) => ({ value: t.name, label: t.name }))
+    : [
+        { value: 'Entry', label: 'Entry Level (0-2 Yrs)' },
+        { value: 'Mid', label: 'Mid Level (2-5 Yrs)' },
+        { value: 'Senior', label: 'Senior Level (5-8 Yrs)' },
+        { value: 'Lead', label: 'Lead / Principal (8+ Yrs)' },
+        { value: 'Executive', label: 'Executive Director' },
+      ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,14 +169,17 @@ export default function CreateJobPage() {
           isRequired: q.isRequired,
         }));
 
-      const parsedSkills = formData.skillsInput.split(',').map((s) => s.trim()).filter(Boolean);
-
       await sdk.createJob({
         title: formData.title,
         category: formData.category,
         employmentType: formData.employmentType,
         experienceLevel: formData.experienceLevel,
-        location: formData.location,
+        minExperience: minExperience,
+        maxExperience: maxExperience,
+        location: formData.location || 'Remote',
+        locationCity: locationDetails.city || formData.location || 'Remote',
+        locationState: locationDetails.state,
+        locationCountry: locationDetails.country || 'United States',
         isRemote: formData.isRemote,
         salaryMin: Number(formData.salaryMin),
         salaryMax: Number(formData.salaryMax),
@@ -147,7 +189,7 @@ export default function CreateJobPage() {
         isFeatured: formData.isFeatured,
         applyType: formData.applyType,
         applyUrl: formData.applyUrl,
-        skills: parsedSkills,
+        skills: selectedSkills.length > 0 ? selectedSkills : ['TypeScript', 'Node.js'],
         benefits: selectedBenefits,
         genderPreference: formData.genderPreference,
         companyName: user?.tenantName || 'Company Tenant',
@@ -220,27 +262,35 @@ export default function CreateJobPage() {
               </div>
             </div>
 
-            {/* Experience Level & Location */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Location & Experience Range Feature */}
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">Experience Level *</label>
-                <SearchableSelect
-                  options={experienceLevels}
-                  value={formData.experienceLevel}
-                  onChange={(val) => setFormData({ ...formData, experienceLevel: val as any })}
-                  placeholder="Select Experience Level..."
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
+                  Job Location (Cities, States, Countries Auto-Dropdown) *
+                </label>
+                <LocationSearchDropdown
+                  value={formData.location}
+                  onChange={(val, details) => {
+                    setFormData({ ...formData, location: val });
+                    if (details) setLocationDetails(details);
+                  }}
+                  placeholder="Search and select city, state, or country..."
+                  required
                 />
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">Job Location City / Country *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="e.g. San Francisco, CA or Remote"
-                  className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-indigo-500"
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                <ExperienceRangeSelector
+                  minYears={minExperience}
+                  maxYears={maxExperience}
+                  experienceLevel={formData.experienceLevel}
+                  onChange={(min, max, lvl) => {
+                    setMinExperience(min);
+                    setMaxExperience(max);
+                    if (lvl) {
+                      setFormData((prev) => ({ ...prev, experienceLevel: lvl as any }));
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -275,16 +325,13 @@ export default function CreateJobPage() {
               </div>
             </div>
 
-            {/* Required Skills Input */}
-            <div>
-              <label className="text-xs font-bold theme-text block mb-1.5">Required Skills & Tech Badges (Comma Separated) *</label>
-              <input
-                type="text"
-                required
-                value={formData.skillsInput}
-                onChange={(e) => setFormData({ ...formData, skillsInput: e.target.value })}
-                placeholder="TypeScript, Next.js, NestJS, MySQL, Docker"
-                className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs theme-text focus:border-indigo-500 outline-none"
+            {/* Required Skills Input with Workday-style Autocomplete */}
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+              <SkillKeywordAutocomplete
+                selectedSkills={selectedSkills}
+                onChange={setSelectedSkills}
+                label="Required Skills & Tech Keywords (Workday-Style Suggestions)"
+                placeholder="Type 'java', 'spring', 'python', 'react' to get Workday suggestions..."
               />
             </div>
 

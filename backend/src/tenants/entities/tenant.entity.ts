@@ -46,6 +46,9 @@ export class Tenant {
   @Column({ type: 'enum', enum: TenantStatus, default: TenantStatus.ACTIVE })
   status: TenantStatus;
 
+  @Column({ default: true })
+  isVerified: boolean;
+
   @OneToMany(() => User, (user) => user.tenant)
   users: User[];
 

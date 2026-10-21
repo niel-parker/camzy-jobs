@@ -63,6 +63,10 @@ __decorate([
     __metadata("design:type", Boolean)
 ], SubscriptionPlan.prototype, "isActive", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'json', nullable: true }),
+    __metadata("design:type", Array)
+], SubscriptionPlan.prototype, "features", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => tenant_subscription_entity_1.TenantSubscription, (sub) => sub.plan),
     __metadata("design:type", Array)
 ], SubscriptionPlan.prototype, "subscriptions", void 0);

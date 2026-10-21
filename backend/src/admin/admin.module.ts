@@ -10,6 +10,15 @@ import { TenantSubscription } from '../subscriptions/entities/tenant-subscriptio
 import { SubscriptionPlan } from '../subscriptions/entities/subscription-plan.entity';
 import { BillingTransaction } from '../subscriptions/entities/billing-transaction.entity';
 import { User } from '../users/entities/user.entity';
+import { Location } from './entities/location.entity';
+import { SkillKeyword } from './entities/skill-keyword.entity';
+import { ExperienceRange } from './entities/experience-range.entity';
+import { SystemTaxonomy } from './entities/system-taxonomy.entity';
+import { CmsPage } from './entities/cms-page.entity';
+import { BlogPost, BlogCategory } from './entities/blog-post.entity';
+import { SeoConfig } from './entities/seo-config.entity';
+import { FaqItem } from './entities/faq-item.entity';
+import { EmailBroadcast } from './entities/email-broadcast.entity';
 
 @Module({
   imports: [
@@ -22,6 +31,16 @@ import { User } from '../users/entities/user.entity';
       SubscriptionPlan,
       BillingTransaction,
       User,
+      Location,
+      SkillKeyword,
+      ExperienceRange,
+      SystemTaxonomy,
+      CmsPage,
+      BlogPost,
+      BlogCategory,
+      SeoConfig,
+      FaqItem,
+      EmailBroadcast,
     ]),
   ],
   controllers: [AdminController],

@@ -87,6 +87,14 @@ __decorate([
     __metadata("design:type", String)
 ], JobPosting.prototype, "experienceLevel", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'int', default: 0 }),
+    __metadata("design:type", Number)
+], JobPosting.prototype, "minExperience", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'int', default: 5 }),
+    __metadata("design:type", Number)
+], JobPosting.prototype, "maxExperience", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 12, scale: 2, nullable: true }),
     __metadata("design:type", Number)
 ], JobPosting.prototype, "salaryMin", void 0);
@@ -106,6 +114,10 @@ __decorate([
     (0, typeorm_1.Column)({ length: 100 }),
     __metadata("design:type", String)
 ], JobPosting.prototype, "locationCountry", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ length: 100, nullable: true }),
+    __metadata("design:type", String)
+], JobPosting.prototype, "locationState", void 0);
 __decorate([
     (0, typeorm_1.Column)({ length: 100 }),
     __metadata("design:type", String)

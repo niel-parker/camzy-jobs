@@ -16,6 +16,9 @@ export interface JobListingDto {
   consultancyName?: string;
   clientCompanyName?: string;
   location: string;
+  locationCountry?: string;
+  locationState?: string;
+  locationCity?: string;
   isRemote: boolean;
   employmentType: string;
   salaryMin?: number;
@@ -24,6 +27,9 @@ export interface JobListingDto {
   isSalaryVisible: boolean;
   category: string;
   experienceLevel: string;
+  minExperience?: number;
+  maxExperience?: number;
+  skills?: string[];
   description: string;
   isFeatured: boolean;
   applyType?: 'INTERNAL' | 'EXTERNAL';
@@ -51,7 +57,15 @@ export class JobsService {
     private readonly subRepo: Repository<TenantSubscription>,
   ) {}
 
-  async findAll(category?: string, query?: string, tenantId?: string): Promise<JobListingDto[]> {
+  async findAll(
+    category?: string,
+    query?: string,
+    tenantId?: string,
+    location?: string,
+    experienceLevel?: string,
+    minExp?: number,
+    maxExp?: number,
+  ): Promise<JobListingDto[]> {
     const qb = this.jobRepo.createQueryBuilder('job')
       .leftJoinAndSelect('job.tenant', 'tenant')
       .where('job.status = :status', { status: JobStatus.PUBLISHED });
@@ -64,10 +78,30 @@ export class JobsService {
       qb.andWhere('LOWER(job.category) LIKE LOWER(:category)', { category: `%${category}%` });
     }
 
-    if (query) {
+    if (location && location !== 'All') {
       qb.andWhere(
-        '(LOWER(job.title) LIKE LOWER(:q) OR LOWER(job.description) LIKE LOWER(:q) OR LOWER(tenant.name) LIKE LOWER(:q))',
-        { q: `%${query}%` },
+        '(LOWER(job.locationCity) LIKE LOWER(:loc) OR LOWER(job.locationCountry) LIKE LOWER(:loc) OR LOWER(COALESCE(job.locationState, \'\')) LIKE LOWER(:loc))',
+        { loc: `%${location}%` },
+      );
+    }
+
+    if (experienceLevel && experienceLevel !== 'All') {
+      qb.andWhere('job.experienceLevel = :experienceLevel', { experienceLevel });
+    }
+
+    if (minExp !== undefined && !isNaN(minExp)) {
+      qb.andWhere('job.maxExperience >= :minExp', { minExp });
+    }
+
+    if (maxExp !== undefined && !isNaN(maxExp)) {
+      qb.andWhere('job.minExperience <= :maxExp', { maxExp });
+    }
+
+    if (query && query.trim()) {
+      const q = query.trim().toLowerCase();
+      qb.andWhere(
+        '(LOWER(job.title) LIKE :q OR LOWER(job.description) LIKE :q OR LOWER(tenant.name) LIKE :q OR LOWER(job.category) LIKE :q OR LOWER(CAST(job.skills AS CHAR)) LIKE :q)',
+        { q: `%${q}%` },
       );
     }
 
@@ -149,8 +183,12 @@ export class JobsService {
       salaryMax: jobData.salaryMax || 160000,
       currency: jobData.currency || 'USD',
       isSalaryVisible: jobData.isSalaryVisible ?? true,
-      locationCountry: 'United States',
-      locationCity: jobData.location || 'Remote',
+      locationCountry: (jobData as any).locationCountry || 'United States',
+      locationState: (jobData as any).locationState || null,
+      locationCity: (jobData as any).locationCity || jobData.location || 'Remote',
+      minExperience: (jobData as any).minExperience ?? 0,
+      maxExperience: (jobData as any).maxExperience ?? 5,
+      skills: (jobData as any).skills || [],
       isRemote: jobData.isRemote ?? true,
       isFeatured: jobData.isFeatured ?? false,
       applyType: jobData.applyType || 'INTERNAL',
@@ -183,6 +221,12 @@ export class JobsService {
     if (updateData.currency !== undefined) job.currency = updateData.currency;
     if (updateData.isSalaryVisible !== undefined) job.isSalaryVisible = updateData.isSalaryVisible;
     if (updateData.location !== undefined) job.locationCity = updateData.location;
+    if ((updateData as any).locationCity !== undefined) job.locationCity = (updateData as any).locationCity;
+    if ((updateData as any).locationState !== undefined) job.locationState = (updateData as any).locationState;
+    if ((updateData as any).locationCountry !== undefined) job.locationCountry = (updateData as any).locationCountry;
+    if ((updateData as any).minExperience !== undefined) job.minExperience = (updateData as any).minExperience;
+    if ((updateData as any).maxExperience !== undefined) job.maxExperience = (updateData as any).maxExperience;
+    if ((updateData as any).skills !== undefined) job.skills = (updateData as any).skills;
     if (updateData.isRemote !== undefined) job.isRemote = updateData.isRemote;
     if (updateData.isFeatured !== undefined) job.isFeatured = updateData.isFeatured;
     if (updateData.applyType !== undefined) job.applyType = updateData.applyType;
@@ -221,6 +265,9 @@ export class JobsService {
       companyLogoUrl: job.tenant ? job.tenant.logoUrl : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=120',
       isConsultancy: false,
       location: job.locationCity || 'Remote',
+      locationCountry: job.locationCountry || 'United States',
+      locationState: job.locationState || undefined,
+      locationCity: job.locationCity || 'Remote',
       isRemote: job.isRemote,
       employmentType: job.employmentType || 'Full-time',
       salaryMin: job.salaryMin ? Number(job.salaryMin) : undefined,
@@ -229,6 +276,9 @@ export class JobsService {
       isSalaryVisible: job.isSalaryVisible,
       category: job.category,
       experienceLevel: job.experienceLevel || 'Mid',
+      minExperience: job.minExperience ?? 0,
+      maxExperience: job.maxExperience ?? 5,
+      skills: job.skills || [],
       description: job.description,
       isFeatured: job.isFeatured,
       applyType: job.applyType || 'INTERNAL',
