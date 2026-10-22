@@ -439,13 +439,13 @@ export class AdminController {
       .leftJoinAndSelect('user.tenant', 'tenant')
       .leftJoinAndSelect('user.candidate', 'candidate');
 
-    if (role === 'CANDIDATES') {
+    if (role === 'CANDIDATES' || role === 'CANDIDATE') {
       qb.where('user.role = :r', { r: UserRole.CANDIDATE });
-    } else if (role === 'EMPLOYERS') {
+    } else if (role === 'EMPLOYERS' || role === 'EMPLOYER') {
       qb.where('user.role IN (:...roles)', {
         roles: [UserRole.COMPANY_ADMIN, UserRole.RECRUITER, UserRole.CONSULTANCY_ADMIN, UserRole.AGENCY_AGENT],
       });
-    } else if (role === 'ADMINS') {
+    } else if (role === 'ADMINS' || role === 'ADMIN' || role === 'SUPER_ADMIN') {
       qb.where('user.role = :r', { r: UserRole.SUPER_ADMIN });
     }
 

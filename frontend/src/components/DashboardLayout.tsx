@@ -134,8 +134,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
   } else {
     navItems = [
       { label: 'Control Center', href: '/admin/dashboard', icon: LayoutDashboard, section: 'Operations & Access' },
-      { label: 'Admin Users', href: '/admin/users', icon: ShieldCheck, section: 'Operations & Access' },
-      { label: 'User Profiles', href: '/admin/profiles', icon: Users, badge: 'Candidates/Employers', section: 'Operations & Access' },
+      { label: 'Camzy Internal Team', href: '/admin/users', icon: ShieldCheck, badge: 'Staff Only', section: 'Operations & Access' },
+      { label: 'Job Seekers & Employers', href: '/admin/profiles', icon: Users, badge: 'Candidates & Cos', section: 'Operations & Access' },
       { label: 'Login Activity', href: '/admin/login-activity', icon: Activity, badge: 'Audit Logs', section: 'Operations & Access' },
       { label: 'Jobs (All Companies)', href: '/admin/jobs', icon: Briefcase, badge: 'Post/View', section: 'Operations & Access' },
       { label: 'Companies Directory', href: '/admin/tenants', icon: Building2, section: 'Operations & Access' },

@@ -8,7 +8,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { AdminUserProfile, CompanyDirectoryItem } from '@job-portal/sdk';
 import { 
   Users, UserCheck, ShieldCheck, Search, Plus, Download, Eye, 
-  Building2, Mail, Phone, CheckCircle2, XCircle, Loader2, RefreshCw, X, AlertCircle, Activity 
+  Building2, Mail, Phone, CheckCircle2, XCircle, Loader2, RefreshCw, X, AlertCircle, Activity, ArrowUpRight 
 } from 'lucide-react';
 import { ProfileResumeModal } from '../../../components/ProfileResumeModal';
 
@@ -176,16 +176,16 @@ function AdminUserProfilesContent() {
           <div>
             <div className="flex items-center space-x-2">
               <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                User Profiles 3-in-1
+                Platform User Directory
               </span>
-              <span className="text-xs font-semibold theme-muted">Candidates, Employers & Admins</span>
+              <span className="text-xs font-semibold theme-muted">Candidates & Employer Accounts</span>
             </div>
             <h1 className="text-2xl font-black theme-text tracking-tight mt-1 flex items-center gap-2">
               <Users className="w-6 h-6 text-indigo-500" />
-              Unified User Directory
+              Job Seekers & Employer Directory
             </h1>
             <p className="text-xs theme-muted mt-1 max-w-2xl">
-              Inspect candidates, employer team recruiters, and administrators. Download resumes or provision new accounts directly.
+              Inspect candidates and employer recruiter accounts. For Camzy Infotech internal administrators, visit <Link href="/admin/users" className="text-rose-500 font-bold hover:underline inline-flex items-center gap-0.5">Camzy Internal Team <ArrowUpRight className="w-3 h-3" /></Link>.
             </p>
           </div>
 
@@ -200,7 +200,7 @@ function AdminUserProfilesContent() {
             </Link>
             <button
               onClick={loadProfiles}
-              className="p-2.5 rounded-xl border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2.5 rounded-xl border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Refresh"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -213,9 +213,29 @@ function AdminUserProfilesContent() {
               className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 flex items-center space-x-2 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Add New User</span>
+              <span>Add Platform User</span>
             </button>
           </div>
+        </div>
+
+        {/* Security & Scope Clarity Notice Banner */}
+        <div className="p-4 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 flex items-start justify-between gap-3 flex-col sm:flex-row">
+          <div className="flex items-start gap-3">
+            <Users className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <h4 className="text-xs font-black theme-text">External Platform Users Directory</h4>
+              <p className="text-[11px] theme-muted leading-relaxed">
+                This console manages external clients: job applicants (Candidates) and hiring teams (Employers). Camzy Infotech internal personnel are strictly isolated under <Link href="/admin/users" className="text-rose-500 font-bold hover:underline">Camzy Internal Team</Link>.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/users"
+            className="flex-shrink-0 px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Camzy Internal Team &rarr;</span>
+          </Link>
         </div>
 
         {/* 3 Submenus / Tab Navigation */}
@@ -229,7 +249,7 @@ function AdminUserProfilesContent() {
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>1. Candidates Directory</span>
+            <span>1. Candidates Directory (Job Seekers)</span>
           </button>
 
           <button
@@ -241,7 +261,7 @@ function AdminUserProfilesContent() {
             }`}
           >
             <Building2 className="w-4 h-4" />
-            <span>2. Employer Users</span>
+            <span>2. Employer Users (Recruiters & Companies)</span>
           </button>
 
           <button
@@ -253,7 +273,7 @@ function AdminUserProfilesContent() {
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
-            <span>3. Administrator Users</span>
+            <span>3. Camzy Internal Staff (Staff Only)</span>
           </button>
         </div>
 
@@ -282,6 +302,22 @@ function AdminUserProfilesContent() {
             Showing <span className="font-bold theme-text">{filteredProfiles.length}</span> profiles
           </div>
         </div>
+
+        {/* Camzy Internal Team Tab Notification */}
+        {activeTab === 'admins' && (
+          <div className="p-3.5 rounded-xl border border-rose-500/20 bg-rose-500/5 flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-semibold">
+              <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+              <span>This list displays Camzy Infotech internal personnel (Superadmins). For dedicated root administration, use the Camzy Internal Team console.</span>
+            </div>
+            <Link
+              href="/admin/users"
+              className="flex-shrink-0 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-[11px] transition-colors"
+            >
+              Open Team Console &rarr;
+            </Link>
+          </div>
+        )}
 
         {/* Profiles Table */}
         <div className="theme-surface border theme-border rounded-2xl shadow-sm overflow-hidden">
@@ -533,8 +569,10 @@ function AdminUserProfilesContent() {
                     <option value="CANDIDATE">Candidate (Job Seeker)</option>
                     <option value="COMPANY_ADMIN">Company Admin (Employer Owner)</option>
                     <option value="RECRUITER">Recruiter (Team Member)</option>
-                    <option value="SUPER_ADMIN">Super Administrator</option>
                   </select>
+                  <p className="text-[10px] theme-muted mt-1">
+                    Looking to add Camzy internal staff? Use the <Link href="/admin/users" className="text-rose-500 font-bold hover:underline">Camzy Internal Team</Link> console.
+                  </p>
                 </div>
 
                 {['COMPANY_ADMIN', 'RECRUITER'].includes(newUserForm.role) && (

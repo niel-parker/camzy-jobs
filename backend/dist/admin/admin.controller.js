@@ -339,15 +339,15 @@ let AdminController = class AdminController {
         const qb = this.userRepo.createQueryBuilder('user')
             .leftJoinAndSelect('user.tenant', 'tenant')
             .leftJoinAndSelect('user.candidate', 'candidate');
-        if (role === 'CANDIDATES') {
+        if (role === 'CANDIDATES' || role === 'CANDIDATE') {
             qb.where('user.role = :r', { r: user_entity_1.UserRole.CANDIDATE });
         }
-        else if (role === 'EMPLOYERS') {
+        else if (role === 'EMPLOYERS' || role === 'EMPLOYER') {
             qb.where('user.role IN (:...roles)', {
                 roles: [user_entity_1.UserRole.COMPANY_ADMIN, user_entity_1.UserRole.RECRUITER, user_entity_1.UserRole.CONSULTANCY_ADMIN, user_entity_1.UserRole.AGENCY_AGENT],
             });
         }
-        else if (role === 'ADMINS') {
+        else if (role === 'ADMINS' || role === 'ADMIN' || role === 'SUPER_ADMIN') {
             qb.where('user.role = :r', { r: user_entity_1.UserRole.SUPER_ADMIN });
         }
         if (search && search.trim()) {

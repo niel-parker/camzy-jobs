@@ -9,7 +9,7 @@ import {
   Activity, ShieldCheck, ShieldAlert, KeyRound, Smartphone, Search,
   RefreshCw, Download, Trash2, CheckCircle2, XCircle, AlertTriangle,
   Monitor, Tablet, Phone, Globe, Info, Clock, ChevronLeft, ChevronRight,
-  ExternalLink, Copy, Check, Filter, Database, ArrowUpRight, Lock, Eye, X
+  ExternalLink, Copy, Check, Filter, Database, ArrowUpRight, Lock, Eye, X, Users
 } from 'lucide-react';
 
 export default function AdminLoginActivityPage() {
@@ -446,20 +446,21 @@ export default function AdminLoginActivityPage() {
               </button>
             </div>
 
-            {/* Quick Links to Admin Users & User Profiles */}
+            {/* Quick Links to Camzy Internal Team & Job Seekers & Employers */}
             <div className="flex items-center gap-2">
               <Link
                 href="/admin/users"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border theme-border transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-500/20 transition-all"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
-                Admin Accounts
+                Camzy Internal Team
               </Link>
               <Link
                 href="/admin/profiles"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border theme-border transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 border border-indigo-500/20 transition-all"
               >
-                User Profiles
+                <Users className="w-3.5 h-3.5" />
+                Job Seekers & Employers
                 <ArrowUpRight className="w-3.5 h-3.5 text-slate-400" />
               </Link>
             </div>
