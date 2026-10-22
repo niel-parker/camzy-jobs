@@ -10,8 +10,6 @@ out/
 build/
 
 # NestJS / TypeScript Compilation Output
-dist/
-**/dist/
 *.tsbuildinfo
 
 # Environment & Secrets Files

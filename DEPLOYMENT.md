@@ -21,15 +21,20 @@ DB_PASS=job_password
 DB_NAME=job_portal_db
 REDIS_HOST=localhost
 REDIS_PORT=6379
-JWT_SECRET=super_secret_jwt_key_here
+JWT_SECRET=super_secret_jwt_key_camzy_jobs_2026_enterprise
 STRIPE_SECRET_KEY=sk_test_51UOPRtIeu7vvxPLc3VaRMJDdlMzK00tDlUoFZUlqWpIccZ1xHoCz4hxkL7qFoMJl3LrXiH2aMK1Zf2qxf4wszWfS00pxU3Dt0W
 STRIPE_WEBHOOK_SECRET=whsec_...
+MAIL_HOST=smtp.mailgun.org
+MAIL_PORT=587
+MAIL_USERNAME=postmaster@camzyjobs.com
+MAIL_PASSWORD=dfc32017356244417addabe87d1e0d6d-6fafb9bf-fcba5c32
+MAIL_FROM="Camzy Jobs Security" <postmaster@camzyjobs.com>
 ```
 
 ### Frontend (`website/frontend/.env.local`)
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
 ## 4. Docker Deployment Instructions
