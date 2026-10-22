@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Headers, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Post, Query, Req } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import { AuthService } from './auth.service';
 
 @ApiTags('Authentication')
@@ -7,11 +8,30 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  private getClientMeta(req: Request) {
+    const rawForwarded = req.headers['x-forwarded-for'];
+    const forwarded = Array.isArray(rawForwarded) ? rawForwarded[0] : rawForwarded;
+    const ipAddress = forwarded || req.socket?.remoteAddress || req.ip || '127.0.0.1';
+    const userAgent = (req.headers['user-agent'] as string) || '';
+    return { ipAddress, userAgent };
+  }
+
+  @Get('check-domain')
+  @ApiOperation({ summary: 'Check if an email domain is restricted for employer registration' })
+  async checkDomain(@Query('email') email?: string, @Query('domain') domain?: string) {
+    const target = email || domain || '';
+    return await this.authService.checkDomainRestriction(target);
+  }
+
   @Post('login')
   @ApiOperation({ summary: 'Login user & retrieve JWT access token' })
-  async login(@Body() body: { email: string; password?: string; password_hash?: string; passwordHash?: string }) {
+  async login(
+    @Body() body: { email: string; password?: string; password_hash?: string; passwordHash?: string },
+    @Req() req: Request,
+  ) {
     const pwd = body.password || body.password_hash || body.passwordHash;
-    return await this.authService.login(body.email, pwd);
+    const meta = this.getClientMeta(req);
+    return await this.authService.login(body.email, pwd, meta);
   }
 
   @Post('register/company')
@@ -35,9 +55,13 @@ export class AuthController {
 
   @Post('verify-otp')
   @ApiOperation({ summary: 'Verify OTP code and log in or register user' })
-  async verifyOtp(@Body() body: { identifier?: string; email?: string; phone?: string; otp: string }) {
+  async verifyOtp(
+    @Body() body: { identifier?: string; email?: string; phone?: string; otp: string },
+    @Req() req: Request,
+  ) {
     const target = body.identifier || body.email || body.phone || '';
-    return await this.authService.verifyOtp(target, body.otp);
+    const meta = this.getClientMeta(req);
+    return await this.authService.verifyOtp(target, body.otp, meta);
   }
 
   @Post('share-job')

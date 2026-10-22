@@ -17,6 +17,8 @@ import { BlogPost, BlogCategory } from '../admin/entities/blog-post.entity';
 import { SeoConfig } from '../admin/entities/seo-config.entity';
 import { FaqItem } from '../admin/entities/faq-item.entity';
 import { EmailBroadcast } from '../admin/entities/email-broadcast.entity';
+import { RestrictedDomain } from '../admin/entities/restricted-domain.entity';
+import { LoginActivity } from '../admin/entities/login-activity.entity';
 export declare class SeedService implements OnModuleInit {
     private readonly userRepo;
     private readonly tenantRepo;
@@ -36,10 +38,14 @@ export declare class SeedService implements OnModuleInit {
     private readonly seoRepo;
     private readonly faqRepo;
     private readonly broadcastRepo;
+    private readonly domainRepo;
+    private readonly loginActivityRepo;
     private readonly logger;
-    constructor(userRepo: Repository<User>, tenantRepo: Repository<Tenant>, planRepo: Repository<SubscriptionPlan>, subRepo: Repository<TenantSubscription>, txnRepo: Repository<BillingTransaction>, jobRepo: Repository<JobPosting>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>);
+    constructor(userRepo: Repository<User>, tenantRepo: Repository<Tenant>, planRepo: Repository<SubscriptionPlan>, subRepo: Repository<TenantSubscription>, txnRepo: Repository<BillingTransaction>, jobRepo: Repository<JobPosting>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>, domainRepo: Repository<RestrictedDomain>, loginActivityRepo: Repository<LoginActivity>);
     onModuleInit(): Promise<void>;
     seedAll(): Promise<void>;
     seedTaxonomiesAndCms(): Promise<void>;
     seedBroadcastUsers(): Promise<void>;
+    seedRestrictedDomains(): Promise<void>;
+    seedLoginActivities(): Promise<void>;
 }

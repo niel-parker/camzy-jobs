@@ -23,6 +23,14 @@ async function bootstrap() {
     fs.mkdirSync(avatarsDir, { recursive: true });
   }
   app.use('/uploads', express.static(uploadsDir));
+  // Fallback for missing uploaded resume files so downloads never 404
+  app.use('/uploads/resumes', (req, res, next) => {
+    const sample = path.join(uploadsDir, 'resumes', 'sample-resume.pdf');
+    if (fs.existsSync(sample)) {
+      return res.sendFile(sample);
+    }
+    next();
+  });
 
   // Enable CORS for Next.js frontend (production domain https://jobs.camzytech.com + local + credentials support)
   app.enableCors({

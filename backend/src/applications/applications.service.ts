@@ -11,6 +11,8 @@ export interface ApplicationDto {
   jobTitle: string;
   candidateId: string;
   candidateName: string;
+  candidateEmail?: string;
+  candidatePhone?: string;
   candidateHeadline: string;
   coverLetter?: string;
   resumeUrlSnapshot: string;
@@ -108,6 +110,8 @@ export class ApplicationsService {
     const candidateName = app.candidate?.user
       ? `${app.candidate.user.firstName} ${app.candidate.user.lastName}`
       : 'Candidate';
+    const candidateEmail = app.candidate?.user?.email || '';
+    const candidatePhone = app.candidate?.user?.phoneNumber || '';
 
     return {
       id: app.id,
@@ -115,6 +119,8 @@ export class ApplicationsService {
       jobTitle: app.job?.title || 'Senior Full Stack Engineer',
       candidateId: app.candidateId,
       candidateName,
+      candidateEmail,
+      candidatePhone,
       candidateHeadline: app.candidate?.headline || 'Senior Engineer',
       coverLetter: app.coverLetter || '',
       resumeUrlSnapshot: app.resumeUrlSnapshot || '',

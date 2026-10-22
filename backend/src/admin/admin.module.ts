@@ -19,6 +19,8 @@ import { BlogPost, BlogCategory } from './entities/blog-post.entity';
 import { SeoConfig } from './entities/seo-config.entity';
 import { FaqItem } from './entities/faq-item.entity';
 import { EmailBroadcast } from './entities/email-broadcast.entity';
+import { RestrictedDomain } from './entities/restricted-domain.entity';
+import { LoginActivity } from './entities/login-activity.entity';
 
 @Module({
   imports: [
@@ -41,6 +43,8 @@ import { EmailBroadcast } from './entities/email-broadcast.entity';
       SeoConfig,
       FaqItem,
       EmailBroadcast,
+      RestrictedDomain,
+      LoginActivity,
     ]),
   ],
   controllers: [AdminController],

@@ -18,6 +18,8 @@ import { BlogPost, BlogCategory } from '../admin/entities/blog-post.entity';
 import { SeoConfig } from '../admin/entities/seo-config.entity';
 import { FaqItem } from '../admin/entities/faq-item.entity';
 import { EmailBroadcast } from '../admin/entities/email-broadcast.entity';
+import { RestrictedDomain } from '../admin/entities/restricted-domain.entity';
+import { LoginActivity } from '../admin/entities/login-activity.entity';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { EmailBroadcast } from '../admin/entities/email-broadcast.entity';
       SeoConfig,
       FaqItem,
       EmailBroadcast,
+      RestrictedDomain,
+      LoginActivity,
     ]),
   ],
   providers: [SeedService],

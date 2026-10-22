@@ -23,6 +23,11 @@ import {
   ThemeConfig,
   UploadResumeResponse,
   User,
+  RestrictedDomainItem,
+  AtsApplicationItem,
+  LoginActivityItem,
+  LoginActivityStats,
+  PaginatedLoginActivities,
 } from './types';
 
 declare const process: any;
@@ -639,6 +644,97 @@ export class JobPortalSdk {
 
   async deleteTaxonomy(id: string): Promise<{ success: boolean }> {
     return this.request<{ success: boolean }>(`/admin/taxonomies/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // --- Super Admin Restricted Email Domains ---
+  async getRestrictedDomains(): Promise<RestrictedDomainItem[]> {
+    return this.request<RestrictedDomainItem[]>('/admin/restricted-domains');
+  }
+
+  async createRestrictedDomain(data: { domain: string; description?: string; isActive?: boolean }): Promise<RestrictedDomainItem> {
+    return this.request<RestrictedDomainItem>('/admin/restricted-domains', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateRestrictedDomain(id: string, data: Partial<RestrictedDomainItem>): Promise<RestrictedDomainItem> {
+    return this.request<RestrictedDomainItem>(`/admin/restricted-domains/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteRestrictedDomain(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/admin/restricted-domains/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async seedDefaultRestrictedDomains(): Promise<any> {
+    return this.request<any>('/admin/restricted-domains/seed-defaults', {
+      method: 'POST',
+    });
+  }
+
+  async checkEmailDomain(emailOrDomain: string): Promise<{ domain: string; restricted: boolean; message?: string }> {
+    return this.request<{ domain: string; restricted: boolean; message?: string }>(
+      `/auth/check-domain?email=${encodeURIComponent(emailOrDomain)}`,
+    );
+  }
+
+  // --- Recruiter ATS Applications & Pipeline ---
+  async getAtsApplications(jobId?: string): Promise<AtsApplicationItem[]> {
+    const qs = jobId ? `?jobId=${encodeURIComponent(jobId)}` : '';
+    return this.request<AtsApplicationItem[]>(`/applications${qs}`);
+  }
+
+  async updateAtsStage(id: string, stage: string, rating?: number): Promise<AtsApplicationItem> {
+    return this.request<AtsApplicationItem>(`/applications/${id}/stage`, {
+      method: 'PATCH',
+      body: JSON.stringify({ stage, rating }),
+    });
+  }
+
+  // --- Super Admin Login Activity & Audit Logs ---
+  async getLoginActivities(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    role?: string;
+    method?: string;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<PaginatedLoginActivities> {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.append('page', String(params.page));
+    if (params?.limit) sp.append('limit', String(params.limit));
+    if (params?.status) sp.append('status', params.status);
+    if (params?.role) sp.append('role', params.role);
+    if (params?.method) sp.append('method', params.method);
+    if (params?.search) sp.append('search', params.search);
+    if (params?.startDate) sp.append('startDate', params.startDate);
+    if (params?.endDate) sp.append('endDate', params.endDate);
+    const qs = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<PaginatedLoginActivities>(`/admin/login-activities${qs}`);
+  }
+
+  async getLoginActivityStats(): Promise<LoginActivityStats> {
+    return this.request<LoginActivityStats>('/admin/login-activities/stats');
+  }
+
+  async seedDemoLoginActivities(): Promise<{ message: string; count: number }> {
+    return this.request<{ message: string; count: number }>('/admin/login-activities/seed-demo', {
+      method: 'POST',
+    });
+  }
+
+  async clearLoginActivities(olderThanDays?: number): Promise<{ message: string }> {
+    const qs = olderThanDays ? `?olderThanDays=${olderThanDays}` : '';
+    return this.request<{ message: string }>(`/admin/login-activities/clear${qs}`, {
       method: 'DELETE',
     });
   }

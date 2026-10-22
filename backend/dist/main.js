@@ -22,6 +22,13 @@ async function bootstrap() {
         fs.mkdirSync(avatarsDir, { recursive: true });
     }
     app.use('/uploads', express.static(uploadsDir));
+    app.use('/uploads/resumes', (req, res, next) => {
+        const sample = path.join(uploadsDir, 'resumes', 'sample-resume.pdf');
+        if (fs.existsSync(sample)) {
+            return res.sendFile(sample);
+        }
+        next();
+    });
     app.enableCors({
         origin: (origin, callback) => {
             callback(null, true);

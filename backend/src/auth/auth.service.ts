@@ -7,6 +7,8 @@ import { Tenant, TenantType, TenantStatus } from '../tenants/entities/tenant.ent
 import { Candidate } from '../candidates/entities/candidate.entity';
 import { TenantSubscription, SubscriptionStatus } from '../subscriptions/entities/tenant-subscription.entity';
 import { SubscriptionPlan, PlanCode } from '../subscriptions/entities/subscription-plan.entity';
+import { RestrictedDomain } from '../admin/entities/restricted-domain.entity';
+import { LoginActivity, LoginStatus, LoginMethod } from '../admin/entities/login-activity.entity';
 import { MailService } from '../mail/mail.service';
 
 export interface UserDto {
@@ -42,11 +44,99 @@ export class AuthService {
     private readonly subRepo: Repository<TenantSubscription>,
     @InjectRepository(SubscriptionPlan)
     private readonly planRepo: Repository<SubscriptionPlan>,
+    @InjectRepository(RestrictedDomain)
+    private readonly domainRepo: Repository<RestrictedDomain>,
+    @InjectRepository(LoginActivity)
+    private readonly activityRepo: Repository<LoginActivity>,
     private readonly mailService: MailService,
   ) {}
 
-  async login(email: string, rawPassword?: string) {
+  private parseUserAgent(ua?: string) {
+    if (!ua) {
+      return { browser: 'Browser / Direct API', os: 'Unknown OS', deviceType: 'Desktop' };
+    }
+    let browser = 'Browser';
+    let os = 'Unknown OS';
+    let deviceType = 'Desktop';
+
+    if (/mobile/i.test(ua)) deviceType = 'Mobile';
+    else if (/tablet|ipad/i.test(ua)) deviceType = 'Tablet';
+    else deviceType = 'Desktop';
+
+    if (/edg/i.test(ua)) browser = 'Edge';
+    else if (/opr|opera/i.test(ua)) browser = 'Opera';
+    else if (/chrome|crios/i.test(ua)) browser = 'Chrome';
+    else if (/firefox|fxios/i.test(ua)) browser = 'Firefox';
+    else if (/safari/i.test(ua)) browser = 'Safari';
+    else if (/postman/i.test(ua)) browser = 'Postman';
+    else if (/curl/i.test(ua)) browser = 'cURL';
+
+    if (/macintosh|mac os x/i.test(ua)) os = 'macOS';
+    else if (/windows nt 10/i.test(ua)) os = 'Windows 10/11';
+    else if (/windows/i.test(ua)) os = 'Windows';
+    else if (/android/i.test(ua)) os = 'Android';
+    else if (/iphone|ipad|ipod/i.test(ua)) os = 'iOS';
+    else if (/linux/i.test(ua)) os = 'Linux';
+
+    return { browser, os, deviceType };
+  }
+
+  async recordLoginActivity(data: {
+    email: string;
+    userId?: string | null;
+    userName?: string | null;
+    role?: string | null;
+    status: LoginStatus | string;
+    failureReason?: string | null;
+    loginMethod?: LoginMethod | string;
+    ipAddress?: string;
+    userAgent?: string;
+  }) {
+    try {
+      let rawIp = (data.ipAddress || '127.0.0.1').split(',')[0].trim();
+      if (rawIp.startsWith('::ffff:')) rawIp = rawIp.replace('::ffff:', '');
+      if (rawIp === '::1') rawIp = '127.0.0.1';
+
+      let location = 'External Client';
+      if (rawIp === '127.0.0.1' || rawIp === 'localhost') {
+        location = 'Local Network / Dev';
+      } else if (rawIp.startsWith('192.168.') || rawIp.startsWith('10.') || rawIp.startsWith('172.16.')) {
+        location = 'Private Intranet';
+      }
+
+      const { browser, os, deviceType } = this.parseUserAgent(data.userAgent);
+
+      const log = this.activityRepo.create({
+        email: data.email,
+        userId: data.userId || null,
+        userName: data.userName || null,
+        role: data.role || null,
+        ipAddress: rawIp,
+        userAgent: data.userAgent ? data.userAgent.slice(0, 500) : null,
+        deviceType,
+        browser,
+        os,
+        status: data.status,
+        failureReason: data.failureReason || null,
+        loginMethod: data.loginMethod || LoginMethod.PASSWORD,
+        location,
+      });
+
+      await this.activityRepo.save(log);
+    } catch (err) {
+      console.error('Failed to log login activity:', err);
+    }
+  }
+
+  async login(email: string, rawPassword?: string, meta?: { ipAddress?: string; userAgent?: string }) {
     if (!email || !rawPassword) {
+      await this.recordLoginActivity({
+        email: email || 'unknown',
+        status: LoginStatus.FAILED,
+        failureReason: 'Email address and password are required',
+        loginMethod: LoginMethod.PASSWORD,
+        ...meta,
+      });
       throw new BadRequestException('Email address and password are required.');
     }
 
@@ -59,13 +149,20 @@ export class AuthService {
     });
 
     if (!user) {
+      await this.recordLoginActivity({
+        email: cleanEmail,
+        status: LoginStatus.FAILED,
+        failureReason: 'Account not found with this email',
+        loginMethod: LoginMethod.PASSWORD,
+        ...meta,
+      });
       throw new UnauthorizedException('Invalid email or password.');
     }
 
     // Verify Password (bcrypt match or exact string match fallback)
     let isValidPassword = false;
     if (user.passwordHash) {
-      if (user.passwordHash.startsWith('$2a$') || user.passwordHash.startsWith('$2b$')) {
+      if (user.passwordHash.startsWith('$2a$') || user.passwordHash.startsWith('$2b$') || user.passwordHash.startsWith('$2y$')) {
         isValidPassword = bcrypt.compareSync(rawPassword, user.passwordHash);
       } else {
         isValidPassword = user.passwordHash === rawPassword;
@@ -73,12 +170,45 @@ export class AuthService {
     }
 
     if (!isValidPassword) {
+      await this.recordLoginActivity({
+        email: cleanEmail,
+        userId: user.id,
+        userName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        role: user.role,
+        status: LoginStatus.FAILED,
+        failureReason: 'Invalid password provided',
+        loginMethod: LoginMethod.PASSWORD,
+        ...meta,
+      });
       throw new UnauthorizedException('Invalid email or password.');
     }
 
     if (user.status === UserStatus.BANNED || user.status === UserStatus.INACTIVE) {
+      await this.recordLoginActivity({
+        email: cleanEmail,
+        userId: user.id,
+        userName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        role: user.role,
+        status: LoginStatus.FAILED,
+        failureReason: 'Account has been disabled or suspended',
+        loginMethod: LoginMethod.PASSWORD,
+        ...meta,
+      });
       throw new UnauthorizedException('Your account has been disabled or suspended.');
     }
+
+    user.lastLoginAt = new Date();
+    await this.userRepo.save(user);
+
+    await this.recordLoginActivity({
+      email: cleanEmail,
+      userId: user.id,
+      userName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+      role: user.role,
+      status: LoginStatus.SUCCESS,
+      loginMethod: LoginMethod.PASSWORD,
+      ...meta,
+    });
 
     const dto = await this.mapToDto(user);
 
@@ -86,6 +216,40 @@ export class AuthService {
       accessToken: `jwt-user-token-${user.id}-${Date.now()}`,
       user: dto,
     };
+  }
+
+  async checkDomainRestriction(emailOrDomain: string): Promise<{ restricted: boolean; domain: string; message?: string }> {
+    if (!emailOrDomain) return { restricted: false, domain: '' };
+    const trimmed = emailOrDomain.toLowerCase().trim();
+    const domain = trimmed.includes('@') ? trimmed.split('@').pop()?.trim() || '' : trimmed.replace(/^@+/, '');
+
+    if (!domain) return { restricted: false, domain: '' };
+
+    // Check exact active domain match
+    const matched = await this.domainRepo.findOne({
+      where: { domain, isActive: true },
+    });
+
+    if (matched) {
+      return {
+        restricted: true,
+        domain,
+        message: `Registration with email domain "@${domain}" is restricted for employers. Please use your corporate or company work email (e.g. name@yourcompany.com).`,
+      };
+    }
+
+    // Check subdomain (e.g. mail.gmail.com)
+    const allActive = await this.domainRepo.find({ where: { isActive: true } });
+    const parentMatch = allActive.find((d) => domain.endsWith(`.${d.domain}`));
+    if (parentMatch) {
+      return {
+        restricted: true,
+        domain,
+        message: `Registration with email domain "@${domain}" is restricted for employers. Please use your corporate or company work email (e.g. name@yourcompany.com).`,
+      };
+    }
+
+    return { restricted: false, domain };
   }
 
   async registerCompany(body: {
@@ -105,6 +269,11 @@ export class AuthService {
     }
 
     const cleanEmail = body.adminEmail.toLowerCase().trim();
+
+    const domainCheck = await this.checkDomainRestriction(cleanEmail);
+    if (domainCheck.restricted) {
+      throw new BadRequestException(domainCheck.message);
+    }
 
     const existingUser = await this.userRepo.findOne({
       where: { email: cleanEmail },
@@ -298,8 +467,15 @@ export class AuthService {
     };
   }
 
-  async verifyOtp(identifier: string, otpCode: string) {
+  async verifyOtp(identifier: string, otpCode: string, meta?: { ipAddress?: string; userAgent?: string }) {
     if (!identifier || !otpCode) {
+      await this.recordLoginActivity({
+        email: identifier || 'unknown',
+        status: LoginStatus.FAILED,
+        failureReason: 'Identifier and OTP code are required',
+        loginMethod: LoginMethod.OTP,
+        ...meta,
+      });
       throw new BadRequestException('Email/Phone and OTP code are required.');
     }
 
@@ -310,6 +486,13 @@ export class AuthService {
       (cached && cached.code === otpCode && Date.now() <= cached.expiresAt) || otpCode === '123456';
 
     if (!isValidOtp) {
+      await this.recordLoginActivity({
+        email: clean,
+        status: LoginStatus.FAILED,
+        failureReason: 'Invalid or expired OTP verification code',
+        loginMethod: LoginMethod.OTP,
+        ...meta,
+      });
       throw new UnauthorizedException('Invalid or expired OTP verification code. Please request a new code.');
     }
 
@@ -355,6 +538,16 @@ export class AuthService {
       else user.isPhoneVerified = true;
       await this.userRepo.save(user);
     }
+
+    await this.recordLoginActivity({
+      email: user.email,
+      userId: user.id,
+      userName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+      role: user.role,
+      status: LoginStatus.SUCCESS,
+      loginMethod: LoginMethod.OTP,
+      ...meta,
+    });
 
     const dto = await this.mapToDto(user);
 

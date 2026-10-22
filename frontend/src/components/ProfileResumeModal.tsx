@@ -12,6 +12,7 @@ interface ProfileResumeModalProps {
   onClose: () => void;
   candidate: {
     id?: string;
+    userId?: string;
     user?: {
       firstName?: string;
       lastName?: string;
@@ -32,49 +33,14 @@ interface ProfileResumeModalProps {
     expectedSalary?: number | string;
     noticePeriod?: string;
     preferredLocations?: string[];
+    resumeUrl?: string;
+    resumes?: Array<any>;
     skills?: string[] | string;
-    experience?: Array<{
-      id?: string;
-      designation: string;
-      companyName: string;
-      isCurrentJob?: boolean;
-      startDate?: string;
-      endDate?: string;
-      noticePeriod?: string;
-      location?: string;
-      jobSummary?: string;
-      rolesAndResponsibilities?: string;
-    }>;
-    education?: Array<{
-      id?: string;
-      degree: string;
-      fieldOfStudy?: string;
-      institution: string;
-      startYear?: string;
-      endYear?: string;
-      grade?: string;
-    }>;
-    certifications?: Array<{
-      id?: string;
-      title: string;
-      issuingOrganization: string;
-      issueDate?: string;
-      expiryDate?: string;
-      credentialUrl?: string;
-    }>;
-    projects?: Array<{
-      id?: string;
-      projectTitle: string;
-      client?: string;
-      role?: string;
-      projectDescription?: string;
-      technologies?: string[];
-      projectUrl?: string;
-    }>;
-    languages?: Array<{
-      language: string;
-      proficiency: string;
-    }>;
+    experience?: Array<any>;
+    education?: Array<any>;
+    certifications?: Array<any>;
+    projects?: Array<any>;
+    languages?: Array<any>;
     socialLinks?: {
       github?: string;
       linkedin?: string;
@@ -89,99 +55,31 @@ export const ProfileResumeModal: React.FC<ProfileResumeModalProps> = ({ isOpen, 
 
   if (!isOpen || !candidate) return null;
 
-  const fallbackExperiences = [
-    {
-      id: 'exp-1',
-      designation: 'Senior Full Stack Engineer',
-      companyName: 'TechCorp Global',
-      isCurrentJob: true,
-      startDate: '03/2022',
-      endDate: 'Present',
-      location: 'Bengaluru, India',
-      noticePeriod: 'Immediate',
-      jobSummary: 'Architecting high-scale micro-frontends with Next.js and resilient NestJS backend APIs.',
-      rolesAndResponsibilities: '• Architected resilient microservices and reduced API latency by 45%.\n• Designed and delivered responsive high-conversion UI workflows in Next.js.\n• Spearheaded sprint cycles, code reviews, and mentored junior team engineers.\n• Automated CI/CD deployment pipelines using Docker and GitHub Actions.',
-    },
-    {
-      id: 'exp-2',
-      designation: 'Full Stack Developer',
-      companyName: 'InnoTech Solutions',
-      isCurrentJob: false,
-      startDate: '06/2018',
-      endDate: '02/2022',
-      location: 'Mumbai, India',
-      noticePeriod: '30 Days',
-      jobSummary: 'Developed core SaaS web products, authentication modules, and transactional database services.',
-      rolesAndResponsibilities: '• Built responsive web applications using React, Node.js, Express, and MySQL.\n• Implemented secure JWT authentication and role-based access control.\n• Integrated third-party payment workflows and webhook event handlers.\n• Optimized database indexes, reducing query bottlenecks by 35%.',
-    },
-  ];
+  const resolveResumeUrl = (rawUrl?: string) => {
+    if (!rawUrl || rawUrl.includes('example.com')) {
+      return 'http://localhost:4000/uploads/resumes/sample-resume.pdf';
+    }
+    if (rawUrl.startsWith('/uploads')) {
+      const apiHost = typeof window !== 'undefined' && window.location.hostname === 'jobs.camzytech.com'
+        ? 'https://api.jobs.camzytech.com'
+        : 'http://localhost:4000';
+      return `${apiHost}${rawUrl}`;
+    }
+    return rawUrl;
+  };
 
-  const fallbackEducations = [
-    {
-      id: 'edu-1',
-      degree: 'B.Tech in Computer Science & Engineering',
-      fieldOfStudy: 'Software Engineering',
-      institution: 'Rajasthan Technical University (RTU)',
-      startYear: '2014',
-      endYear: '2018',
-      grade: '8.6 CGPA / Distinction',
-    },
-  ];
+  const isMockTemplate = !candidate.id && !candidate.user?.email && !candidate.email;
 
-  const fallbackCerts = [
-    {
-      id: 'cert-1',
-      title: 'AWS Certified Solutions Architect',
-      issuingOrganization: 'Amazon Web Services (AWS)',
-      issueDate: '01/2023',
-      expiryDate: '01/2026',
-      credentialUrl: 'https://aws.amazon.com/verify/123456',
-    },
-    {
-      id: 'cert-2',
-      title: 'Meta Certified Full-Stack Developer',
-      issuingOrganization: 'Meta / Coursera',
-      issueDate: '08/2022',
-      expiryDate: 'Lifetime',
-      credentialUrl: 'https://coursera.org/verify/meta-fullstack',
-    },
-  ];
-
-  const fallbackProjects = [
-    {
-      id: 'proj-1',
-      projectTitle: 'Enterprise Multi-Tenant Job Portal & ATS',
-      role: 'Lead Architect',
-      client: 'Enterprise SaaS',
-      projectDescription: 'Architected modern recruitment engine featuring candidate resume builder, multi-channel job postings, and employer ATS kanban pipeline.',
-      technologies: ['Next.js', 'NestJS', 'TypeScript', 'MySQL', 'Docker', 'Tailwind CSS'],
-      projectUrl: 'https://jobs.camzytech.com',
-    },
-    {
-      id: 'proj-2',
-      projectTitle: 'High-Throughput Payment & Billing Microservice',
-      role: 'Backend Engineer',
-      client: 'FinTech Core',
-      projectDescription: 'Constructed asynchronous webhook listener and Stripe subscription billing engine processing 10k+ daily transactions.',
-      technologies: ['NestJS', 'Redis', 'Stripe API', 'PostgreSQL', 'TypeORM'],
-      projectUrl: 'https://github.com/nileshchoubisa/billing-service',
-    },
-  ];
-
-  const fallbackLangs = ['English (Professional / Fluent)', 'Hindi (Native)'];
-
-  const firstName = candidate.user?.firstName || candidate.firstName || 'Nilesh';
-  const lastName = candidate.user?.lastName || candidate.lastName || 'Choubisa';
-  const fullName = `${firstName} ${lastName}`.trim();
-  const email = candidate.user?.email || candidate.email || 'candidate@example.com';
-  const phone = candidate.user?.phoneNumber || candidate.phoneNumber || '9664085446';
+  const firstName = candidate.user?.firstName || candidate.firstName || '';
+  const lastName = candidate.user?.lastName || candidate.lastName || '';
+  const fullName = `${firstName} ${lastName}`.trim() || candidate.user?.email?.split('@')[0] || candidate.email?.split('@')[0] || (isMockTemplate ? 'Candidate Name' : 'Verified Candidate');
+  const email = candidate.user?.email || candidate.email || '';
+  const phone = candidate.user?.phoneNumber || candidate.phoneNumber || '';
   const avatar = candidate.user?.avatarUrl || candidate.avatarUrl || '';
-  const headline = candidate.headline || candidate.currentTitle || 'Senior Full Stack Engineer | Next.js & NestJS Expert';
-  const summary = candidate.summary || 'Passionate Senior Full Stack Engineer with 6+ years building enterprise web applications, high-scale microservices, distributed architectures, and modern design systems.';
+  const headline = candidate.headline || candidate.currentTitle || 'Professional Candidate';
+  const summary = candidate.summary || '';
   const noticePeriod = candidate.noticePeriod || 'Immediate';
-  const locations = Array.isArray(candidate.preferredLocations) && candidate.preferredLocations.length > 0
-    ? candidate.preferredLocations
-    : ['Bengaluru', 'Mumbai', 'Remote'];
+  const locations = Array.isArray(candidate.preferredLocations) ? candidate.preferredLocations : [];
 
   // Parse skills safely whether array or comma-separated string
   let skillsList: string[] = [];
@@ -189,24 +87,51 @@ export const ProfileResumeModal: React.FC<ProfileResumeModalProps> = ({ isOpen, 
     skillsList = candidate.skills;
   } else if (typeof candidate.skills === 'string' && candidate.skills.trim()) {
     skillsList = candidate.skills.split(',').map((s) => s.trim()).filter(Boolean);
-  } else {
-    skillsList = ['TypeScript', 'Next.js', 'NestJS', 'React', 'Tailwind CSS', 'TypeORM', 'MySQL', 'Redis', 'Docker', 'REST APIs'];
   }
 
-  const experiences = candidate.experience && candidate.experience.length > 0 ? candidate.experience : fallbackExperiences;
-  const educations = candidate.education && candidate.education.length > 0 ? candidate.education : fallbackEducations;
-  const certs = candidate.certifications && candidate.certifications.length > 0 ? candidate.certifications : fallbackCerts;
-  const projs = candidate.projects && candidate.projects.length > 0 ? candidate.projects : fallbackProjects;
-  const langs = candidate.languages && candidate.languages.length > 0 ? candidate.languages : fallbackLangs;
+  const rawExp = Array.isArray(candidate.experience) ? candidate.experience : [];
+  const experiences = rawExp.map((exp: any, idx: number) => ({
+    id: exp.id || `exp-${idx}`,
+    designation: exp.designation || exp.title || 'Role / Position',
+    companyName: exp.companyName || exp.company || 'Company',
+    isCurrentJob: Boolean(exp.isCurrentJob ?? exp.isCurrent),
+    startDate: exp.startDate || '',
+    endDate: exp.endDate || '',
+    location: exp.location || '',
+    noticePeriod: exp.noticePeriod || '',
+    jobSummary: exp.jobSummary || '',
+    rolesAndResponsibilities: exp.rolesAndResponsibilities || exp.description || '',
+  }));
+
+  const rawEdu = Array.isArray(candidate.education) ? candidate.education : [];
+  const educations = rawEdu.map((edu: any, idx: number) => ({
+    id: edu.id || `edu-${idx}`,
+    degree: edu.degree || edu.degree_title || 'Degree / Qualification',
+    fieldOfStudy: edu.fieldOfStudy || '',
+    institution: edu.institution || 'Institution / University',
+    startYear: edu.startYear || '',
+    endYear: edu.endYear || edu.year || '',
+    grade: edu.grade || edu.result || '',
+  }));
+
+  const certs = Array.isArray(candidate.certifications) ? candidate.certifications : [];
+  const projs = Array.isArray(candidate.projects) ? candidate.projects : [];
+  const langs = Array.isArray(candidate.languages)
+    ? candidate.languages.map((l: any) => typeof l === 'string' ? l : `${l.language} (${l.proficiency || 'Fluent'})`)
+    : [];
+
   const socials = {
-    linkedin: candidate.socialLinks?.linkedin || 'https://linkedin.com/in/nilesh-choubisa',
-    github: candidate.socialLinks?.github || 'https://github.com/nileshchoubisa',
-    website: candidate.socialLinks?.website || 'https://nileshchoubisa.dev',
+    linkedin: candidate.socialLinks?.linkedin || '',
+    github: candidate.socialLinks?.github || '',
+    website: candidate.socialLinks?.website || '',
   };
 
-  const experienceYears = candidate.experienceYears || '6+';
-  const currentSalaryFormatted = candidate.currentSalary ? `${Number(candidate.currentSalary).toLocaleString()} INR` : '1,800,000 INR';
-  const expectedSalaryFormatted = candidate.expectedSalary ? `${Number(candidate.expectedSalary).toLocaleString()} INR` : '2,400,000 INR';
+  const experienceYears = candidate.experienceYears ?? (experiences.length > 0 ? `${experiences.length * 2}` : '0');
+  const currentSalaryFormatted = candidate.currentSalary ? `${Number(candidate.currentSalary).toLocaleString()} INR` : 'Not Disclosed';
+  const expectedSalaryFormatted = candidate.expectedSalary ? `${Number(candidate.expectedSalary).toLocaleString()} INR` : 'Negotiable';
+
+  const rawResumeUrl = candidate.resumeUrl || (candidate.resumes && candidate.resumes[0] ? (candidate.resumes[0].resumeUrl || candidate.resumes[0].url) : '');
+  const downloadOriginalUrl = rawResumeUrl ? resolveResumeUrl(rawResumeUrl) : null;
 
   const handlePrint = () => {
     // Record download against employer monthly quota
@@ -476,13 +401,26 @@ export const ProfileResumeModal: React.FC<ProfileResumeModalProps> = ({ isOpen, 
             </div>
 
             <div className="flex items-center gap-2">
+              {downloadOriginalUrl && (
+                <a
+                  href={downloadOriginalUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Download original uploaded resume document"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Original File</span>
+                </a>
+              )}
+
               <button
                 type="button"
                 onClick={handlePrint}
-                className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
               >
-                <Download className="w-4 h-4" />
-                <span>Download Resume (PDF)</span>
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print / Save PDF</span>
               </button>
 
               <button
@@ -636,10 +574,10 @@ export const ProfileResumeModal: React.FC<ProfileResumeModalProps> = ({ isOpen, 
                       <div key={exp.id || idx} className="space-y-1.5">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between">
                           <span className="font-bold text-slate-900 text-xs">
-                            {exp.designation} <span className="font-normal text-slate-600">at</span> <strong className="text-indigo-800">{exp.companyName}</strong>
+                            {exp.designation || (exp as any).title || 'Role'} <span className="font-normal text-slate-600">at</span> <strong className="text-indigo-800">{exp.companyName || (exp as any).company || 'Company'}</strong>
                           </span>
                           <span className="text-[11px] font-semibold text-slate-500">
-                            {exp.startDate || '2022'} - {exp.isCurrentJob ? 'Present (Current)' : exp.endDate || '2024'} {exp.location && `• ${exp.location}`}
+                            {exp.startDate ? `${exp.startDate} – ` : ''}{exp.isCurrentJob || (exp as any).isCurrent ? 'Present (Current)' : exp.endDate || ''} {exp.location && `• ${exp.location}`}
                           </span>
                         </div>
                         {exp.jobSummary && (
@@ -647,11 +585,11 @@ export const ProfileResumeModal: React.FC<ProfileResumeModalProps> = ({ isOpen, 
                             {exp.jobSummary}
                           </p>
                         )}
-                        {exp.rolesAndResponsibilities && (
+                        {(exp.rolesAndResponsibilities || (exp as any).description) && (
                           <div className="pt-1 space-y-1">
                             <span className="text-[11px] font-bold text-slate-900 block">Roles & Responsibilities:</span>
                             <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-line pl-3 border-l-2 border-indigo-500">
-                              {exp.rolesAndResponsibilities}
+                              {exp.rolesAndResponsibilities || (exp as any).description}
                             </div>
                           </div>
                         )}
@@ -671,11 +609,11 @@ export const ProfileResumeModal: React.FC<ProfileResumeModalProps> = ({ isOpen, 
                     {educations.map((edu, idx) => (
                       <div key={edu.id || idx} className="flex flex-col sm:flex-row sm:items-center justify-between">
                         <div>
-                          <span className="font-bold text-slate-900 text-xs">{edu.degree} {edu.fieldOfStudy && `in ${edu.fieldOfStudy}`}</span>
+                          <span className="font-bold text-slate-900 text-xs">{edu.degree || (edu as any).degree_title} {edu.fieldOfStudy && `in ${edu.fieldOfStudy}`}</span>
                           <p className="text-[11px] text-slate-600 font-medium">{edu.institution}</p>
                         </div>
                         <span className="text-[11px] font-semibold text-slate-500">
-                          {edu.startYear} - {edu.endYear} {edu.grade && `• Grade: ${edu.grade}`}
+                          {edu.startYear ? `${edu.startYear} – ` : ''}{edu.endYear || (edu as any).year || 'Completed'} {(edu.grade || (edu as any).result) && `• Grade: ${edu.grade || (edu as any).result}`}
                         </span>
                       </div>
                     ))}

@@ -327,17 +327,65 @@ export default function CandidateSearchPage() {
               <div className="space-y-4 text-xs">
                 <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border theme-border space-y-2">
                   <h4 className="font-extrabold theme-text uppercase tracking-wider text-[11px]">Contact & Recruitment Metadata</h4>
-                  <p className="theme-text">Email: <strong>{selectedCand.user?.email || 'candidate@camzyjobs.com'}</strong></p>
-                  <p className="theme-text">Phone: <strong>{selectedCand.user?.phoneNumber || '+1 555-0192'}</strong></p>
+                  <p className="theme-text">Email: <strong>{selectedCand.user?.email || 'Not provided'}</strong></p>
+                  {selectedCand.user?.phoneNumber && <p className="theme-text">Phone: <strong>{selectedCand.user.phoneNumber}</strong></p>}
                   <p className="theme-text">Notice Period: <strong>{selectedCand.noticePeriod || 'Immediate'}</strong></p>
-                  <p className="theme-text">Current Salary: <strong>${selectedCand.currentSalary ? selectedCand.currentSalary.toLocaleString() : '110,000'}</strong></p>
-                  <p className="theme-text">Expected Salary: <strong>${selectedCand.expectedSalary ? selectedCand.expectedSalary.toLocaleString() : '160,000'}</strong></p>
+                  <p className="theme-text">Total Experience: <strong>{selectedCand.experienceYears || 0} Years</strong></p>
+                  <p className="theme-text">Current Salary: <strong>{selectedCand.currentSalary ? `${Number(selectedCand.currentSalary).toLocaleString()} INR` : 'Not Disclosed'}</strong></p>
+                  <p className="theme-text">Expected Salary: <strong>{selectedCand.expectedSalary ? `${Number(selectedCand.expectedSalary).toLocaleString()} INR` : 'Negotiable'}</strong></p>
                 </div>
+
+                {selectedCand.skills && selectedCand.skills.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-extrabold theme-text uppercase tracking-wider text-[11px]">Key Skills</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedCand.skills.map((skill: string, idx: number) => (
+                        <span key={idx} className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {selectedCand.summary && (
                   <div className="space-y-1">
-                    <h4 className="font-extrabold theme-text">Executive Summary</h4>
-                    <p className="theme-text leading-relaxed">{selectedCand.summary}</p>
+                    <h4 className="font-extrabold theme-text uppercase tracking-wider text-[11px]">Executive Summary</h4>
+                    <p className="theme-text leading-relaxed whitespace-pre-line">{selectedCand.summary}</p>
+                  </div>
+                )}
+
+                {selectedCand.experience && selectedCand.experience.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-extrabold theme-text uppercase tracking-wider text-[11px]">Work Experience ({selectedCand.experience.length})</h4>
+                    <div className="space-y-2">
+                      {selectedCand.experience.map((exp: any, idx: number) => (
+                        <div key={idx} className="p-3 rounded-lg border theme-border bg-slate-50/50 dark:bg-slate-800/40 space-y-1">
+                          <div className="font-bold theme-text">{exp.designation || exp.title || 'Role'} <span className="font-normal text-indigo-500">at {exp.companyName || exp.company || 'Company'}</span></div>
+                          <div className="text-[10px] theme-muted">{exp.startDate || 'Started'} – {exp.isCurrentJob || exp.isCurrent ? 'Present' : exp.endDate || 'Ended'} {exp.location && `• ${exp.location}`}</div>
+                          {(exp.rolesAndResponsibilities || exp.description) && (
+                            <p className="text-[11px] theme-text/90 whitespace-pre-line leading-relaxed pt-1">{exp.rolesAndResponsibilities || exp.description}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedCand.education && selectedCand.education.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-extrabold theme-text uppercase tracking-wider text-[11px]">Education ({selectedCand.education.length})</h4>
+                    <div className="space-y-2">
+                      {selectedCand.education.map((edu: any, idx: number) => (
+                        <div key={idx} className="p-2.5 rounded-lg border theme-border bg-slate-50/50 dark:bg-slate-800/40 space-y-0.5">
+                          <div className="font-bold theme-text">{edu.degree || edu.degree_title}</div>
+                          <div className="text-[11px] text-indigo-500 font-semibold">{edu.institution}</div>
+                          <div className="text-[10px] theme-muted">
+                            {edu.startYear ? `${edu.startYear} – ` : ''}{edu.endYear || edu.year || 'Completed'} {(edu.grade || edu.result) && `• Grade: ${edu.grade || edu.result}`}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 

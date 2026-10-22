@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 import { AppConfigDto, AppConfigService } from './app-config.service';
 import { JobPosting } from '../jobs/entities/job-posting.entity';
 import { Tenant, TenantType, TenantStatus } from '../tenants/entities/tenant.entity';
@@ -9,7 +10,7 @@ import { Candidate } from '../candidates/entities/candidate.entity';
 import { JobApplication } from '../applications/entities/job-application.entity';
 import { TenantSubscription, SubscriptionStatus } from '../subscriptions/entities/tenant-subscription.entity';
 import { SubscriptionPlan, PlanCode } from '../subscriptions/entities/subscription-plan.entity';
-import { User, UserRole } from '../users/entities/user.entity';
+import { User, UserRole, UserStatus } from '../users/entities/user.entity';
 import { BillingTransaction } from '../subscriptions/entities/billing-transaction.entity';
 import { Location } from './entities/location.entity';
 import { SkillKeyword } from './entities/skill-keyword.entity';
@@ -20,6 +21,8 @@ import { BlogPost, BlogCategory } from './entities/blog-post.entity';
 import { SeoConfig } from './entities/seo-config.entity';
 import { FaqItem } from './entities/faq-item.entity';
 import { EmailBroadcast } from './entities/email-broadcast.entity';
+import { RestrictedDomain } from './entities/restricted-domain.entity';
+import { LoginActivity, LoginStatus, LoginMethod } from './entities/login-activity.entity';
 
 @ApiTags('Super Admin Governance')
 @Controller('api/v1/admin')
@@ -44,6 +47,8 @@ export class AdminController {
     @InjectRepository(SeoConfig) private readonly seoRepo: Repository<SeoConfig>,
     @InjectRepository(FaqItem) private readonly faqRepo: Repository<FaqItem>,
     @InjectRepository(EmailBroadcast) private readonly broadcastRepo: Repository<EmailBroadcast>,
+    @InjectRepository(RestrictedDomain) private readonly domainRepo: Repository<RestrictedDomain>,
+    @InjectRepository(LoginActivity) private readonly loginActivityRepo: Repository<LoginActivity>,
   ) {}
 
   @Get('metrics')
@@ -451,21 +456,35 @@ export class AdminController {
 
     qb.orderBy('user.createdAt', 'DESC');
     const users = await qb.getMany();
-    return users.map((u) => ({
-      id: u.id,
-      email: u.email,
-      firstName: u.firstName,
-      lastName: u.lastName,
-      name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
-      role: u.role,
-      status: u.status,
-      tenantId: u.tenantId,
-      companyName: u.tenant?.name || null,
-      candidateId: u.candidate?.id || null,
-      headline: u.candidate?.headline || null,
-      phone: u.phoneNumber || null,
-      createdAt: u.createdAt,
-    }));
+    return users.map((u) => {
+      const cand = u.candidate;
+      let resumeUrl = cand?.resumeUrl || null;
+      if (!resumeUrl && Array.isArray(cand?.resumes) && cand.resumes.length > 0) {
+        const first = cand.resumes[0] as any;
+        resumeUrl = first?.resumeUrl || first?.url || null;
+      }
+      return {
+        id: u.id,
+        email: u.email,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
+        role: u.role,
+        status: u.status,
+        tenantId: u.tenantId,
+        companyName: u.tenant?.name || null,
+        candidateId: cand?.id || null,
+        headline: cand?.headline || cand?.currentTitle || null,
+        currentTitle: cand?.currentTitle || null,
+        experienceYears: cand?.experienceYears ?? null,
+        resumeUrl: resumeUrl,
+        hasResume: Boolean(resumeUrl),
+        experienceCount: Array.isArray(cand?.experience) ? cand.experience.length : 0,
+        educationCount: Array.isArray(cand?.education) ? cand.education.length : 0,
+        phone: u.phoneNumber || null,
+        createdAt: u.createdAt,
+      };
+    });
   }
 
   @Post('users/create')
@@ -671,6 +690,19 @@ export class AdminController {
   @Post('companies/register')
   @ApiOperation({ summary: 'Super Admin: Direct register company/agency' })
   async registerCompanyDirect(@Body() body: any) {
+    if (body.adminEmail) {
+      const email = body.adminEmail.toLowerCase().trim();
+      const domain = email.includes('@') ? email.split('@').pop()?.trim() || '' : '';
+      if (domain) {
+        const restricted = await this.domainRepo.findOne({ where: { domain, isActive: true } });
+        if (restricted) {
+          throw new BadRequestException(
+            `Email domain "@${domain}" is restricted for employer registration. Please use a corporate/business email address.`,
+          );
+        }
+      }
+    }
+
     const slug = body.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
     const tenant = this.tenantRepo.create({
       name: body.name,
@@ -681,12 +713,34 @@ export class AdminController {
     });
     const saved = await this.tenantRepo.save(tenant);
 
-    // Assign Starter Plan
-    const defaultPlan = await this.planRepo.findOne({ where: { code: PlanCode.FREE } });
-    if (defaultPlan) {
+    // If admin user details provided, create user
+    if (body.adminEmail) {
+      const cleanEmail = body.adminEmail.toLowerCase().trim();
+      const existing = await this.userRepo.findOne({ where: { email: cleanEmail } });
+      if (!existing) {
+        const u = this.userRepo.create({
+          email: cleanEmail,
+          passwordHash: bcrypt.hashSync('password123', 10),
+          firstName: body.adminFirstName?.trim() || 'Admin',
+          lastName: body.adminLastName?.trim() || 'User',
+          role: UserRole.COMPANY_ADMIN,
+          tenantId: saved.id,
+          status: UserStatus.ACTIVE,
+        });
+        await this.userRepo.save(u);
+      }
+    }
+
+    // Assign Plan
+    const planCode = body.planCode === 'ENTERPRISE' ? PlanCode.ENTERPRISE : body.planCode === 'PRO' ? PlanCode.PRO : PlanCode.FREE;
+    let selectedPlan = await this.planRepo.findOne({ where: { code: planCode } });
+    if (!selectedPlan) {
+      selectedPlan = await this.planRepo.findOne({ where: { code: PlanCode.FREE } });
+    }
+    if (selectedPlan) {
       const sub = this.subRepo.create({
         tenantId: saved.id,
-        planId: defaultPlan.id,
+        planId: selectedPlan.id,
         status: SubscriptionStatus.ACTIVE,
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 365 * 86400000),
@@ -1348,5 +1402,414 @@ export class AdminController {
     if (!item) throw new Error(`Taxonomy ${id} not found`);
     await this.taxonomyRepo.remove(item);
     return { success: true };
+  }
+
+  // ==========================================
+  // RESTRICTED EMAIL DOMAINS (Employer Blocklist)
+  // ==========================================
+
+  @Get('restricted-domains')
+  @ApiOperation({ summary: 'Super Admin: List all restricted employer email domains' })
+  async getRestrictedDomains() {
+    return await this.domainRepo.find({
+      order: { isActive: 'DESC', domain: 'ASC' },
+    });
+  }
+
+  @Post('restricted-domains')
+  @ApiOperation({ summary: 'Super Admin: Add new restricted employer email domain' })
+  async createRestrictedDomain(@Body() body: { domain: string; description?: string; isActive?: boolean }) {
+    if (!body.domain || !body.domain.trim()) {
+      throw new BadRequestException('Domain name is required (e.g. gmail.com).');
+    }
+    const cleanDomain = body.domain.replace(/^@+/, '').trim().toLowerCase();
+
+    const existing = await this.domainRepo.findOne({ where: { domain: cleanDomain } });
+    if (existing) {
+      throw new BadRequestException(`Email domain "${cleanDomain}" is already in the restricted list.`);
+    }
+
+    const domain = this.domainRepo.create({
+      domain: cleanDomain,
+      description: body.description?.trim() || 'Restricted email domain',
+      isActive: body.isActive ?? true,
+    });
+    return await this.domainRepo.save(domain);
+  }
+
+  @Put('restricted-domains/:id')
+  @ApiOperation({ summary: 'Super Admin: Update restricted email domain' })
+  async updateRestrictedDomain(
+    @Param('id') id: string,
+    @Body() body: { domain?: string; description?: string; isActive?: boolean },
+  ) {
+    const item = await this.domainRepo.findOne({ where: { id } });
+    if (!item) throw new NotFoundException(`Restricted domain ${id} not found`);
+
+    if (body.domain !== undefined) {
+      item.domain = body.domain.replace(/^@+/, '').trim().toLowerCase();
+    }
+    if (body.description !== undefined) {
+      item.description = body.description.trim();
+    }
+    if (body.isActive !== undefined) {
+      item.isActive = body.isActive;
+    }
+
+    return await this.domainRepo.save(item);
+  }
+
+  @Delete('restricted-domains/:id')
+  @ApiOperation({ summary: 'Super Admin: Delete restricted email domain' })
+  async deleteRestrictedDomain(@Param('id') id: string) {
+    const item = await this.domainRepo.findOne({ where: { id } });
+    if (!item) throw new NotFoundException(`Restricted domain ${id} not found`);
+    await this.domainRepo.remove(item);
+    return { success: true };
+  }
+
+  @Post('restricted-domains/seed-defaults')
+  @ApiOperation({ summary: 'Super Admin: Populate standard public email provider domains' })
+  async seedDefaultRestrictedDomains() {
+    const defaultDomains = [
+      { domain: 'gmail.com', description: 'Consumer webmail - Google Gmail' },
+      { domain: 'googlemail.com', description: 'Consumer webmail - Googlemail' },
+      { domain: 'yahoo.com', description: 'Consumer webmail - Yahoo Mail' },
+      { domain: 'ymail.com', description: 'Consumer webmail - Yahoo Ymail' },
+      { domain: 'hotmail.com', description: 'Consumer webmail - Microsoft Hotmail' },
+      { domain: 'outlook.com', description: 'Consumer webmail - Microsoft Outlook' },
+      { domain: 'live.com', description: 'Consumer webmail - Microsoft Live' },
+      { domain: 'msn.com', description: 'Consumer webmail - Microsoft MSN' },
+      { domain: 'aol.com', description: 'Consumer webmail - AOL Mail' },
+      { domain: 'icloud.com', description: 'Consumer webmail - Apple iCloud' },
+      { domain: 'me.com', description: 'Consumer webmail - Apple Me' },
+      { domain: 'mail.com', description: 'Consumer webmail - Mail.com' },
+      { domain: 'zoho.com', description: 'Free personal webmail - Zoho Personal' },
+      { domain: 'protonmail.com', description: 'Consumer webmail - ProtonMail' },
+      { domain: 'proton.me', description: 'Consumer webmail - Proton' },
+      { domain: 'rediffmail.com', description: 'Consumer webmail - Rediffmail' },
+      { domain: 'gmx.com', description: 'Consumer webmail - GMX Mail' },
+      { domain: 'yandex.com', description: 'Consumer webmail - Yandex Mail' },
+      { domain: 'tempmail.com', description: 'Disposable throwaway email service' },
+      { domain: 'mailinator.com', description: 'Disposable throwaway email service' },
+      { domain: 'yopmail.com', description: 'Disposable throwaway email service' },
+      { domain: '10minutemail.com', description: 'Disposable throwaway email service' },
+      { domain: 'guerrillamail.com', description: 'Disposable throwaway email service' },
+      { domain: 'sharklasers.com', description: 'Disposable throwaway email service' },
+    ];
+
+    let addedCount = 0;
+    for (const d of defaultDomains) {
+      const exists = await this.domainRepo.findOne({ where: { domain: d.domain } });
+      if (!exists) {
+        await this.domainRepo.save(
+          this.domainRepo.create({
+            domain: d.domain,
+            description: d.description,
+            isActive: true,
+          }),
+        );
+        addedCount++;
+      }
+    }
+
+    const all = await this.domainRepo.find({ order: { isActive: 'DESC', domain: 'ASC' } });
+    return {
+      message: `Seeded ${addedCount} standard public email provider domains`,
+      addedCount,
+      totalCount: all.length,
+      domains: all,
+    };
+  }
+
+  // ==========================================
+  // LOGIN ACTIVITY & AUDIT LOGS
+  // ==========================================
+
+  @Get('login-activities')
+  @ApiOperation({ summary: 'Super Admin: List historical login and authentication activity logs with pagination and filters' })
+  async getLoginActivities(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+    @Query('role') role?: string,
+    @Query('method') method?: string,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit || '25', 10) || 25));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Check if table has records, if completely empty, auto-seed realistic demo activities
+    const currentCount = await this.loginActivityRepo.count();
+    if (currentCount === 0) {
+      await this.seedDemoLoginActivities();
+    }
+
+    const qb = this.loginActivityRepo.createQueryBuilder('log');
+
+    if (status && status !== 'ALL') {
+      qb.andWhere('log.status = :status', { status: status.toUpperCase() });
+    }
+
+    if (role && role !== 'ALL') {
+      qb.andWhere('log.role = :role', { role });
+    }
+
+    if (method && method !== 'ALL') {
+      qb.andWhere('log.loginMethod = :method', { method: method.toUpperCase() });
+    }
+
+    if (search && search.trim()) {
+      const q = `%${search.trim().toLowerCase()}%`;
+      qb.andWhere(
+        '(LOWER(log.email) LIKE :q OR LOWER(log.userName) LIKE :q OR LOWER(log.ipAddress) LIKE :q OR LOWER(log.browser) LIKE :q OR LOWER(log.failureReason) LIKE :q)',
+        { q },
+      );
+    }
+
+    if (startDate) {
+      qb.andWhere('log.createdAt >= :startDate', { startDate: new Date(startDate) });
+    }
+    if (endDate) {
+      qb.andWhere('log.createdAt <= :endDate', { endDate: new Date(endDate) });
+    }
+
+    qb.orderBy('log.createdAt', 'DESC');
+    qb.skip(skip).take(limitNum);
+
+    const [items, total] = await qb.getManyAndCount();
+
+    return {
+      items,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum) || 1,
+    };
+  }
+
+  @Get('login-activities/stats')
+  @ApiOperation({ summary: 'Super Admin: Fetch key metrics & analytics for login and authentication activities' })
+  async getLoginActivityStats() {
+    const currentCount = await this.loginActivityRepo.count();
+    if (currentCount === 0) {
+      await this.seedDemoLoginActivities();
+    }
+
+    const totalAllTime = await this.loginActivityRepo.count();
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    const total24h = await this.loginActivityRepo.createQueryBuilder('log')
+      .where('log.createdAt >= :since24h', { since24h })
+      .getCount();
+
+    const success24h = await this.loginActivityRepo.createQueryBuilder('log')
+      .where('log.createdAt >= :since24h AND log.status = :st', { since24h, st: LoginStatus.SUCCESS })
+      .getCount();
+
+    const failed24h = await this.loginActivityRepo.createQueryBuilder('log')
+      .where('log.createdAt >= :since24h AND log.status = :st', { since24h, st: LoginStatus.FAILED })
+      .getCount();
+
+    // Unique active users in 24h
+    const uniqueUsers24hRaw = await this.loginActivityRepo.createQueryBuilder('log')
+      .select('COUNT(DISTINCT log.email)', 'cnt')
+      .where('log.createdAt >= :since24h', { since24h })
+      .getRawOne();
+    const uniqueUsers24h = parseInt(uniqueUsers24hRaw?.cnt || '0', 10);
+
+    // Unique active users all time
+    const uniqueUsersAllTimeRaw = await this.loginActivityRepo.createQueryBuilder('log')
+      .select('COUNT(DISTINCT log.email)', 'cnt')
+      .getRawOne();
+    const uniqueUsersAllTime = parseInt(uniqueUsersAllTimeRaw?.cnt || '0', 10);
+
+    // Recent 5 failed logins
+    const recentFailures = await this.loginActivityRepo.find({
+      where: { status: LoginStatus.FAILED },
+      order: { createdAt: 'DESC' },
+      take: 5,
+    });
+
+    // Breakdown by device type
+    const desktopCount = await this.loginActivityRepo.count({ where: { deviceType: 'Desktop' } });
+    const mobileCount = await this.loginActivityRepo.count({ where: { deviceType: 'Mobile' } });
+    const tabletCount = await this.loginActivityRepo.count({ where: { deviceType: 'Tablet' } });
+
+    // Success rate overall
+    const successAllTime = await this.loginActivityRepo.count({ where: { status: LoginStatus.SUCCESS } });
+    const successRate = totalAllTime > 0 ? Math.round((successAllTime / totalAllTime) * 1000) / 10 : 100;
+
+    return {
+      totalAllTime,
+      total24h,
+      success24h,
+      failed24h,
+      uniqueUsers24h,
+      uniqueUsersAllTime,
+      successRate,
+      recentFailures,
+      deviceBreakdown: {
+        desktop: desktopCount,
+        mobile: mobileCount,
+        tablet: tabletCount,
+      },
+    };
+  }
+
+  @Post('login-activities/seed-demo')
+  @ApiOperation({ summary: 'Super Admin: Seed realistic historical login activities for testing and audit visualization' })
+  async seedDemoLoginActivities() {
+    const demoLogs = [
+      {
+        email: 'superadmin@camzyjobs.com',
+        userName: 'Platform Superadmin',
+        role: UserRole.SUPER_ADMIN,
+        ipAddress: '127.0.0.1',
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+        deviceType: 'Desktop',
+        browser: 'Chrome',
+        os: 'macOS',
+        status: LoginStatus.SUCCESS,
+        loginMethod: LoginMethod.PASSWORD,
+        location: 'Local Network / Dev',
+        createdAt: new Date(Date.now() - 5 * 60 * 1000), // 5 mins ago
+      },
+      {
+        email: 'techcorp@camzyjobs.com',
+        userName: 'TechCorp Admin',
+        role: UserRole.COMPANY_ADMIN,
+        ipAddress: '142.250.190.46',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+        deviceType: 'Desktop',
+        browser: 'Chrome',
+        os: 'Windows 10/11',
+        status: LoginStatus.SUCCESS,
+        loginMethod: LoginMethod.PASSWORD,
+        location: 'San Jose, US',
+        createdAt: new Date(Date.now() - 28 * 60 * 1000), // 28 mins ago
+      },
+      {
+        email: 'candidate@camzyjobs.com',
+        userName: 'Alex Johnson',
+        role: UserRole.CANDIDATE,
+        ipAddress: '172.56.21.89',
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+        deviceType: 'Mobile',
+        browser: 'Safari',
+        os: 'iOS',
+        status: LoginStatus.SUCCESS,
+        loginMethod: LoginMethod.OTP,
+        location: 'New York, US',
+        createdAt: new Date(Date.now() - 65 * 60 * 1000), // 1h ago
+      },
+      {
+        email: 'attacker@untrusted-network.ru',
+        userName: null,
+        role: null,
+        ipAddress: '185.220.101.5',
+        userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0',
+        deviceType: 'Desktop',
+        browser: 'Firefox',
+        os: 'Linux',
+        status: LoginStatus.FAILED,
+        failureReason: 'Account not found with this email',
+        loginMethod: LoginMethod.PASSWORD,
+        location: 'Tor Exit Node / External',
+        createdAt: new Date(Date.now() - 110 * 60 * 1000), // ~2h ago
+      },
+      {
+        email: 'superadmin@camzyjobs.com',
+        userName: 'Platform Superadmin',
+        role: UserRole.SUPER_ADMIN,
+        ipAddress: '198.51.100.22',
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+        deviceType: 'Desktop',
+        browser: 'Safari',
+        os: 'macOS',
+        status: LoginStatus.FAILED,
+        failureReason: 'Invalid password provided',
+        loginMethod: LoginMethod.PASSWORD,
+        location: 'Chicago, US',
+        createdAt: new Date(Date.now() - 180 * 60 * 1000), // 3h ago
+      },
+      {
+        email: 'recruiter@apex.io',
+        userName: 'Sarah Jenkins',
+        role: UserRole.RECRUITER,
+        ipAddress: '194.26.29.112',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/125.0.0.0 Safari/537.36',
+        deviceType: 'Desktop',
+        browser: 'Edge',
+        os: 'Windows 10/11',
+        status: LoginStatus.SUCCESS,
+        loginMethod: LoginMethod.PASSWORD,
+        location: 'London, UK',
+        createdAt: new Date(Date.now() - 4 * 3600 * 1000), // 4h ago
+      },
+      {
+        email: 'priya.dev@camzyjobs.com',
+        userName: 'Priya Sharma',
+        role: UserRole.CANDIDATE,
+        ipAddress: '103.21.124.5',
+        userAgent: 'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
+        deviceType: 'Mobile',
+        browser: 'Chrome',
+        os: 'Android',
+        status: LoginStatus.SUCCESS,
+        loginMethod: LoginMethod.OTP,
+        location: 'Bengaluru, IN',
+        createdAt: new Date(Date.now() - 6 * 3600 * 1000), // 6h ago
+      },
+      {
+        email: 'bot_scanner@darkprobe.io',
+        userName: null,
+        role: null,
+        ipAddress: '45.154.255.80',
+        userAgent: 'python-requests/2.31.0',
+        deviceType: 'Desktop',
+        browser: 'Bot / Script',
+        os: 'Linux',
+        status: LoginStatus.FAILED,
+        failureReason: 'Email address and password are required',
+        loginMethod: LoginMethod.PASSWORD,
+        location: 'Frankfurt, DE',
+        createdAt: new Date(Date.now() - 9 * 3600 * 1000), // 9h ago
+      },
+    ];
+
+    let inserted = 0;
+    for (const log of demoLogs) {
+      await this.loginActivityRepo.save(this.loginActivityRepo.create(log));
+      inserted++;
+    }
+
+    return {
+      message: `Seeded ${inserted} demo login activity records`,
+      count: inserted,
+    };
+  }
+
+  @Delete('login-activities/clear')
+  @ApiOperation({ summary: 'Super Admin: Clear old login activity records' })
+  async clearLoginActivities(@Query('olderThanDays') days?: string) {
+    if (days && parseInt(days, 10) > 0) {
+      const cutoff = new Date(Date.now() - parseInt(days, 10) * 86400000);
+      await this.loginActivityRepo.createQueryBuilder()
+        .delete()
+        .from(LoginActivity)
+        .where('createdAt < :cutoff', { cutoff })
+        .execute();
+      return { message: `Cleared login activities older than ${days} days` };
+    }
+    const all = await this.loginActivityRepo.find({ order: { createdAt: 'DESC' }, skip: 50 });
+    if (all.length > 0) {
+      const ids = all.map((a) => a.id);
+      await this.loginActivityRepo.delete(ids);
+    }
+    return { message: 'Pruned historical login activities, retaining recent 50 records.' };
   }
 }

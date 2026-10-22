@@ -51,6 +51,7 @@ export class Candidate {
     id: string;
     title: string;
     resumeUrl: string;
+    url?: string;
     isDefault?: boolean;
     uploadedAt?: string;
   }>;

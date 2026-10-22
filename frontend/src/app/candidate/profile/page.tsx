@@ -289,8 +289,9 @@ export default function CandidateProfilePage() {
       if (!user) return;
       setIsLoading(true);
       try {
-        const candidateId = user.candidateId || user.id;
-        const data = await sdk.request<any>(`/candidates/${candidateId}`);
+        const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+        const targetCandidateId = urlParams?.get('id') || urlParams?.get('candidateId') || user.candidateId || user.id;
+        const data = await sdk.request<any>(`/candidates/${targetCandidateId}`);
         if (data) {
           let resumeName = 'candidate-resume.pdf';
           if (data.resumeUrl) {
@@ -331,14 +332,51 @@ export default function CandidateProfilePage() {
           }
 
           if (data.resumes && Array.isArray(data.resumes) && data.resumes.length > 0) {
-            setResumesList(data.resumes);
+            setResumesList(data.resumes.map((r: any, idx: number) => ({
+              id: r.id || `res_${idx}`,
+              title: r.title || (r.resumeUrl || r.url ? (r.resumeUrl || r.url).split('/').pop() : `Resume ${idx + 1}.pdf`),
+              resumeUrl: r.resumeUrl || r.url || data.resumeUrl || '',
+              isDefault: Boolean(r.isDefault ?? (idx === 0)),
+              uploadedAt: r.uploadedAt || new Date().toISOString(),
+            })));
+          } else if (data.resumeUrl) {
+            const parts = data.resumeUrl.split('/');
+            setResumesList([{
+              id: 'res-default',
+              title: parts[parts.length - 1] || 'Primary Resume.pdf',
+              resumeUrl: data.resumeUrl,
+              isDefault: true,
+              uploadedAt: new Date().toISOString(),
+            }]);
           }
-          if (data.experience && Array.isArray(data.experience) && data.experience.length > 0) {
-            setExperienceList(data.experience);
+
+          if (data.experience && Array.isArray(data.experience)) {
+            setExperienceList(data.experience.map((e: any, idx: number) => ({
+              id: e.id || `exp_${idx}`,
+              designation: e.designation || e.title || 'Role',
+              companyName: e.companyName || e.company || 'Company',
+              startDate: e.startDate || '',
+              endDate: e.endDate || '',
+              isCurrentJob: Boolean(e.isCurrentJob ?? e.isCurrent),
+              location: e.location || '',
+              noticePeriod: e.noticePeriod || '',
+              jobSummary: e.jobSummary || '',
+              rolesAndResponsibilities: e.rolesAndResponsibilities || e.description || '',
+            })));
           }
-          if (data.education && Array.isArray(data.education) && data.education.length > 0) {
-            setEducationList(data.education);
+
+          if (data.education && Array.isArray(data.education)) {
+            setEducationList(data.education.map((ed: any, idx: number) => ({
+              id: ed.id || `edu_${idx}`,
+              degree: ed.degree || ed.degree_title || 'Degree',
+              institution: ed.institution || 'Institution',
+              fieldOfStudy: ed.fieldOfStudy || '',
+              startYear: ed.startYear || '',
+              endYear: ed.endYear || ed.year || '',
+              grade: ed.grade || ed.result || '',
+            })));
           }
+
           if (data.certifications && Array.isArray(data.certifications) && data.certifications.length > 0) {
             setCertificationList(data.certifications);
           }
@@ -384,9 +422,12 @@ export default function CandidateProfilePage() {
     setError(null);
 
     try {
-      const candidateId = user.candidateId || user.id;
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const candidateId = urlParams?.get('id') || urlParams?.get('candidateId') || user.candidateId || user.id;
       const defaultRes = resumesList.find((r) => r.isDefault) || resumesList[0];
-      const updatedResumeUrl = defaultRes ? defaultRes.resumeUrl : 'http://localhost:4000/uploads/resumes/sample-resume.pdf';
+      const updatedResumeUrl = defaultRes 
+        ? (defaultRes.resumeUrl || (defaultRes as any).url) 
+        : (profile.resumeFileName ? `/uploads/resumes/${profile.resumeFileName}` : '');
 
       const resData = await sdk.request<any>(`/candidates/${candidateId}`, {
         method: 'PUT',
@@ -406,9 +447,27 @@ export default function CandidateProfilePage() {
           skills: profile.skills.split(',').map((s) => s.trim()).filter(Boolean),
           visibility: profile.visibility,
           resumeUrl: updatedResumeUrl,
-          resumes: resumesList,
-          experience: experienceList,
-          education: educationList,
+          resumes: resumesList.map((r) => ({
+            id: r.id,
+            title: r.title,
+            resumeUrl: r.resumeUrl || (r as any).url,
+            url: r.resumeUrl || (r as any).url,
+            isDefault: r.isDefault,
+            uploadedAt: r.uploadedAt,
+          })),
+          experience: experienceList.map((exp) => ({
+            ...exp,
+            title: exp.designation,
+            company: exp.companyName,
+            description: exp.rolesAndResponsibilities || exp.jobSummary,
+            isCurrent: exp.isCurrentJob,
+          })),
+          education: educationList.map((edu) => ({
+            ...edu,
+            degree_title: edu.degree,
+            year: edu.endYear,
+            result: edu.grade,
+          })),
           certifications: certificationList,
           projects: projectList,
           socialLinks: socialLinks,
@@ -1066,7 +1125,7 @@ export default function CandidateProfilePage() {
                 </button>
               </div>
             {resumesList.map((res) => {
-              const fileUrl = resolveResumeUrl(res.resumeUrl);
+              const fileUrl = resolveResumeUrl(res.resumeUrl || (res as any).url);
               return (
                 <div key={res.id} className="p-4 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
@@ -1154,8 +1213,8 @@ export default function CandidateProfilePage() {
               <div key={exp.id || idx} className="p-4 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 space-y-1.5 relative">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-xs font-black theme-text">{exp.designation}</h3>
-                    <p className="text-xs font-bold text-indigo-500">{exp.companyName} {exp.location && `• ${exp.location}`}</p>
+                    <h3 className="text-xs font-black theme-text">{exp.designation || (exp as any).title || 'Role'}</h3>
+                    <p className="text-xs font-bold text-indigo-500">{exp.companyName || (exp as any).company || 'Company'} {exp.location && `• ${exp.location}`}</p>
                   </div>
                   <button
                     type="button"
@@ -1166,16 +1225,16 @@ export default function CandidateProfilePage() {
                   </button>
                 </div>
                 <p className="text-[11px] theme-muted font-medium">
-                  {exp.startDate || '2021'} – {exp.isCurrentJob ? 'Present (Current Job)' : exp.endDate || '2023'} {exp.noticePeriod && `• Notice Period: ${exp.noticePeriod}`}
+                  {exp.startDate || 'Started'} – {exp.isCurrentJob || (exp as any).isCurrent ? 'Present (Current Job)' : exp.endDate || 'Ended'} {exp.noticePeriod && `• Notice Period: ${exp.noticePeriod}`}
                 </p>
                 {exp.jobSummary && <p className="text-xs theme-text pt-1 leading-relaxed">{exp.jobSummary}</p>}
-                {exp.rolesAndResponsibilities && (
+                {(exp.rolesAndResponsibilities || (exp as any).description) && (
                   <div className="mt-2 pt-2 border-t theme-border/60">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 block mb-1">
                       Roles & Responsibilities
                     </span>
                     <p className="text-xs theme-text/90 whitespace-pre-line leading-relaxed pl-2 border-l-2 border-indigo-500/40">
-                      {exp.rolesAndResponsibilities}
+                      {exp.rolesAndResponsibilities || (exp as any).description}
                     </p>
                   </div>
                 )}
@@ -1202,9 +1261,11 @@ export default function CandidateProfilePage() {
             <div className="space-y-3">
               {educationList.map((edu, idx) => (
                 <div key={idx} className="p-3.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 text-xs space-y-1">
-                  <h4 className="font-bold theme-text">{edu.degree}</h4>
+                  <h4 className="font-bold theme-text">{edu.degree || (edu as any).degree_title}</h4>
                   <p className="text-indigo-500 font-semibold">{edu.institution}</p>
-                  <p className="theme-muted text-[11px]">{edu.startYear} – {edu.endYear}</p>
+                  <p className="theme-muted text-[11px]">
+                    {edu.startYear ? `${edu.startYear} – ` : ''}{edu.endYear || (edu as any).year || 'Completed'} {(edu.grade || (edu as any).result) && `• Grade: ${edu.grade || (edu as any).result}`}
+                  </p>
                 </div>
               ))}
             </div>

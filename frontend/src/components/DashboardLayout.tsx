@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Briefcase, Users, FileText, Bookmark, Settings, 
   ShieldCheck, Palette, Bell, Search, ChevronLeft, ChevronRight, 
   LogOut, User, Building2, Plus, Sparkles, UserCheck, Lock, LogIn, ChevronDown, Eye, Download,
-  Globe, BookOpen, HelpCircle, Send, CreditCard, Receipt, MapPin, Layers
+  Globe, BookOpen, HelpCircle, Send, CreditCard, Receipt, MapPin, Layers, ShieldAlert, Activity
 } from 'lucide-react';
 import { SuperAdminThemeCustomizer } from './SuperAdminThemeCustomizer';
 
@@ -135,9 +135,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
     navItems = [
       { label: 'Control Center', href: '/admin/dashboard', icon: LayoutDashboard, section: 'Operations & Access' },
       { label: 'Admin Users', href: '/admin/users', icon: ShieldCheck, section: 'Operations & Access' },
+      { label: 'User Profiles', href: '/admin/profiles', icon: Users, badge: 'Candidates/Employers', section: 'Operations & Access' },
+      { label: 'Login Activity', href: '/admin/login-activity', icon: Activity, badge: 'Audit Logs', section: 'Operations & Access' },
       { label: 'Jobs (All Companies)', href: '/admin/jobs', icon: Briefcase, badge: 'Post/View', section: 'Operations & Access' },
       { label: 'Companies Directory', href: '/admin/tenants', icon: Building2, section: 'Operations & Access' },
-      { label: 'User Profiles', href: '/admin/profiles', icon: Users, badge: 'Candidates/Employers', section: 'Operations & Access' },
 
       { label: 'CMS & Translations', href: '/admin/cms', icon: FileText, section: 'Content & Growth' },
       { label: 'Manage Blogs', href: '/admin/blogs', icon: BookOpen, section: 'Content & Growth' },
@@ -164,6 +165,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
       { label: 'Payment & Invoices', href: '/admin/transactions', icon: Receipt, section: 'Billing & Locations' },
 
       { label: 'Master Taxonomies', href: '/admin/taxonomies', icon: Layers, badge: '16 Masters', section: 'Master System Data' },
+      { label: 'Domain Restrictions', href: '/admin/settings?tab=restricted-domains', icon: ShieldAlert, badge: 'Blocklist', section: 'Master System Data' },
       { label: 'Global Settings', href: '/admin/settings', icon: Settings, section: 'Master System Data' },
     ];
   }

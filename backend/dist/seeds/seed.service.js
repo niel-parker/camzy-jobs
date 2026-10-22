@@ -34,8 +34,10 @@ const blog_post_entity_1 = require("../admin/entities/blog-post.entity");
 const seo_config_entity_1 = require("../admin/entities/seo-config.entity");
 const faq_item_entity_1 = require("../admin/entities/faq-item.entity");
 const email_broadcast_entity_1 = require("../admin/entities/email-broadcast.entity");
+const restricted_domain_entity_1 = require("../admin/entities/restricted-domain.entity");
+const login_activity_entity_1 = require("../admin/entities/login-activity.entity");
 let SeedService = SeedService_1 = class SeedService {
-    constructor(userRepo, tenantRepo, planRepo, subRepo, txnRepo, jobRepo, candidateRepo, appRepo, locationRepo, skillRepo, expRangeRepo, taxonomyRepo, cmsRepo, blogPostRepo, blogCatRepo, seoRepo, faqRepo, broadcastRepo) {
+    constructor(userRepo, tenantRepo, planRepo, subRepo, txnRepo, jobRepo, candidateRepo, appRepo, locationRepo, skillRepo, expRangeRepo, taxonomyRepo, cmsRepo, blogPostRepo, blogCatRepo, seoRepo, faqRepo, broadcastRepo, domainRepo, loginActivityRepo) {
         this.userRepo = userRepo;
         this.tenantRepo = tenantRepo;
         this.planRepo = planRepo;
@@ -54,6 +56,8 @@ let SeedService = SeedService_1 = class SeedService {
         this.seoRepo = seoRepo;
         this.faqRepo = faqRepo;
         this.broadcastRepo = broadcastRepo;
+        this.domainRepo = domainRepo;
+        this.loginActivityRepo = loginActivityRepo;
         this.logger = new common_1.Logger(SeedService_1.name);
     }
     async onModuleInit() {
@@ -301,6 +305,22 @@ let SeedService = SeedService_1 = class SeedService {
         }
         else {
             candidateProfile = await this.candidateRepo.findOne({ where: { userId: candidateUser.id } });
+            if (!candidateProfile && candidateUser) {
+                candidateProfile = await this.candidateRepo.save(this.candidateRepo.create({
+                    userId: candidateUser.id,
+                    headline: 'Senior Full Stack Engineer | Next.js & NestJS Expert',
+                    summary: 'Passionate developer with 6+ years building enterprise web applications, microservices, and design systems.',
+                    currentTitle: 'Senior Full Stack Developer',
+                    experienceYears: 6,
+                    currentSalary: 1800000,
+                    expectedSalary: 2400000,
+                    noticePeriod: '30 Days',
+                    preferredLocations: ['Bangalore', 'Mumbai', 'Remote'],
+                    resumeUrl: '/uploads/resumes/sample-resume.pdf',
+                    skills: ['TypeScript', 'Next.js', 'NestJS', 'React', 'Tailwind CSS', 'TypeORM', 'MySQL', 'Redis'],
+                    visibility: candidate_entity_1.ProfileVisibility.PUBLIC,
+                }));
+            }
         }
         const jobCount = await this.jobRepo.count();
         let job1;
@@ -852,6 +872,8 @@ let SeedService = SeedService_1 = class SeedService {
             }
         }
         await this.seedTaxonomiesAndCms();
+        await this.seedRestrictedDomains();
+        await this.seedLoginActivities();
         this.logger.log('🎉 Database seeding verified successfully!');
     }
     async seedTaxonomiesAndCms() {
@@ -1325,6 +1347,171 @@ let SeedService = SeedService_1 = class SeedService {
         }
         this.logger.log('✅ Seeded Broadcast demo candidates & expired companies!');
     }
+    async seedRestrictedDomains() {
+        const count = await this.domainRepo.count();
+        if (count === 0) {
+            this.logger.log('Seeding standard restricted email domains for employer onboarding...');
+            const defaultDomains = [
+                { domain: 'gmail.com', description: 'Consumer webmail - Google Gmail' },
+                { domain: 'googlemail.com', description: 'Consumer webmail - Googlemail' },
+                { domain: 'yahoo.com', description: 'Consumer webmail - Yahoo Mail' },
+                { domain: 'ymail.com', description: 'Consumer webmail - Yahoo Ymail' },
+                { domain: 'hotmail.com', description: 'Consumer webmail - Microsoft Hotmail' },
+                { domain: 'outlook.com', description: 'Consumer webmail - Microsoft Outlook' },
+                { domain: 'live.com', description: 'Consumer webmail - Microsoft Live' },
+                { domain: 'msn.com', description: 'Consumer webmail - Microsoft MSN' },
+                { domain: 'aol.com', description: 'Consumer webmail - AOL Mail' },
+                { domain: 'icloud.com', description: 'Consumer webmail - Apple iCloud' },
+                { domain: 'me.com', description: 'Consumer webmail - Apple Me' },
+                { domain: 'mail.com', description: 'Consumer webmail - Mail.com' },
+                { domain: 'zoho.com', description: 'Free personal webmail - Zoho Personal' },
+                { domain: 'protonmail.com', description: 'Consumer webmail - ProtonMail' },
+                { domain: 'proton.me', description: 'Consumer webmail - Proton' },
+                { domain: 'rediffmail.com', description: 'Consumer webmail - Rediffmail' },
+                { domain: 'gmx.com', description: 'Consumer webmail - GMX Mail' },
+                { domain: 'yandex.com', description: 'Consumer webmail - Yandex Mail' },
+                { domain: 'tempmail.com', description: 'Disposable throwaway email service' },
+                { domain: 'mailinator.com', description: 'Disposable throwaway email service' },
+                { domain: 'yopmail.com', description: 'Disposable throwaway email service' },
+                { domain: '10minutemail.com', description: 'Disposable throwaway email service' },
+                { domain: 'guerrillamail.com', description: 'Disposable throwaway email service' },
+                { domain: 'sharklasers.com', description: 'Disposable throwaway email service' },
+            ];
+            const entities = defaultDomains.map((d) => this.domainRepo.create({
+                domain: d.domain.toLowerCase().trim(),
+                description: d.description,
+                isActive: true,
+            }));
+            await this.domainRepo.save(entities);
+            this.logger.log(`✅ Successfully seeded ${entities.length} restricted employer email domains!`);
+        }
+    }
+    async seedLoginActivities() {
+        const count = await this.loginActivityRepo.count();
+        if (count > 0)
+            return;
+        this.logger.log('Seeding initial login activity and audit logs...');
+        const demoLogs = [
+            {
+                email: 'superadmin@camzyjobs.com',
+                userName: 'Platform Superadmin',
+                role: user_entity_1.UserRole.SUPER_ADMIN,
+                ipAddress: '127.0.0.1',
+                userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+                deviceType: 'Desktop',
+                browser: 'Chrome',
+                os: 'macOS',
+                status: login_activity_entity_1.LoginStatus.SUCCESS,
+                loginMethod: login_activity_entity_1.LoginMethod.PASSWORD,
+                location: 'Local Network / Dev',
+                createdAt: new Date(Date.now() - 5 * 60 * 1000),
+            },
+            {
+                email: 'techcorp@camzyjobs.com',
+                userName: 'TechCorp Admin',
+                role: user_entity_1.UserRole.COMPANY_ADMIN,
+                ipAddress: '142.250.190.46',
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                deviceType: 'Desktop',
+                browser: 'Chrome',
+                os: 'Windows 10/11',
+                status: login_activity_entity_1.LoginStatus.SUCCESS,
+                loginMethod: login_activity_entity_1.LoginMethod.PASSWORD,
+                location: 'San Jose, US',
+                createdAt: new Date(Date.now() - 28 * 60 * 1000),
+            },
+            {
+                email: 'candidate@camzyjobs.com',
+                userName: 'Alex Johnson',
+                role: user_entity_1.UserRole.CANDIDATE,
+                ipAddress: '172.56.21.89',
+                userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+                deviceType: 'Mobile',
+                browser: 'Safari',
+                os: 'iOS',
+                status: login_activity_entity_1.LoginStatus.SUCCESS,
+                loginMethod: login_activity_entity_1.LoginMethod.OTP,
+                location: 'New York, US',
+                createdAt: new Date(Date.now() - 65 * 60 * 1000),
+            },
+            {
+                email: 'attacker@untrusted-network.ru',
+                userName: null,
+                role: null,
+                ipAddress: '185.220.101.5',
+                userAgent: 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0',
+                deviceType: 'Desktop',
+                browser: 'Firefox',
+                os: 'Linux',
+                status: login_activity_entity_1.LoginStatus.FAILED,
+                failureReason: 'Account not found with this email',
+                loginMethod: login_activity_entity_1.LoginMethod.PASSWORD,
+                location: 'Tor Exit Node / External',
+                createdAt: new Date(Date.now() - 110 * 60 * 1000),
+            },
+            {
+                email: 'superadmin@camzyjobs.com',
+                userName: 'Platform Superadmin',
+                role: user_entity_1.UserRole.SUPER_ADMIN,
+                ipAddress: '198.51.100.22',
+                userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
+                deviceType: 'Desktop',
+                browser: 'Safari',
+                os: 'macOS',
+                status: login_activity_entity_1.LoginStatus.FAILED,
+                failureReason: 'Invalid password provided',
+                loginMethod: login_activity_entity_1.LoginMethod.PASSWORD,
+                location: 'Chicago, US',
+                createdAt: new Date(Date.now() - 180 * 60 * 1000),
+            },
+            {
+                email: 'recruiter@apex.io',
+                userName: 'Sarah Jenkins',
+                role: user_entity_1.UserRole.RECRUITER,
+                ipAddress: '194.26.29.112',
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/125.0.0.0 Safari/537.36',
+                deviceType: 'Desktop',
+                browser: 'Edge',
+                os: 'Windows 10/11',
+                status: login_activity_entity_1.LoginStatus.SUCCESS,
+                loginMethod: login_activity_entity_1.LoginMethod.PASSWORD,
+                location: 'London, UK',
+                createdAt: new Date(Date.now() - 4 * 3600 * 1000),
+            },
+            {
+                email: 'priya.dev@camzyjobs.com',
+                userName: 'Priya Sharma',
+                role: user_entity_1.UserRole.CANDIDATE,
+                ipAddress: '103.21.124.5',
+                userAgent: 'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
+                deviceType: 'Mobile',
+                browser: 'Chrome',
+                os: 'Android',
+                status: login_activity_entity_1.LoginStatus.SUCCESS,
+                loginMethod: login_activity_entity_1.LoginMethod.OTP,
+                location: 'Bengaluru, IN',
+                createdAt: new Date(Date.now() - 6 * 3600 * 1000),
+            },
+            {
+                email: 'bot_scanner@darkprobe.io',
+                userName: null,
+                role: null,
+                ipAddress: '45.154.255.80',
+                userAgent: 'python-requests/2.31.0',
+                deviceType: 'Desktop',
+                browser: 'Bot / Script',
+                os: 'Linux',
+                status: login_activity_entity_1.LoginStatus.FAILED,
+                failureReason: 'Email address and password are required',
+                loginMethod: login_activity_entity_1.LoginMethod.PASSWORD,
+                location: 'Frankfurt, DE',
+                createdAt: new Date(Date.now() - 9 * 3600 * 1000),
+            },
+        ];
+        const entities = demoLogs.map((log) => this.loginActivityRepo.create(log));
+        await this.loginActivityRepo.save(entities);
+        this.logger.log(`✅ Successfully seeded ${entities.length} demo login activities for audit trail!`);
+    }
 };
 exports.SeedService = SeedService;
 exports.SeedService = SeedService = SeedService_1 = __decorate([
@@ -1347,7 +1534,11 @@ exports.SeedService = SeedService = SeedService_1 = __decorate([
     __param(15, (0, typeorm_1.InjectRepository)(seo_config_entity_1.SeoConfig)),
     __param(16, (0, typeorm_1.InjectRepository)(faq_item_entity_1.FaqItem)),
     __param(17, (0, typeorm_1.InjectRepository)(email_broadcast_entity_1.EmailBroadcast)),
+    __param(18, (0, typeorm_1.InjectRepository)(restricted_domain_entity_1.RestrictedDomain)),
+    __param(19, (0, typeorm_1.InjectRepository)(login_activity_entity_1.LoginActivity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

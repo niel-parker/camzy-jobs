@@ -42,10 +42,48 @@ export default function CompanyOnboardingPage() {
   const [selectedPlan, setSelectedPlan] = useState<'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE'>('PROFESSIONAL');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [emailDomainError, setEmailDomainError] = useState<string | null>(null);
+  const [validatingEmail, setValidatingEmail] = useState(false);
+
+  const checkEmailValidity = async (emailToTest: string): Promise<boolean> => {
+    if (!emailToTest || !emailToTest.includes('@')) {
+      setEmailDomainError(null);
+      return true;
+    }
+    setValidatingEmail(true);
+    try {
+      const res = await sdk.checkEmailDomain(emailToTest);
+      if (res && res.restricted) {
+        const msg =
+          res.message ||
+          `Registration with email domain "@${res.domain}" is restricted for employers. Please use your corporate or company work email.`;
+        setEmailDomainError(msg);
+        return false;
+      } else {
+        setEmailDomainError(null);
+        return true;
+      }
+    } catch (err) {
+      console.error('Error verifying email domain:', err);
+      return true;
+    } finally {
+      setValidatingEmail(false);
+    }
+  };
 
   const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+
+    // If moving past Step 2, strictly validate work email domain
+    if (step === 2) {
+      const isValid = await checkEmailValidity(adminEmail);
+      if (!isValid) {
+        setErrorMsg('Employer registration with this email domain is prohibited. Please provide a corporate/company email address.');
+        return;
+      }
+    }
+
     if (step < 3) {
       setStep(step + 1);
     } else {
@@ -71,7 +109,12 @@ export default function CompanyOnboardingPage() {
         setIsSubmitted(true);
       } catch (err: any) {
         console.error('Error registering company:', err);
-        setErrorMsg(err.message || 'Failed to onboard company. Please check details and try again.');
+        const errMsg = err.message || 'Failed to onboard company. Please check details and try again.';
+        setErrorMsg(errMsg);
+        if (errMsg.toLowerCase().includes('domain') || errMsg.toLowerCase().includes('restricted')) {
+          setEmailDomainError(errMsg);
+          setStep(2); // Jump back to step 2 to show the email issue
+        }
       } finally {
         setIsSubmitting(false);
       }
@@ -145,6 +188,16 @@ export default function CompanyOnboardingPage() {
         </div>
       ) : (
         <form onSubmit={handleNext} className="p-8 theme-surface border theme-border rounded-xl shadow-xl space-y-6">
+          {errorMsg && (
+            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-start gap-2.5 animate-in fade-in">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="font-extrabold block">Validation Error:</span>
+                <span className="font-medium">{errorMsg}</span>
+              </div>
+            </div>
+          )}
+
           {/* STEP 1: Company Profile Details */}
           {step === 1 && (
             <div className="space-y-4">
@@ -303,9 +356,14 @@ export default function CompanyOnboardingPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold theme-text uppercase tracking-wider mb-1">
-                    Work Email Address *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold theme-text uppercase tracking-wider">
+                      Work Email Address *
+                    </label>
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">
+                      Corporate Domain Required
+                    </span>
+                  </div>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 theme-muted" />
                     <input
@@ -313,10 +371,31 @@ export default function CompanyOnboardingPage() {
                       required
                       placeholder="sarah.jenkins@company.com"
                       value={adminEmail}
-                      onChange={(e) => setAdminEmail(e.target.value)}
-                      className="w-full pl-9 pr-3.5 py-2.5 rounded-lg border theme-border theme-input theme-text text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      onChange={(e) => {
+                        setAdminEmail(e.target.value);
+                        if (emailDomainError) setEmailDomainError(null);
+                      }}
+                      onBlur={() => checkEmailValidity(adminEmail)}
+                      className={`w-full pl-9 pr-8 py-2.5 rounded-lg border theme-input theme-text text-sm focus:ring-2 focus:outline-none transition-all ${
+                        emailDomainError
+                          ? 'border-rose-500 focus:ring-rose-500 bg-rose-500/5'
+                          : 'theme-border focus:ring-indigo-500'
+                      }`}
                     />
+                    {validatingEmail && (
+                      <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-indigo-500" />
+                    )}
                   </div>
+                  {emailDomainError ? (
+                    <div className="mt-1.5 p-2 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-start gap-1.5 animate-in fade-in">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <span>{emailDomainError}</span>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] theme-muted mt-1">
+                      Must be your company work domain (e.g. @yourcompany.com). Consumer webmail (Gmail, Yahoo, Outlook, etc.) is strictly prohibited.
+                    </p>
+                  )}
                 </div>
               </div>
 

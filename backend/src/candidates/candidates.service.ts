@@ -21,6 +21,7 @@ export interface CandidateProfileDto {
     id: string;
     title: string;
     resumeUrl: string;
+    url?: string;
     isDefault?: boolean;
     uploadedAt?: string;
   }>;
@@ -40,23 +41,30 @@ export interface CandidateProfileDto {
   experience?: Array<{
     id?: string;
     designation: string;
+    title?: string;
     companyName: string;
+    company?: string;
     isCurrentJob?: boolean;
+    isCurrent?: boolean;
     startDate?: string;
     endDate?: string;
     noticePeriod?: string;
     location?: string;
     jobSummary?: string;
     rolesAndResponsibilities?: string;
+    description?: string;
   }>;
   education?: Array<{
     id?: string;
     degree: string;
+    degree_title?: string;
     fieldOfStudy?: string;
     institution: string;
     startYear?: string;
     endYear?: string;
+    year?: string;
     grade?: string;
+    result?: string;
   }>;
   certifications?: Array<{
     id?: string;
@@ -101,6 +109,8 @@ export class CandidatesService {
   async findAll(params?: { skill?: string; noticePeriod?: string; city?: string; minExp?: number; maxSalary?: number }): Promise<CandidateProfileDto[]> {
     const candidates = await this.candidateRepo.find({
       relations: { user: true },
+      order: { updatedAt: 'DESC' },
+      take: 100,
     });
 
     let result = candidates.map((c) => this.mapToDto(c));
@@ -316,19 +326,93 @@ export class CandidatesService {
   }
 
   private mapToDto(c: Candidate): CandidateProfileDto {
+    const rawExp = Array.isArray(c.experience) ? c.experience : [];
+    const normalizedExp = rawExp.map((e: any, idx: number) => {
+      const designation = e.designation || e.title || '';
+      const companyName = e.companyName || e.company || '';
+      const rolesAndResponsibilities = e.rolesAndResponsibilities || e.description || '';
+      const jobSummary = e.jobSummary || '';
+      return {
+        id: e.id || `exp_${idx}`,
+        designation,
+        title: designation,
+        companyName,
+        company: companyName,
+        startDate: e.startDate ? String(e.startDate).substring(0, 10) : '',
+        endDate: e.endDate ? String(e.endDate).substring(0, 10) : '',
+        isCurrentJob: Boolean(e.isCurrentJob ?? e.isCurrent),
+        isCurrent: Boolean(e.isCurrent ?? e.isCurrentJob),
+        location: e.location || '',
+        noticePeriod: e.noticePeriod || '',
+        jobSummary,
+        rolesAndResponsibilities,
+        description: rolesAndResponsibilities || jobSummary,
+      };
+    });
+
+    const rawEdu = Array.isArray(c.education) ? c.education : [];
+    const normalizedEdu = rawEdu.map((ed: any, idx: number) => {
+      const degree = ed.degree || ed.degree_title || '';
+      const institution = ed.institution || '';
+      const endYear = ed.endYear || ed.year || '';
+      const grade = ed.grade || ed.result || '';
+      return {
+        id: ed.id || `edu_${idx}`,
+        degree,
+        degree_title: degree,
+        institution,
+        fieldOfStudy: ed.fieldOfStudy || '',
+        startYear: ed.startYear || '',
+        endYear,
+        year: endYear,
+        grade,
+        result: grade,
+      };
+    });
+
+    const rawResumes = Array.isArray(c.resumes) ? c.resumes : [];
+    let normalizedResumes = rawResumes.map((r: any, idx: number) => {
+      const url = r.resumeUrl || r.url || c.resumeUrl || '';
+      const defaultTitle = url ? url.split('/').pop() : `Resume_${idx + 1}.pdf`;
+      return {
+        id: r.id || `res_${idx}`,
+        title: r.title || defaultTitle || 'Resume.pdf',
+        resumeUrl: url,
+        url: url,
+        isDefault: Boolean(r.isDefault ?? (idx === 0)),
+        uploadedAt: r.uploadedAt || r.created_at || new Date().toISOString(),
+      };
+    });
+
+    if (normalizedResumes.length === 0 && c.resumeUrl) {
+      const parts = c.resumeUrl.split('/');
+      const title = parts[parts.length - 1] || 'Primary Resume.pdf';
+      normalizedResumes.push({
+        id: 'res_default',
+        title,
+        resumeUrl: c.resumeUrl,
+        url: c.resumeUrl,
+        isDefault: true,
+        uploadedAt: new Date().toISOString(),
+      });
+    }
+
+    const defaultResume = normalizedResumes.find((r) => r.isDefault) || normalizedResumes[0];
+    const effectiveResumeUrl = c.resumeUrl || (defaultResume ? defaultResume.resumeUrl : undefined);
+
     return {
       id: c.id,
       userId: c.userId,
       headline: c.headline || 'Software Engineer',
       summary: c.summary || '',
       currentTitle: c.currentTitle || 'Engineer',
-      experienceYears: c.experienceYears || 0,
+      experienceYears: c.experienceYears || (normalizedExp.length > 0 ? Math.min(25, normalizedExp.length * 2) : 0),
       currentSalary: c.currentSalary ? Number(c.currentSalary) : undefined,
       expectedSalary: c.expectedSalary ? Number(c.expectedSalary) : undefined,
       noticePeriod: c.noticePeriod || 'Immediate',
       preferredLocations: c.preferredLocations || [],
-      resumeUrl: c.resumeUrl || undefined,
-      resumes: c.resumes || [],
+      resumeUrl: effectiveResumeUrl,
+      resumes: normalizedResumes,
       savedJobIds: c.savedJobIds || [],
       skills: c.skills || [],
       user: c.user
@@ -344,8 +428,8 @@ export class CandidatesService {
             createdAt: c.user.createdAt,
           }
         : undefined,
-      experience: c.experience || [],
-      education: c.education || [],
+      experience: normalizedExp,
+      education: normalizedEdu,
       certifications: c.certifications || [],
       projects: c.projects || [],
       languages: c.languages || [],

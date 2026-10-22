@@ -1,13 +1,20 @@
+import { Request } from 'express';
 import { AuthService } from './auth.service';
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
+    private getClientMeta;
+    checkDomain(email?: string, domain?: string): Promise<{
+        restricted: boolean;
+        domain: string;
+        message?: string;
+    }>;
     login(body: {
         email: string;
         password?: string;
         password_hash?: string;
         passwordHash?: string;
-    }): Promise<{
+    }, req: Request): Promise<{
         accessToken: string;
         user: import("./auth.service").UserDto;
     }>;
@@ -36,7 +43,7 @@ export declare class AuthController {
         email?: string;
         phone?: string;
         otp: string;
-    }): Promise<{
+    }, req: Request): Promise<{
         accessToken: string;
         user: import("./auth.service").UserDto;
         isNewAccount: boolean;

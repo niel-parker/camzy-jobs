@@ -18,6 +18,7 @@ export interface CandidateProfileDto {
         id: string;
         title: string;
         resumeUrl: string;
+        url?: string;
         isDefault?: boolean;
         uploadedAt?: string;
     }>;
@@ -37,23 +38,30 @@ export interface CandidateProfileDto {
     experience?: Array<{
         id?: string;
         designation: string;
+        title?: string;
         companyName: string;
+        company?: string;
         isCurrentJob?: boolean;
+        isCurrent?: boolean;
         startDate?: string;
         endDate?: string;
         noticePeriod?: string;
         location?: string;
         jobSummary?: string;
         rolesAndResponsibilities?: string;
+        description?: string;
     }>;
     education?: Array<{
         id?: string;
         degree: string;
+        degree_title?: string;
         fieldOfStudy?: string;
         institution: string;
         startYear?: string;
         endYear?: string;
+        year?: string;
         grade?: string;
+        result?: string;
     }>;
     certifications?: Array<{
         id?: string;

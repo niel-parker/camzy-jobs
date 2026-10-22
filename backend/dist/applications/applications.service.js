@@ -94,12 +94,16 @@ let ApplicationsService = class ApplicationsService {
         const candidateName = app.candidate?.user
             ? `${app.candidate.user.firstName} ${app.candidate.user.lastName}`
             : 'Candidate';
+        const candidateEmail = app.candidate?.user?.email || '';
+        const candidatePhone = app.candidate?.user?.phoneNumber || '';
         return {
             id: app.id,
             jobId: app.jobId,
             jobTitle: app.job?.title || 'Senior Full Stack Engineer',
             candidateId: app.candidateId,
             candidateName,
+            candidateEmail,
+            candidatePhone,
             candidateHeadline: app.candidate?.headline || 'Senior Engineer',
             coverLetter: app.coverLetter || '',
             resumeUrlSnapshot: app.resumeUrlSnapshot || '',

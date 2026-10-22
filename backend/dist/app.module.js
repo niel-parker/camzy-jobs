@@ -35,6 +35,8 @@ const blog_post_entity_1 = require("./admin/entities/blog-post.entity");
 const seo_config_entity_1 = require("./admin/entities/seo-config.entity");
 const faq_item_entity_1 = require("./admin/entities/faq-item.entity");
 const email_broadcast_entity_1 = require("./admin/entities/email-broadcast.entity");
+const restricted_domain_entity_1 = require("./admin/entities/restricted-domain.entity");
+const login_activity_entity_1 = require("./admin/entities/login-activity.entity");
 const mail_module_1 = require("./mail/mail.module");
 let AppModule = class AppModule {
 };
@@ -68,6 +70,8 @@ exports.AppModule = AppModule = __decorate([
                     seo_config_entity_1.SeoConfig,
                     faq_item_entity_1.FaqItem,
                     email_broadcast_entity_1.EmailBroadcast,
+                    restricted_domain_entity_1.RestrictedDomain,
+                    login_activity_entity_1.LoginActivity,
                 ],
                 synchronize: true,
                 logging: false,

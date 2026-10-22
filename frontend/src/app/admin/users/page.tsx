@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { DashboardLayout } from '../../../components/DashboardLayout';
 import { useTheme } from '../../../context/ThemeContext';
 import { AdminUserProfile } from '@job-portal/sdk';
 import { 
   ShieldCheck, Plus, Search, Mail, Phone, CheckCircle2, 
-  XCircle, Loader2, RefreshCw, X, AlertCircle, Key, Shield
+  XCircle, Loader2, RefreshCw, X, AlertCircle, Key, Shield, Activity
 } from 'lucide-react';
 
 export default function AdminUsersManagementPage() {
@@ -123,6 +124,14 @@ export default function AdminUsersManagementPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/admin/login-activity"
+              className="px-3.5 py-2.5 rounded-xl border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 font-bold text-xs flex items-center space-x-2 transition-all"
+              title="View Authentication & Login Activity Audit Logs"
+            >
+              <Activity className="w-4 h-4 text-indigo-500" />
+              <span>Login Activity</span>
+            </Link>
             <button
               onClick={loadAdmins}
               className="p-2.5 rounded-xl border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"

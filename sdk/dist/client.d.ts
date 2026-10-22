@@ -1,4 +1,4 @@
-import { AdminUserProfile, AppConfig, AuthResponse, BlogCategoryItem, BlogPostItem, BroadcastRecipientResponse, CmsPageItem, CompanyDirectoryItem, CrossCompanyJobItem, DashboardMetrics, EmailBroadcastItem, ExperienceRangeItem, FaqItemData, JobListing, LocationItem, SeoConfigItem, SkillKeywordItem, SkillSuggestionResponse, SubscriptionPackageItem, SystemTaxonomyItem, ThemeConfig, UploadResumeResponse, User } from './types';
+import { AdminUserProfile, AppConfig, AuthResponse, BlogCategoryItem, BlogPostItem, BroadcastRecipientResponse, CmsPageItem, CompanyDirectoryItem, CrossCompanyJobItem, DashboardMetrics, EmailBroadcastItem, ExperienceRangeItem, FaqItemData, JobListing, LocationItem, SeoConfigItem, SkillKeywordItem, SkillSuggestionResponse, SubscriptionPackageItem, SystemTaxonomyItem, ThemeConfig, UploadResumeResponse, User, RestrictedDomainItem, AtsApplicationItem, LoginActivityStats, PaginatedLoginActivities } from './types';
 export declare class JobPortalSdk {
     private baseUrl;
     private token;
@@ -201,5 +201,41 @@ export declare class JobPortalSdk {
     updateTaxonomy(id: string, item: Partial<SystemTaxonomyItem>): Promise<SystemTaxonomyItem>;
     deleteTaxonomy(id: string): Promise<{
         success: boolean;
+    }>;
+    getRestrictedDomains(): Promise<RestrictedDomainItem[]>;
+    createRestrictedDomain(data: {
+        domain: string;
+        description?: string;
+        isActive?: boolean;
+    }): Promise<RestrictedDomainItem>;
+    updateRestrictedDomain(id: string, data: Partial<RestrictedDomainItem>): Promise<RestrictedDomainItem>;
+    deleteRestrictedDomain(id: string): Promise<{
+        success: boolean;
+    }>;
+    seedDefaultRestrictedDomains(): Promise<any>;
+    checkEmailDomain(emailOrDomain: string): Promise<{
+        domain: string;
+        restricted: boolean;
+        message?: string;
+    }>;
+    getAtsApplications(jobId?: string): Promise<AtsApplicationItem[]>;
+    updateAtsStage(id: string, stage: string, rating?: number): Promise<AtsApplicationItem>;
+    getLoginActivities(params?: {
+        page?: number;
+        limit?: number;
+        status?: string;
+        role?: string;
+        method?: string;
+        search?: string;
+        startDate?: string;
+        endDate?: string;
+    }): Promise<PaginatedLoginActivities>;
+    getLoginActivityStats(): Promise<LoginActivityStats>;
+    seedDemoLoginActivities(): Promise<{
+        message: string;
+        count: number;
+    }>;
+    clearLoginActivities(olderThanDays?: number): Promise<{
+        message: string;
     }>;
 }

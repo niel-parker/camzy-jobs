@@ -527,5 +527,81 @@ class JobPortalSdk {
             method: 'DELETE',
         });
     }
+    // --- Super Admin Restricted Email Domains ---
+    async getRestrictedDomains() {
+        return this.request('/admin/restricted-domains');
+    }
+    async createRestrictedDomain(data) {
+        return this.request('/admin/restricted-domains', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+    async updateRestrictedDomain(id, data) {
+        return this.request(`/admin/restricted-domains/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+    async deleteRestrictedDomain(id) {
+        return this.request(`/admin/restricted-domains/${id}`, {
+            method: 'DELETE',
+        });
+    }
+    async seedDefaultRestrictedDomains() {
+        return this.request('/admin/restricted-domains/seed-defaults', {
+            method: 'POST',
+        });
+    }
+    async checkEmailDomain(emailOrDomain) {
+        return this.request(`/auth/check-domain?email=${encodeURIComponent(emailOrDomain)}`);
+    }
+    // --- Recruiter ATS Applications & Pipeline ---
+    async getAtsApplications(jobId) {
+        const qs = jobId ? `?jobId=${encodeURIComponent(jobId)}` : '';
+        return this.request(`/applications${qs}`);
+    }
+    async updateAtsStage(id, stage, rating) {
+        return this.request(`/applications/${id}/stage`, {
+            method: 'PATCH',
+            body: JSON.stringify({ stage, rating }),
+        });
+    }
+    // --- Super Admin Login Activity & Audit Logs ---
+    async getLoginActivities(params) {
+        const sp = new URLSearchParams();
+        if (params?.page)
+            sp.append('page', String(params.page));
+        if (params?.limit)
+            sp.append('limit', String(params.limit));
+        if (params?.status)
+            sp.append('status', params.status);
+        if (params?.role)
+            sp.append('role', params.role);
+        if (params?.method)
+            sp.append('method', params.method);
+        if (params?.search)
+            sp.append('search', params.search);
+        if (params?.startDate)
+            sp.append('startDate', params.startDate);
+        if (params?.endDate)
+            sp.append('endDate', params.endDate);
+        const qs = sp.toString() ? `?${sp.toString()}` : '';
+        return this.request(`/admin/login-activities${qs}`);
+    }
+    async getLoginActivityStats() {
+        return this.request('/admin/login-activities/stats');
+    }
+    async seedDemoLoginActivities() {
+        return this.request('/admin/login-activities/seed-demo', {
+            method: 'POST',
+        });
+    }
+    async clearLoginActivities(olderThanDays) {
+        const qs = olderThanDays ? `?olderThanDays=${olderThanDays}` : '';
+        return this.request(`/admin/login-activities/clear${qs}`, {
+            method: 'DELETE',
+        });
+    }
 }
 exports.JobPortalSdk = JobPortalSdk;

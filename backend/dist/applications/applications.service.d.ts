@@ -8,6 +8,8 @@ export interface ApplicationDto {
     jobTitle: string;
     candidateId: string;
     candidateName: string;
+    candidateEmail?: string;
+    candidatePhone?: string;
     candidateHeadline: string;
     coverLetter?: string;
     resumeUrlSnapshot: string;

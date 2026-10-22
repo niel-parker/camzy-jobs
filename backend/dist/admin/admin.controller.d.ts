@@ -6,7 +6,7 @@ import { Candidate } from '../candidates/entities/candidate.entity';
 import { JobApplication } from '../applications/entities/job-application.entity';
 import { TenantSubscription } from '../subscriptions/entities/tenant-subscription.entity';
 import { SubscriptionPlan, PlanCode } from '../subscriptions/entities/subscription-plan.entity';
-import { User, UserRole } from '../users/entities/user.entity';
+import { User, UserRole, UserStatus } from '../users/entities/user.entity';
 import { BillingTransaction } from '../subscriptions/entities/billing-transaction.entity';
 import { Location } from './entities/location.entity';
 import { SkillKeyword } from './entities/skill-keyword.entity';
@@ -17,6 +17,8 @@ import { BlogPost, BlogCategory } from './entities/blog-post.entity';
 import { SeoConfig } from './entities/seo-config.entity';
 import { FaqItem } from './entities/faq-item.entity';
 import { EmailBroadcast } from './entities/email-broadcast.entity';
+import { RestrictedDomain } from './entities/restricted-domain.entity';
+import { LoginActivity } from './entities/login-activity.entity';
 export declare class AdminController {
     private readonly appConfigService;
     private readonly jobRepo;
@@ -37,7 +39,9 @@ export declare class AdminController {
     private readonly seoRepo;
     private readonly faqRepo;
     private readonly broadcastRepo;
-    constructor(appConfigService: AppConfigService, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, txnRepo: Repository<BillingTransaction>, userRepo: Repository<User>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>);
+    private readonly domainRepo;
+    private readonly loginActivityRepo;
+    constructor(appConfigService: AppConfigService, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, txnRepo: Repository<BillingTransaction>, userRepo: Repository<User>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>, domainRepo: Repository<RestrictedDomain>, loginActivityRepo: Repository<LoginActivity>);
     getDashboardMetrics(): Promise<{
         totalJobs: number;
         totalCompanies: number;
@@ -114,11 +118,17 @@ export declare class AdminController {
         lastName: string;
         name: string;
         role: UserRole;
-        status: import("../users/entities/user.entity").UserStatus;
+        status: UserStatus;
         tenantId: string;
         companyName: string;
         candidateId: string;
         headline: string;
+        currentTitle: string;
+        experienceYears: number;
+        resumeUrl: string;
+        hasResume: boolean;
+        experienceCount: number;
+        educationCount: number;
         phone: string;
         createdAt: Date;
     }[]>;
@@ -221,5 +231,54 @@ export declare class AdminController {
     updateTaxonomy(id: string, body: Partial<SystemTaxonomy>): Promise<SystemTaxonomy>;
     deleteTaxonomy(id: string): Promise<{
         success: boolean;
+    }>;
+    getRestrictedDomains(): Promise<RestrictedDomain[]>;
+    createRestrictedDomain(body: {
+        domain: string;
+        description?: string;
+        isActive?: boolean;
+    }): Promise<RestrictedDomain>;
+    updateRestrictedDomain(id: string, body: {
+        domain?: string;
+        description?: string;
+        isActive?: boolean;
+    }): Promise<RestrictedDomain>;
+    deleteRestrictedDomain(id: string): Promise<{
+        success: boolean;
+    }>;
+    seedDefaultRestrictedDomains(): Promise<{
+        message: string;
+        addedCount: number;
+        totalCount: number;
+        domains: RestrictedDomain[];
+    }>;
+    getLoginActivities(page?: string, limit?: string, status?: string, role?: string, method?: string, search?: string, startDate?: string, endDate?: string): Promise<{
+        items: LoginActivity[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }>;
+    getLoginActivityStats(): Promise<{
+        totalAllTime: number;
+        total24h: number;
+        success24h: number;
+        failed24h: number;
+        uniqueUsers24h: number;
+        uniqueUsersAllTime: number;
+        successRate: number;
+        recentFailures: LoginActivity[];
+        deviceBreakdown: {
+            desktop: number;
+            mobile: number;
+            tablet: number;
+        };
+    }>;
+    seedDemoLoginActivities(): Promise<{
+        message: string;
+        count: number;
+    }>;
+    clearLoginActivities(days?: string): Promise<{
+        message: string;
     }>;
 }

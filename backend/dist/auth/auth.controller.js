@@ -20,9 +20,21 @@ let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
-    async login(body) {
+    getClientMeta(req) {
+        const rawForwarded = req.headers['x-forwarded-for'];
+        const forwarded = Array.isArray(rawForwarded) ? rawForwarded[0] : rawForwarded;
+        const ipAddress = forwarded || req.socket?.remoteAddress || req.ip || '127.0.0.1';
+        const userAgent = req.headers['user-agent'] || '';
+        return { ipAddress, userAgent };
+    }
+    async checkDomain(email, domain) {
+        const target = email || domain || '';
+        return await this.authService.checkDomainRestriction(target);
+    }
+    async login(body, req) {
         const pwd = body.password || body.password_hash || body.passwordHash;
-        return await this.authService.login(body.email, pwd);
+        const meta = this.getClientMeta(req);
+        return await this.authService.login(body.email, pwd, meta);
     }
     async registerCompany(body) {
         return await this.authService.registerCompany(body);
@@ -34,9 +46,10 @@ let AuthController = class AuthController {
         const target = body.identifier || body.email || body.phone || '';
         return await this.authService.requestOtp(target);
     }
-    async verifyOtp(body) {
+    async verifyOtp(body, req) {
         const target = body.identifier || body.email || body.phone || '';
-        return await this.authService.verifyOtp(target, body.otp);
+        const meta = this.getClientMeta(req);
+        return await this.authService.verifyOtp(target, body.otp, meta);
     }
     async shareJob(body) {
         return await this.authService.sendJobShareEmail(body);
@@ -48,11 +61,21 @@ let AuthController = class AuthController {
 };
 exports.AuthController = AuthController;
 __decorate([
+    (0, common_1.Get)('check-domain'),
+    (0, swagger_1.ApiOperation)({ summary: 'Check if an email domain is restricted for employer registration' }),
+    __param(0, (0, common_1.Query)('email')),
+    __param(1, (0, common_1.Query)('domain')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "checkDomain", null);
+__decorate([
     (0, common_1.Post)('login'),
     (0, swagger_1.ApiOperation)({ summary: 'Login user & retrieve JWT access token' }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
@@ -83,8 +106,9 @@ __decorate([
     (0, common_1.Post)('verify-otp'),
     (0, swagger_1.ApiOperation)({ summary: 'Verify OTP code and log in or register user' }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "verifyOtp", null);
 __decorate([

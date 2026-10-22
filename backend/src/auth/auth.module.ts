@@ -7,10 +7,12 @@ import { Tenant } from '../tenants/entities/tenant.entity';
 import { Candidate } from '../candidates/entities/candidate.entity';
 import { TenantSubscription } from '../subscriptions/entities/tenant-subscription.entity';
 import { SubscriptionPlan } from '../subscriptions/entities/subscription-plan.entity';
+import { RestrictedDomain } from '../admin/entities/restricted-domain.entity';
+import { LoginActivity } from '../admin/entities/login-activity.entity';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Tenant, Candidate, TenantSubscription, SubscriptionPlan]), MailModule],
+  imports: [TypeOrmModule.forFeature([User, Tenant, Candidate, TenantSubscription, SubscriptionPlan, RestrictedDomain, LoginActivity]), MailModule],
   controllers: [AuthController],
   providers: [AuthService],
   exports: [AuthService],

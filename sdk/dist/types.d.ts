@@ -381,6 +381,12 @@ export interface AdminUserProfile {
     companyName?: string;
     candidateId?: string;
     headline?: string;
+    currentTitle?: string;
+    experienceYears?: number;
+    resumeUrl?: string;
+    hasResume?: boolean;
+    experienceCount?: number;
+    educationCount?: number;
     phone?: string;
     createdAt: string;
 }
@@ -416,4 +422,66 @@ export interface CompanyDirectoryItem {
     resumeDownloadsUsed: number;
     resumeDownloadsLimit: number;
     createdAt: string;
+}
+export interface RestrictedDomainItem {
+    id: string;
+    domain: string;
+    description: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+export interface AtsApplicationItem {
+    id: string;
+    jobId: string;
+    jobTitle: string;
+    candidateId: string;
+    candidateName: string;
+    candidateEmail?: string;
+    candidatePhone?: string;
+    candidateHeadline: string;
+    coverLetter?: string;
+    resumeUrlSnapshot: string;
+    stage: string;
+    rating: number;
+    createdAt: string;
+}
+export interface LoginActivityItem {
+    id: string;
+    userId?: string | null;
+    email: string;
+    userName?: string | null;
+    role?: string | null;
+    ipAddress: string;
+    userAgent?: string | null;
+    deviceType: string;
+    browser?: string | null;
+    os?: string | null;
+    status: 'SUCCESS' | 'FAILED';
+    failureReason?: string | null;
+    loginMethod: 'PASSWORD' | 'OTP' | 'GOOGLE' | 'MAGIC_LINK' | string;
+    location?: string | null;
+    createdAt: string;
+}
+export interface LoginActivityStats {
+    totalAllTime: number;
+    total24h: number;
+    success24h: number;
+    failed24h: number;
+    uniqueUsers24h: number;
+    uniqueUsersAllTime: number;
+    successRate: number;
+    recentFailures: LoginActivityItem[];
+    deviceBreakdown: {
+        desktop: number;
+        mobile: number;
+        tablet: number;
+    };
+}
+export interface PaginatedLoginActivities {
+    items: LoginActivityItem[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
 }

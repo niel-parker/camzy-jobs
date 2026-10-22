@@ -22,19 +22,107 @@ const tenant_entity_1 = require("../tenants/entities/tenant.entity");
 const candidate_entity_1 = require("../candidates/entities/candidate.entity");
 const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-subscription.entity");
 const subscription_plan_entity_1 = require("../subscriptions/entities/subscription-plan.entity");
+const restricted_domain_entity_1 = require("../admin/entities/restricted-domain.entity");
+const login_activity_entity_1 = require("../admin/entities/login-activity.entity");
 const mail_service_1 = require("../mail/mail.service");
 let AuthService = class AuthService {
-    constructor(userRepo, tenantRepo, candidateRepo, subRepo, planRepo, mailService) {
+    constructor(userRepo, tenantRepo, candidateRepo, subRepo, planRepo, domainRepo, activityRepo, mailService) {
         this.userRepo = userRepo;
         this.tenantRepo = tenantRepo;
         this.candidateRepo = candidateRepo;
         this.subRepo = subRepo;
         this.planRepo = planRepo;
+        this.domainRepo = domainRepo;
+        this.activityRepo = activityRepo;
         this.mailService = mailService;
         this.otpStore = new Map();
     }
-    async login(email, rawPassword) {
+    parseUserAgent(ua) {
+        if (!ua) {
+            return { browser: 'Browser / Direct API', os: 'Unknown OS', deviceType: 'Desktop' };
+        }
+        let browser = 'Browser';
+        let os = 'Unknown OS';
+        let deviceType = 'Desktop';
+        if (/mobile/i.test(ua))
+            deviceType = 'Mobile';
+        else if (/tablet|ipad/i.test(ua))
+            deviceType = 'Tablet';
+        else
+            deviceType = 'Desktop';
+        if (/edg/i.test(ua))
+            browser = 'Edge';
+        else if (/opr|opera/i.test(ua))
+            browser = 'Opera';
+        else if (/chrome|crios/i.test(ua))
+            browser = 'Chrome';
+        else if (/firefox|fxios/i.test(ua))
+            browser = 'Firefox';
+        else if (/safari/i.test(ua))
+            browser = 'Safari';
+        else if (/postman/i.test(ua))
+            browser = 'Postman';
+        else if (/curl/i.test(ua))
+            browser = 'cURL';
+        if (/macintosh|mac os x/i.test(ua))
+            os = 'macOS';
+        else if (/windows nt 10/i.test(ua))
+            os = 'Windows 10/11';
+        else if (/windows/i.test(ua))
+            os = 'Windows';
+        else if (/android/i.test(ua))
+            os = 'Android';
+        else if (/iphone|ipad|ipod/i.test(ua))
+            os = 'iOS';
+        else if (/linux/i.test(ua))
+            os = 'Linux';
+        return { browser, os, deviceType };
+    }
+    async recordLoginActivity(data) {
+        try {
+            let rawIp = (data.ipAddress || '127.0.0.1').split(',')[0].trim();
+            if (rawIp.startsWith('::ffff:'))
+                rawIp = rawIp.replace('::ffff:', '');
+            if (rawIp === '::1')
+                rawIp = '127.0.0.1';
+            let location = 'External Client';
+            if (rawIp === '127.0.0.1' || rawIp === 'localhost') {
+                location = 'Local Network / Dev';
+            }
+            else if (rawIp.startsWith('192.168.') || rawIp.startsWith('10.') || rawIp.startsWith('172.16.')) {
+                location = 'Private Intranet';
+            }
+            const { browser, os, deviceType } = this.parseUserAgent(data.userAgent);
+            const log = this.activityRepo.create({
+                email: data.email,
+                userId: data.userId || null,
+                userName: data.userName || null,
+                role: data.role || null,
+                ipAddress: rawIp,
+                userAgent: data.userAgent ? data.userAgent.slice(0, 500) : null,
+                deviceType,
+                browser,
+                os,
+                status: data.status,
+                failureReason: data.failureReason || null,
+                loginMethod: data.loginMethod || login_activity_entity_1.LoginMethod.PASSWORD,
+                location,
+            });
+            await this.activityRepo.save(log);
+        }
+        catch (err) {
+            console.error('Failed to log login activity:', err);
+        }
+    }
+    async login(email, rawPassword, meta) {
         if (!email || !rawPassword) {
+            await this.recordLoginActivity({
+                email: email || 'unknown',
+                status: login_activity_entity_1.LoginStatus.FAILED,
+                failureReason: 'Email address and password are required',
+                loginMethod: login_activity_entity_1.LoginMethod.PASSWORD,
+                ...meta,
+            });
             throw new common_1.BadRequestException('Email address and password are required.');
         }
         const cleanEmail = email.toLowerCase().trim();
@@ -43,11 +131,18 @@ let AuthService = class AuthService {
             relations: { tenant: true },
         });
         if (!user) {
+            await this.recordLoginActivity({
+                email: cleanEmail,
+                status: login_activity_entity_1.LoginStatus.FAILED,
+                failureReason: 'Account not found with this email',
+                loginMethod: login_activity_entity_1.LoginMethod.PASSWORD,
+                ...meta,
+            });
             throw new common_1.UnauthorizedException('Invalid email or password.');
         }
         let isValidPassword = false;
         if (user.passwordHash) {
-            if (user.passwordHash.startsWith('$2a$') || user.passwordHash.startsWith('$2b$')) {
+            if (user.passwordHash.startsWith('$2a$') || user.passwordHash.startsWith('$2b$') || user.passwordHash.startsWith('$2y$')) {
                 isValidPassword = bcrypt.compareSync(rawPassword, user.passwordHash);
             }
             else {
@@ -55,22 +150,85 @@ let AuthService = class AuthService {
             }
         }
         if (!isValidPassword) {
+            await this.recordLoginActivity({
+                email: cleanEmail,
+                userId: user.id,
+                userName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+                role: user.role,
+                status: login_activity_entity_1.LoginStatus.FAILED,
+                failureReason: 'Invalid password provided',
+                loginMethod: login_activity_entity_1.LoginMethod.PASSWORD,
+                ...meta,
+            });
             throw new common_1.UnauthorizedException('Invalid email or password.');
         }
         if (user.status === user_entity_1.UserStatus.BANNED || user.status === user_entity_1.UserStatus.INACTIVE) {
+            await this.recordLoginActivity({
+                email: cleanEmail,
+                userId: user.id,
+                userName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+                role: user.role,
+                status: login_activity_entity_1.LoginStatus.FAILED,
+                failureReason: 'Account has been disabled or suspended',
+                loginMethod: login_activity_entity_1.LoginMethod.PASSWORD,
+                ...meta,
+            });
             throw new common_1.UnauthorizedException('Your account has been disabled or suspended.');
         }
+        user.lastLoginAt = new Date();
+        await this.userRepo.save(user);
+        await this.recordLoginActivity({
+            email: cleanEmail,
+            userId: user.id,
+            userName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+            role: user.role,
+            status: login_activity_entity_1.LoginStatus.SUCCESS,
+            loginMethod: login_activity_entity_1.LoginMethod.PASSWORD,
+            ...meta,
+        });
         const dto = await this.mapToDto(user);
         return {
             accessToken: `jwt-user-token-${user.id}-${Date.now()}`,
             user: dto,
         };
     }
+    async checkDomainRestriction(emailOrDomain) {
+        if (!emailOrDomain)
+            return { restricted: false, domain: '' };
+        const trimmed = emailOrDomain.toLowerCase().trim();
+        const domain = trimmed.includes('@') ? trimmed.split('@').pop()?.trim() || '' : trimmed.replace(/^@+/, '');
+        if (!domain)
+            return { restricted: false, domain: '' };
+        const matched = await this.domainRepo.findOne({
+            where: { domain, isActive: true },
+        });
+        if (matched) {
+            return {
+                restricted: true,
+                domain,
+                message: `Registration with email domain "@${domain}" is restricted for employers. Please use your corporate or company work email (e.g. name@yourcompany.com).`,
+            };
+        }
+        const allActive = await this.domainRepo.find({ where: { isActive: true } });
+        const parentMatch = allActive.find((d) => domain.endsWith(`.${d.domain}`));
+        if (parentMatch) {
+            return {
+                restricted: true,
+                domain,
+                message: `Registration with email domain "@${domain}" is restricted for employers. Please use your corporate or company work email (e.g. name@yourcompany.com).`,
+            };
+        }
+        return { restricted: false, domain };
+    }
     async registerCompany(body) {
         if (!body.adminEmail) {
             throw new common_1.BadRequestException('Admin email address is required.');
         }
         const cleanEmail = body.adminEmail.toLowerCase().trim();
+        const domainCheck = await this.checkDomainRestriction(cleanEmail);
+        if (domainCheck.restricted) {
+            throw new common_1.BadRequestException(domainCheck.message);
+        }
         const existingUser = await this.userRepo.findOne({
             where: { email: cleanEmail },
         });
@@ -224,14 +382,28 @@ let AuthService = class AuthService {
             otpCode,
         };
     }
-    async verifyOtp(identifier, otpCode) {
+    async verifyOtp(identifier, otpCode, meta) {
         if (!identifier || !otpCode) {
+            await this.recordLoginActivity({
+                email: identifier || 'unknown',
+                status: login_activity_entity_1.LoginStatus.FAILED,
+                failureReason: 'Identifier and OTP code are required',
+                loginMethod: login_activity_entity_1.LoginMethod.OTP,
+                ...meta,
+            });
             throw new common_1.BadRequestException('Email/Phone and OTP code are required.');
         }
         const clean = identifier.toLowerCase().trim();
         const cached = this.otpStore.get(clean);
         const isValidOtp = (cached && cached.code === otpCode && Date.now() <= cached.expiresAt) || otpCode === '123456';
         if (!isValidOtp) {
+            await this.recordLoginActivity({
+                email: clean,
+                status: login_activity_entity_1.LoginStatus.FAILED,
+                failureReason: 'Invalid or expired OTP verification code',
+                loginMethod: login_activity_entity_1.LoginMethod.OTP,
+                ...meta,
+            });
             throw new common_1.UnauthorizedException('Invalid or expired OTP verification code. Please request a new code.');
         }
         this.otpStore.delete(clean);
@@ -274,6 +446,15 @@ let AuthService = class AuthService {
                 user.isPhoneVerified = true;
             await this.userRepo.save(user);
         }
+        await this.recordLoginActivity({
+            email: user.email,
+            userId: user.id,
+            userName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+            role: user.role,
+            status: login_activity_entity_1.LoginStatus.SUCCESS,
+            loginMethod: login_activity_entity_1.LoginMethod.OTP,
+            ...meta,
+        });
         const dto = await this.mapToDto(user);
         return {
             accessToken: `jwt-user-token-${user.id}-${Date.now()}`,
@@ -325,7 +506,11 @@ exports.AuthService = AuthService = __decorate([
     __param(2, (0, typeorm_1.InjectRepository)(candidate_entity_1.Candidate)),
     __param(3, (0, typeorm_1.InjectRepository)(tenant_subscription_entity_1.TenantSubscription)),
     __param(4, (0, typeorm_1.InjectRepository)(subscription_plan_entity_1.SubscriptionPlan)),
+    __param(5, (0, typeorm_1.InjectRepository)(restricted_domain_entity_1.RestrictedDomain)),
+    __param(6, (0, typeorm_1.InjectRepository)(login_activity_entity_1.LoginActivity)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
