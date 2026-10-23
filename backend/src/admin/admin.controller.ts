@@ -1805,10 +1805,18 @@ export class AdminController {
         .execute();
       return { message: `Cleared login activities older than ${days} days` };
     }
-    const all = await this.loginActivityRepo.find({ order: { createdAt: 'DESC' }, skip: 50 });
-    if (all.length > 0) {
-      const ids = all.map((a) => a.id);
-      await this.loginActivityRepo.delete(ids);
+    const recent = await this.loginActivityRepo.find({
+      select: { id: true },
+      order: { createdAt: 'DESC' },
+      take: 50,
+    });
+    if (recent.length === 50) {
+      const keepIds = recent.map((a) => a.id);
+      await this.loginActivityRepo.createQueryBuilder()
+        .delete()
+        .from(LoginActivity)
+        .where('id NOT IN (:...keepIds)', { keepIds })
+        .execute();
     }
     return { message: 'Pruned historical login activities, retaining recent 50 records.' };
   }
