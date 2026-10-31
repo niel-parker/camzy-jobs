@@ -23,7 +23,13 @@ export declare class CandidatesController {
         fullUrl: string;
     }>;
     getAvatarFile(filename: string, res: Response): Promise<void>;
-    findAll(skill?: string, noticePeriod?: string, city?: string, minExp?: string, maxSalary?: string): Promise<CandidateProfileDto[]>;
+    findAll(skill?: string, query?: string, excludeKeywords?: string, searchIn?: string, noticePeriod?: string, city?: string, location?: string, minExp?: string, maxExp?: string, minSalary?: string, maxSalary?: string, company?: string, designation?: string, activeIn?: string, page?: string, limit?: string, sortBy?: string): Promise<{
+        candidates: CandidateProfileDto[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }>;
     findOne(id: string): Promise<CandidateProfileDto>;
     updateProfile(id: string, body: any): Promise<CandidateProfileDto>;
     toggleSaveJob(id: string, jobId: string): Promise<{

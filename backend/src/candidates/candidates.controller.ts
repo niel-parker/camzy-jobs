@@ -128,23 +128,55 @@ export class CandidatesController {
   @Get()
   @ApiOperation({ summary: 'Search candidate talent database (Guarded by Company Resume Access Plan)' })
   @ApiQuery({ name: 'skill', required: false })
+  @ApiQuery({ name: 'query', required: false })
   @ApiQuery({ name: 'noticePeriod', required: false })
   @ApiQuery({ name: 'city', required: false })
   @ApiQuery({ name: 'minExp', required: false })
+  @ApiQuery({ name: 'maxExp', required: false })
+  @ApiQuery({ name: 'minSalary', required: false })
   @ApiQuery({ name: 'maxSalary', required: false })
+  @ApiQuery({ name: 'company', required: false })
+  @ApiQuery({ name: 'designation', required: false })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'sortBy', required: false })
   async findAll(
     @Query('skill') skill?: string,
+    @Query('query') query?: string,
+    @Query('excludeKeywords') excludeKeywords?: string,
+    @Query('searchIn') searchIn?: string,
     @Query('noticePeriod') noticePeriod?: string,
     @Query('city') city?: string,
+    @Query('location') location?: string,
     @Query('minExp') minExp?: string,
+    @Query('maxExp') maxExp?: string,
+    @Query('minSalary') minSalary?: string,
     @Query('maxSalary') maxSalary?: string,
-  ): Promise<CandidateProfileDto[]> {
+    @Query('company') company?: string,
+    @Query('designation') designation?: string,
+    @Query('activeIn') activeIn?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: string,
+  ) {
     return await this.candidatesService.findAll({
       skill,
+      query,
+      excludeKeywords,
+      searchIn,
       noticePeriod,
       city,
-      minExp: minExp ? Number(minExp) : undefined,
-      maxSalary: maxSalary ? Number(maxSalary) : undefined,
+      location,
+      minExp: minExp !== undefined && minExp !== '' ? Number(minExp) : undefined,
+      maxExp: maxExp !== undefined && maxExp !== '' ? Number(maxExp) : undefined,
+      minSalary: minSalary !== undefined && minSalary !== '' ? Number(minSalary) : undefined,
+      maxSalary: maxSalary !== undefined && maxSalary !== '' ? Number(maxSalary) : undefined,
+      company,
+      designation,
+      activeIn,
+      page: page !== undefined && page !== '' ? Number(page) : 1,
+      limit: limit !== undefined && limit !== '' ? Number(limit) : 20,
+      sortBy,
     });
   }
 

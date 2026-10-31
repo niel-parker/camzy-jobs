@@ -41,11 +41,29 @@ export declare class JobPortalSdk {
     }>;
     searchCandidates(params?: {
         skill?: string;
+        query?: string;
+        excludeKeywords?: string;
+        searchIn?: string;
         noticePeriod?: string;
         city?: string;
+        location?: string;
         minExp?: number;
+        maxExp?: number;
+        minSalary?: number;
         maxSalary?: number;
-    }): Promise<any[]>;
+        company?: string;
+        designation?: string;
+        activeIn?: string;
+        page?: number;
+        limit?: number;
+        sortBy?: string;
+    }): Promise<{
+        candidates: any[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    } | any[]>;
     toggleSaveJob(candidateId: string, jobId: string): Promise<{
         saved: boolean;
         savedJobIds: string[];

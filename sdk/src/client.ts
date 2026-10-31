@@ -168,15 +168,45 @@ export class JobPortalSdk {
     return res.json();
   }
 
-  async searchCandidates(params?: { skill?: string; noticePeriod?: string; city?: string; minExp?: number; maxSalary?: number }): Promise<any[]> {
+  async searchCandidates(params?: {
+    skill?: string;
+    query?: string;
+    excludeKeywords?: string;
+    searchIn?: string;
+    noticePeriod?: string;
+    city?: string;
+    location?: string;
+    minExp?: number;
+    maxExp?: number;
+    minSalary?: number;
+    maxSalary?: number;
+    company?: string;
+    designation?: string;
+    activeIn?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+  }): Promise<{ candidates: any[]; total: number; page: number; limit: number; totalPages: number } | any[]> {
     const searchParams = new URLSearchParams();
     if (params?.skill) searchParams.append('skill', params.skill);
+    if (params?.query) searchParams.append('query', params.query);
+    if (params?.excludeKeywords) searchParams.append('excludeKeywords', params.excludeKeywords);
+    if (params?.searchIn) searchParams.append('searchIn', params.searchIn);
     if (params?.noticePeriod) searchParams.append('noticePeriod', params.noticePeriod);
     if (params?.city) searchParams.append('city', params.city);
-    if (params?.minExp) searchParams.append('minExp', params.minExp.toString());
-    if (params?.maxSalary) searchParams.append('maxSalary', params.maxSalary.toString());
+    if (params?.location) searchParams.append('location', params.location);
+    if (params?.minExp !== undefined) searchParams.append('minExp', params.minExp.toString());
+    if (params?.maxExp !== undefined) searchParams.append('maxExp', params.maxExp.toString());
+    if (params?.minSalary !== undefined) searchParams.append('minSalary', params.minSalary.toString());
+    if (params?.maxSalary !== undefined) searchParams.append('maxSalary', params.maxSalary.toString());
+    if (params?.company) searchParams.append('company', params.company);
+    if (params?.designation) searchParams.append('designation', params.designation);
+    if (params?.activeIn) searchParams.append('activeIn', params.activeIn);
+    if (params?.page !== undefined) searchParams.append('page', params.page.toString());
+    if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString());
+    if (params?.sortBy) searchParams.append('sortBy', params.sortBy);
     const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
-    return this.request<any[]>(`/candidates${queryString}`);
+    return this.request<any>(`/candidates${queryString}`);
   }
 
   async toggleSaveJob(candidateId: string, jobId: string): Promise<{ saved: boolean; savedJobIds: string[] }> {

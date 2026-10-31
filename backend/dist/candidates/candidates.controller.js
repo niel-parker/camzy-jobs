@@ -80,13 +80,25 @@ let CandidatesController = class CandidatesController {
         }
         return res.sendFile(filePath);
     }
-    async findAll(skill, noticePeriod, city, minExp, maxSalary) {
+    async findAll(skill, query, excludeKeywords, searchIn, noticePeriod, city, location, minExp, maxExp, minSalary, maxSalary, company, designation, activeIn, page, limit, sortBy) {
         return await this.candidatesService.findAll({
             skill,
+            query,
+            excludeKeywords,
+            searchIn,
             noticePeriod,
             city,
-            minExp: minExp ? Number(minExp) : undefined,
-            maxSalary: maxSalary ? Number(maxSalary) : undefined,
+            location,
+            minExp: minExp !== undefined && minExp !== '' ? Number(minExp) : undefined,
+            maxExp: maxExp !== undefined && maxExp !== '' ? Number(maxExp) : undefined,
+            minSalary: minSalary !== undefined && minSalary !== '' ? Number(minSalary) : undefined,
+            maxSalary: maxSalary !== undefined && maxSalary !== '' ? Number(maxSalary) : undefined,
+            company,
+            designation,
+            activeIn,
+            page: page !== undefined && page !== '' ? Number(page) : 1,
+            limit: limit !== undefined && limit !== '' ? Number(limit) : 20,
+            sortBy,
         });
     }
     async findOne(id) {
@@ -179,17 +191,37 @@ __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({ summary: 'Search candidate talent database (Guarded by Company Resume Access Plan)' }),
     (0, swagger_1.ApiQuery)({ name: 'skill', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'query', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'noticePeriod', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'city', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'minExp', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'maxExp', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'minSalary', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'maxSalary', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'company', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'designation', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'page', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'limit', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'sortBy', required: false }),
     __param(0, (0, common_1.Query)('skill')),
-    __param(1, (0, common_1.Query)('noticePeriod')),
-    __param(2, (0, common_1.Query)('city')),
-    __param(3, (0, common_1.Query)('minExp')),
-    __param(4, (0, common_1.Query)('maxSalary')),
+    __param(1, (0, common_1.Query)('query')),
+    __param(2, (0, common_1.Query)('excludeKeywords')),
+    __param(3, (0, common_1.Query)('searchIn')),
+    __param(4, (0, common_1.Query)('noticePeriod')),
+    __param(5, (0, common_1.Query)('city')),
+    __param(6, (0, common_1.Query)('location')),
+    __param(7, (0, common_1.Query)('minExp')),
+    __param(8, (0, common_1.Query)('maxExp')),
+    __param(9, (0, common_1.Query)('minSalary')),
+    __param(10, (0, common_1.Query)('maxSalary')),
+    __param(11, (0, common_1.Query)('company')),
+    __param(12, (0, common_1.Query)('designation')),
+    __param(13, (0, common_1.Query)('activeIn')),
+    __param(14, (0, common_1.Query)('page')),
+    __param(15, (0, common_1.Query)('limit')),
+    __param(16, (0, common_1.Query)('sortBy')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], CandidatesController.prototype, "findAll", null);
 __decorate([

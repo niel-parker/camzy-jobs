@@ -106,43 +106,151 @@ export class CandidatesService {
     private readonly jobRepo: Repository<JobPosting>,
   ) {}
 
-  async findAll(params?: { skill?: string; noticePeriod?: string; city?: string; minExp?: number; maxSalary?: number }): Promise<CandidateProfileDto[]> {
-    const candidates = await this.candidateRepo.find({
-      relations: { user: true },
-      order: { updatedAt: 'DESC' },
-      take: 100,
-    });
+  async findAll(params?: {
+    skill?: string;
+    query?: string;
+    excludeKeywords?: string;
+    searchIn?: string;
+    noticePeriod?: string;
+    city?: string;
+    location?: string;
+    minExp?: number;
+    maxExp?: number;
+    minSalary?: number;
+    maxSalary?: number;
+    company?: string;
+    designation?: string;
+    activeIn?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+  }): Promise<{ candidates: CandidateProfileDto[]; total: number; page: number; limit: number; totalPages: number }> {
+    const qb = this.candidateRepo.createQueryBuilder('candidate')
+      .leftJoinAndSelect('candidate.user', 'user');
 
-    let result = candidates.map((c) => this.mapToDto(c));
-
-    if (params?.skill) {
-      const sLower = params.skill.toLowerCase();
-      result = result.filter((c) =>
-        c.skills && c.skills.some((s) => s.toLowerCase().includes(sLower)),
-      );
+    const searchKeyword = (params?.query || params?.skill || '').trim();
+    if (searchKeyword) {
+      const isBoolean = /\b(AND|OR|NOT)\b/i.test(searchKeyword);
+      if (isBoolean) {
+        const terms = searchKeyword.replace(/[()]/g, ' ').split(/\s+(?:AND|OR)\s+/i).map((t) => t.trim()).filter(Boolean);
+        const conditions: string[] = [];
+        const qParams: Record<string, string> = {};
+        terms.forEach((term, idx) => {
+          const pName = `term_${idx}`;
+          qParams[pName] = `%${term.toLowerCase()}%`;
+          conditions.push(`(LOWER(candidate.headline) LIKE :${pName} OR LOWER(candidate.currentTitle) LIKE :${pName} OR LOWER(candidate.skills) LIKE :${pName} OR LOWER(candidate.summary) LIKE :${pName} OR LOWER(candidate.resumeParsedText) LIKE :${pName})`);
+        });
+        if (conditions.length > 0) {
+          qb.andWhere(`(${conditions.join(' OR ')})`, qParams);
+        }
+      } else {
+        const terms = searchKeyword.split(',').map((s) => s.trim()).filter(Boolean);
+        const conditions: string[] = [];
+        const qParams: Record<string, string> = {};
+        terms.forEach((term, idx) => {
+          const pName = `term_${idx}`;
+          qParams[pName] = `%${term.toLowerCase()}%`;
+          conditions.push(`(LOWER(candidate.headline) LIKE :${pName} OR LOWER(candidate.currentTitle) LIKE :${pName} OR LOWER(candidate.skills) LIKE :${pName} OR LOWER(candidate.summary) LIKE :${pName} OR LOWER(candidate.resumeParsedText) LIKE :${pName})`);
+        });
+        if (conditions.length > 0) {
+          qb.andWhere(`(${conditions.join(' OR ')})`, qParams);
+        }
+      }
     }
 
-    if (params?.noticePeriod) {
-      const npLower = params.noticePeriod.toLowerCase();
-      result = result.filter((c) => c.noticePeriod && c.noticePeriod.toLowerCase().includes(npLower));
+    if (params?.excludeKeywords && params.excludeKeywords.trim()) {
+      const exTerms = params.excludeKeywords.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      exTerms.forEach((exTerm, idx) => {
+        const pName = `exTerm_${idx}`;
+        qb.andWhere(`NOT (LOWER(candidate.headline) LIKE :${pName} OR LOWER(candidate.currentTitle) LIKE :${pName} OR LOWER(candidate.skills) LIKE :${pName} OR LOWER(candidate.summary) LIKE :${pName})`, { [pName]: `%${exTerm}%` });
+      });
     }
 
-    if (params?.city) {
-      const cLower = params.city.toLowerCase();
-      result = result.filter((c) =>
-        c.preferredLocations && c.preferredLocations.some((loc) => loc.toLowerCase().includes(cLower)),
-      );
+    const loc = (params?.city || params?.location || '').trim();
+    if (loc) {
+      qb.andWhere('(LOWER(candidate.preferredLocations) LIKE :loc OR LOWER(candidate.summary) LIKE :loc)', { loc: `%${loc.toLowerCase()}%` });
     }
 
-    if (params?.minExp) {
-      result = result.filter((c) => c.experienceYears >= params.minExp!);
+    if (params?.noticePeriod && params.noticePeriod !== 'Any' && params.noticePeriod !== 'all') {
+      const np = params.noticePeriod.toLowerCase();
+      if (np.includes('immediate') || np.includes('0-15')) {
+        qb.andWhere('(LOWER(candidate.noticePeriod) LIKE :np1 OR LOWER(candidate.noticePeriod) LIKE :np2)', { np1: '%immediate%', np2: '%15%' });
+      } else if (np.includes('30') || np.includes('1 month')) {
+        qb.andWhere('(LOWER(candidate.noticePeriod) LIKE :np1 OR LOWER(candidate.noticePeriod) LIKE :np2)', { np1: '%30%', np2: '%1 month%' });
+      } else if (np.includes('60') || np.includes('2 month')) {
+        qb.andWhere('(LOWER(candidate.noticePeriod) LIKE :np1 OR LOWER(candidate.noticePeriod) LIKE :np2)', { np1: '%60%', np2: '%2 month%' });
+      } else if (np.includes('90') || np.includes('3 month')) {
+        qb.andWhere('(LOWER(candidate.noticePeriod) LIKE :np1 OR LOWER(candidate.noticePeriod) LIKE :np2)', { np1: '%90%', np2: '%3 month%' });
+      } else if (np.includes('serving')) {
+        qb.andWhere('(LOWER(candidate.noticePeriod) LIKE :np1 OR LOWER(candidate.headline) LIKE :np1)', { np1: '%serving%' });
+      } else {
+        qb.andWhere('LOWER(candidate.noticePeriod) LIKE :np', { np: `%${np}%` });
+      }
     }
 
-    if (params?.maxSalary) {
-      result = result.filter((c) => (c.expectedSalary || 0) <= params.maxSalary!);
+    if (params?.company && params.company.trim()) {
+      qb.andWhere('LOWER(candidate.experience) LIKE :comp', { comp: `%${params.company.toLowerCase().trim()}%` });
     }
 
-    return result;
+    if (params?.designation && params.designation.trim()) {
+      qb.andWhere('(LOWER(candidate.currentTitle) LIKE :desig OR LOWER(candidate.headline) LIKE :desig OR LOWER(candidate.experience) LIKE :desig)', { desig: `%${params.designation.toLowerCase().trim()}%` });
+    }
+
+    if (params?.minExp !== undefined && !isNaN(Number(params.minExp))) {
+      qb.andWhere('candidate.experienceYears >= :minExp', { minExp: Number(params.minExp) });
+    }
+    if (params?.maxExp !== undefined && !isNaN(Number(params.maxExp))) {
+      qb.andWhere('candidate.experienceYears <= :maxExp', { maxExp: Number(params.maxExp) });
+    }
+
+    if (params?.minSalary !== undefined && !isNaN(Number(params.minSalary))) {
+      qb.andWhere('candidate.expectedSalary >= :minSalary', { minSalary: Number(params.minSalary) });
+    }
+    if (params?.maxSalary !== undefined && !isNaN(Number(params.maxSalary))) {
+      qb.andWhere('(candidate.expectedSalary IS NULL OR candidate.expectedSalary <= :maxSalary)', { maxSalary: Number(params.maxSalary) });
+    }
+
+    if (params?.activeIn) {
+      let days = 365;
+      if (params.activeIn === '15d') days = 15;
+      else if (params.activeIn === '30d') days = 30;
+      else if (params.activeIn === '3m') days = 90;
+      else if (params.activeIn === '6m') days = 180;
+      else if (params.activeIn === '1y') days = 365;
+      const sinceDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      qb.andWhere('(user.lastLoginAt >= :sinceDate OR candidate.updatedAt >= :sinceDate)', { sinceDate });
+    }
+
+    if (params?.sortBy === 'exp_desc') {
+      qb.orderBy('candidate.experienceYears', 'DESC');
+    } else if (params?.sortBy === 'exp_asc') {
+      qb.orderBy('candidate.experienceYears', 'ASC');
+    } else if (params?.sortBy === 'salary_desc') {
+      qb.orderBy('candidate.expectedSalary', 'DESC');
+    } else if (params?.sortBy === 'salary_asc') {
+      qb.orderBy('candidate.expectedSalary', 'ASC');
+    } else if (params?.sortBy === 'active') {
+      qb.orderBy('user.lastLoginAt', 'DESC');
+    } else {
+      qb.orderBy('candidate.updatedAt', 'DESC');
+    }
+
+    const limit = Math.min(Math.max(params?.limit || 20, 1), 100);
+    const page = Math.max(params?.page || 1, 1);
+    const offset = (page - 1) * limit;
+
+    qb.skip(offset).take(limit);
+
+    const [items, total] = await qb.getManyAndCount();
+    const dtos = items.map((c) => this.mapToDto(c));
+
+    return {
+      candidates: dtos,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findOne(id: string): Promise<CandidateProfileDto> {

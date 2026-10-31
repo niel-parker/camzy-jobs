@@ -98,11 +98,29 @@ export declare class CandidatesService {
     constructor(candidateRepo: Repository<Candidate>, userRepo: Repository<User>, jobRepo: Repository<JobPosting>);
     findAll(params?: {
         skill?: string;
+        query?: string;
+        excludeKeywords?: string;
+        searchIn?: string;
         noticePeriod?: string;
         city?: string;
+        location?: string;
         minExp?: number;
+        maxExp?: number;
+        minSalary?: number;
         maxSalary?: number;
-    }): Promise<CandidateProfileDto[]>;
+        company?: string;
+        designation?: string;
+        activeIn?: string;
+        page?: number;
+        limit?: number;
+        sortBy?: string;
+    }): Promise<{
+        candidates: CandidateProfileDto[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }>;
     findOne(id: string): Promise<CandidateProfileDto>;
     updateProfile(id: string, partial: Partial<CandidateProfileDto>): Promise<CandidateProfileDto>;
     toggleSaveJob(candidateOrUserId: string, jobId: string): Promise<{
