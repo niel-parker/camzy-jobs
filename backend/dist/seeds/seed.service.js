@@ -270,22 +270,8 @@ let SeedService = SeedService_1 = class SeedService {
             else {
                 candidateUser = existingCand;
             }
-            const existingEmp = await this.userRepo.findOne({ where: { email: 'employer@techcorp.com' } });
-            if (!existingEmp && techCorp) {
-                await this.userRepo.save(this.userRepo.create({
-                    email: 'employer@techcorp.com',
-                    passwordHash: 'password123',
-                    firstName: 'TechCorp',
-                    lastName: 'Hiring Manager',
-                    role: user_entity_1.UserRole.COMPANY_ADMIN,
-                    status: user_entity_1.UserStatus.ACTIVE,
-                    tenantId: techCorp.id,
-                    isEmailVerified: true,
-                    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
-                }));
-            }
             superAdminUser = await this.userRepo.findOne({ where: { email: 'admin@camzyjobs.com' } });
-            employerUser = await this.userRepo.findOne({ where: { email: 'recruiter@techcorp.com' } });
+            employerUser = await this.userRepo.findOne({ where: { email: 'careers@camzyinfotech.com' } });
         }
         const candidateProfileCount = await this.candidateRepo.count();
         let candidateProfile;
@@ -1311,41 +1297,7 @@ let SeedService = SeedService_1 = class SeedService {
                 await this.candidateRepo.save(cand);
             }
         }
-        let expiredTenant = await this.tenantRepo.findOne({ where: { slug: 'cloudscale-systems' } });
-        if (!expiredTenant) {
-            expiredTenant = await this.tenantRepo.save(this.tenantRepo.create({
-                name: 'CloudScale Systems Inc',
-                slug: 'cloudscale-systems',
-                type: tenant_entity_1.TenantType.COMPANY,
-                logoUrl: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&q=80&w=120',
-                industry: 'Cloud Infrastructure',
-                description: 'Specialists in multi-cloud migration and serverless scale.',
-                status: tenant_entity_1.TenantStatus.ACTIVE,
-            }));
-            const freePlan = await this.planRepo.findOne({ where: { code: subscription_plan_entity_1.PlanCode.FREE } });
-            if (freePlan) {
-                await this.subRepo.save(this.subRepo.create({
-                    tenantId: expiredTenant.id,
-                    planId: freePlan.id,
-                    status: tenant_subscription_entity_1.SubscriptionStatus.EXPIRED,
-                    activeJobsUsed: 0,
-                    currentPeriodStart: new Date(Date.now() - 90 * 86400000),
-                    currentPeriodEnd: new Date(Date.now() - 30 * 86400000),
-                }));
-            }
-            await this.userRepo.save(this.userRepo.create({
-                email: 'sameer@cloudscale.io',
-                passwordHash: 'password123',
-                firstName: 'Sameer',
-                lastName: 'Patel',
-                role: user_entity_1.UserRole.COMPANY_ADMIN,
-                status: user_entity_1.UserStatus.ACTIVE,
-                tenantId: expiredTenant.id,
-                isEmailVerified: true,
-                lastLoginAt: new Date(Date.now() - 45 * 86400000),
-            }));
-        }
-        this.logger.log('✅ Seeded Broadcast demo candidates & expired companies!');
+        this.logger.log('✅ Seeded Broadcast demo candidates!');
     }
     async seedRestrictedDomains() {
         const count = await this.domainRepo.count();
