@@ -430,6 +430,20 @@ export class JobPortalSdk {
     });
   }
 
+  async updateAdminUserProfile(id: string, data: any): Promise<User> {
+    return this.request<User>(`/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async resetAdminUserPassword(id: string, password: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/admin/users/${id}/reset-password`, {
+      method: 'PUT',
+      body: JSON.stringify({ password }),
+    });
+  }
+
   // --- Super Admin Cross-Company Jobs ---
   async getAdminJobs(params?: { tenantId?: string; search?: string }): Promise<CrossCompanyJobItem[]> {
     const sp = new URLSearchParams();

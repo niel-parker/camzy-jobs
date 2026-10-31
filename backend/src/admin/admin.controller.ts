@@ -476,7 +476,13 @@ export class AdminController {
         candidateId: cand?.id || null,
         headline: cand?.headline || cand?.currentTitle || null,
         currentTitle: cand?.currentTitle || null,
+        summary: cand?.summary || null,
         experienceYears: cand?.experienceYears ?? null,
+        currentSalary: cand?.currentSalary ?? null,
+        expectedSalary: cand?.expectedSalary ?? null,
+        noticePeriod: cand?.noticePeriod || null,
+        preferredLocations: cand?.preferredLocations || [],
+        skills: cand?.skills || [],
         resumeUrl: resumeUrl,
         hasResume: Boolean(resumeUrl),
         experienceCount: Array.isArray(cand?.experience) ? cand.experience.length : 0,
@@ -525,19 +531,133 @@ export class AdminController {
     return saved;
   }
 
-  @Put('users/:id')
-  @ApiOperation({ summary: 'Super Admin: Update user status or details' })
-  async updateUser(@Param('id') id: string, @Body() body: any) {
+  @Put('users/:id/status')
+  @ApiOperation({ summary: 'Super Admin: Update user status' })
+  async updateUserStatus(@Param('id') id: string, @Body() body: { status: string }) {
     const user = await this.userRepo.findOne({ where: { id } });
-    if (!user) throw new Error(`User ${id} not found`);
+    if (!user) throw new NotFoundException(`User ${id} not found`);
+    let nextStatus: UserStatus = UserStatus.ACTIVE;
+    if (body.status === 'SUSPENDED' || body.status === 'INACTIVE') {
+      nextStatus = UserStatus.INACTIVE;
+    } else if (body.status === 'BANNED') {
+      nextStatus = UserStatus.BANNED;
+    }
+    user.status = nextStatus;
+    await this.userRepo.save(user);
+    return user;
+  }
 
-    if (body.firstName !== undefined) user.firstName = body.firstName;
-    if (body.lastName !== undefined) user.lastName = body.lastName;
-    if (body.status !== undefined) user.status = body.status;
+  @Put('users/:id/reset-password')
+  @ApiOperation({ summary: 'Super Admin: Reset user password' })
+  async resetUserPassword(@Param('id') id: string, @Body() body: { password?: string; newPassword?: string }) {
+    const user = await this.userRepo.findOne({ where: { id } });
+    if (!user) throw new NotFoundException(`User ${id} not found`);
+    const newPass = (body.password || body.newPassword || '').trim();
+    if (!newPass || newPass.length < 6) {
+      throw new BadRequestException('New password must be at least 6 characters long');
+    }
+    user.passwordHash = bcrypt.hashSync(newPass, 10);
+    await this.userRepo.save(user);
+    return { success: true, message: `Password reset successfully for ${user.email}` };
+  }
+
+  @Put('users/:id')
+  @ApiOperation({ summary: 'Super Admin: Update user profile and details' })
+  async updateUser(@Param('id') id: string, @Body() body: any) {
+    const user = await this.userRepo.findOne({ where: { id }, relations: { candidate: true, tenant: true } });
+    if (!user) throw new NotFoundException(`User ${id} not found`);
+
+    if (body.email && body.email.trim() && body.email.toLowerCase().trim() !== user.email) {
+      const cleanEmail = body.email.toLowerCase().trim();
+      const existing = await this.userRepo.findOne({ where: { email: cleanEmail } });
+      if (existing && existing.id !== user.id) {
+        throw new BadRequestException('Another user with this email address already exists');
+      }
+      user.email = cleanEmail;
+    }
+
+    if (body.firstName !== undefined) user.firstName = body.firstName.trim();
+    if (body.lastName !== undefined) user.lastName = body.lastName.trim();
+    if (body.phoneNumber !== undefined || body.phone !== undefined) {
+      user.phoneNumber = (body.phoneNumber !== undefined ? body.phoneNumber : body.phone)?.trim() || null;
+    }
+    if (body.status !== undefined) {
+      if (body.status === 'SUSPENDED' || body.status === 'INACTIVE') user.status = UserStatus.INACTIVE;
+      else if (body.status === 'BANNED') user.status = UserStatus.BANNED;
+      else user.status = UserStatus.ACTIVE;
+    }
     if (body.role !== undefined) user.role = body.role;
-    if (body.tenantId !== undefined) user.tenantId = body.tenantId;
+    if (body.tenantId !== undefined) user.tenantId = body.tenantId || null;
 
-    return await this.userRepo.save(user);
+    if (body.password && body.password.trim()) {
+      const pass = body.password.trim();
+      if (pass.length < 6) {
+        throw new BadRequestException('Password must be at least 6 characters');
+      }
+      user.passwordHash = bcrypt.hashSync(pass, 10);
+    }
+
+    const savedUser = await this.userRepo.save(user);
+
+    // If user is a candidate or candidate fields are provided, update/create candidate record
+    const hasCandidateFields = body.headline !== undefined ||
+      body.currentTitle !== undefined ||
+      body.summary !== undefined ||
+      body.noticePeriod !== undefined ||
+      body.experienceYears !== undefined ||
+      body.currentSalary !== undefined ||
+      body.expectedSalary !== undefined ||
+      body.skills !== undefined ||
+      body.preferredLocations !== undefined ||
+      body.resumeUrl !== undefined;
+
+    if (user.role === UserRole.CANDIDATE || hasCandidateFields) {
+      let cand = user.candidate || (await this.candidateRepo.findOne({ where: { userId: user.id } }));
+      if (!cand && body.candidateId) {
+        cand = await this.candidateRepo.findOne({ where: { id: body.candidateId } });
+      }
+      if (!cand) {
+        cand = this.candidateRepo.create({
+          userId: user.id,
+          user: user,
+          headline: body.headline || body.currentTitle || 'Active Candidate',
+          skills: Array.isArray(body.skills) ? body.skills : ['General'],
+        });
+      }
+
+      if (body.headline !== undefined) cand.headline = body.headline;
+      if (body.currentTitle !== undefined) cand.currentTitle = body.currentTitle;
+      if (body.summary !== undefined) cand.summary = body.summary;
+      if (body.noticePeriod !== undefined) cand.noticePeriod = body.noticePeriod;
+      if (body.resumeUrl !== undefined) cand.resumeUrl = body.resumeUrl;
+      if (body.experienceYears !== undefined) {
+        cand.experienceYears = Number(body.experienceYears) || 0;
+      }
+      if (body.currentSalary !== undefined) {
+        cand.currentSalary = body.currentSalary !== '' && body.currentSalary !== null ? Number(body.currentSalary) : null as any;
+      }
+      if (body.expectedSalary !== undefined) {
+        cand.expectedSalary = body.expectedSalary !== '' && body.expectedSalary !== null ? Number(body.expectedSalary) : null as any;
+      }
+      if (body.skills !== undefined) {
+        cand.skills = Array.isArray(body.skills)
+          ? body.skills
+          : typeof body.skills === 'string'
+          ? body.skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+          : cand.skills;
+      }
+      if (body.preferredLocations !== undefined) {
+        cand.preferredLocations = Array.isArray(body.preferredLocations)
+          ? body.preferredLocations
+          : typeof body.preferredLocations === 'string'
+          ? body.preferredLocations.split(',').map((s: string) => s.trim()).filter(Boolean)
+          : cand.preferredLocations;
+      }
+
+      await this.candidateRepo.save(cand);
+    }
+
+    return savedUser;
   }
 
   @Delete('users/:id')

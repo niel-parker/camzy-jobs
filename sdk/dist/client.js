@@ -344,6 +344,18 @@ class JobPortalSdk {
             body: JSON.stringify({ status }),
         });
     }
+    async updateAdminUserProfile(id, data) {
+        return this.request(`/admin/users/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+    async resetAdminUserPassword(id, password) {
+        return this.request(`/admin/users/${id}/reset-password`, {
+            method: 'PUT',
+            body: JSON.stringify({ password }),
+        });
+    }
     // --- Super Admin Cross-Company Jobs ---
     async getAdminJobs(params) {
         const sp = new URLSearchParams();

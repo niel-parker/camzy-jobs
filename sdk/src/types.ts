@@ -418,7 +418,13 @@ export interface AdminUserProfile {
   candidateId?: string;
   headline?: string;
   currentTitle?: string;
+  summary?: string;
   experienceYears?: number;
+  currentSalary?: number;
+  expectedSalary?: number;
+  noticePeriod?: string;
+  preferredLocations?: string[];
+  skills?: string[];
   resumeUrl?: string;
   hasResume?: boolean;
   experienceCount?: number;

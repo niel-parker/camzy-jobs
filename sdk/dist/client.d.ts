@@ -125,6 +125,11 @@ export declare class JobPortalSdk {
         phoneNumber?: string;
     }): Promise<User>;
     updateAdminUserStatus(id: string, status: string): Promise<User>;
+    updateAdminUserProfile(id: string, data: any): Promise<User>;
+    resetAdminUserPassword(id: string, password: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
     getAdminJobs(params?: {
         tenantId?: string;
         search?: string;

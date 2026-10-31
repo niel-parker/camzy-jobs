@@ -124,7 +124,13 @@ export declare class AdminController {
         candidateId: string;
         headline: string;
         currentTitle: string;
+        summary: string;
         experienceYears: number;
+        currentSalary: number;
+        expectedSalary: number;
+        noticePeriod: string;
+        preferredLocations: string[];
+        skills: string[];
         resumeUrl: string;
         hasResume: boolean;
         experienceCount: number;
@@ -133,6 +139,16 @@ export declare class AdminController {
         createdAt: Date;
     }[]>;
     createUser(body: any): Promise<User>;
+    updateUserStatus(id: string, body: {
+        status: string;
+    }): Promise<User>;
+    resetUserPassword(id: string, body: {
+        password?: string;
+        newPassword?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+    }>;
     updateUser(id: string, body: any): Promise<User>;
     deleteUser(id: string): Promise<{
         success: boolean;
