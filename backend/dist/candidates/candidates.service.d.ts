@@ -24,6 +24,8 @@ export interface CandidateProfileDto {
     }>;
     savedJobIds?: string[];
     skills: string[];
+    updatedAt?: Date | string;
+    createdAt?: Date | string;
     user?: {
         email: string;
         firstName: string;

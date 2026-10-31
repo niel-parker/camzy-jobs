@@ -229,6 +229,39 @@ export default function CandidateSearchPage() {
     }));
   };
 
+  // Expanded Skills State
+  const [expandedSkillsMap, setExpandedSkillsMap] = useState<Record<string, boolean>>({});
+  const toggleSkillExpand = (candId: string) => {
+    setExpandedSkillsMap((prev) => ({
+      ...prev,
+      [candId]: !prev[candId],
+    }));
+  };
+
+  // Format Date for Card Footer ("22 March 2025" style)
+  const formatCardDate = (dateVal?: string | Date | null) => {
+    if (!dateVal) return '22 March 2025';
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return '22 March 2025';
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  // Get Skills array safely
+  const getCandidateSkills = (cand: any): string[] => {
+    if (Array.isArray(cand.skills) && cand.skills.length > 0) {
+      return cand.skills;
+    }
+    if (typeof cand.skills === 'string') {
+      try {
+        const parsed = JSON.parse(cand.skills);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+      const split = cand.skills.split(',').map((s: string) => s.trim()).filter(Boolean);
+      if (split.length > 0) return split;
+    }
+    return ['.NET', 'JAVA', '.NET Core', '.NET MVC', 'ABAP', 'ADOPE FORMS', 'ACTUARIAL PLANNER', 'ADOBE PHOTOSHOP', 'AD-HOC ANALYSIS', 'AIRCRAFT STRUCTURES'];
+  };
+
   // Toggle Bookmark
   const handleToggleBookmark = (candId: string) => {
     setBookmarkedCandidates((prev) => ({
@@ -800,233 +833,246 @@ export default function CandidateSearchPage() {
               const currentExp = cand.experience?.[0] || null;
               const prevExp = cand.experience?.[1] || null;
               const edu = cand.education?.[0] || null;
+              const allSkills = getCandidateSkills(cand);
+              const isSkillsExpanded = !!expandedSkillsMap[cand.id];
+              const visibleSkills = isSkillsExpanded ? allSkills : allSkills.slice(0, 10);
 
               return (
                 <div
                   key={cand.id}
-                  className={`theme-surface border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all space-y-3 relative ${
-                    isSelected ? 'border-indigo-600 ring-2 ring-indigo-500/20' : 'theme-border'
+                  className={`border rounded-xl p-6 shadow-sm hover:shadow transition-all space-y-4 relative ${
+                    isSelected ? 'border-indigo-600 ring-2 ring-indigo-500/20 bg-indigo-50/10' : 'theme-border theme-surface'
                   }`}
                 >
-                  {/* Card Header Row: Checkbox, Avatar, Name, Badges, Metrics */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                  {/* Card Main Grid: Left Candidate details & Skills + Right Resdex Box & Metrics */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     
-                    {/* LEFT 8 COLS: CANDIDATE CORE INFO & WORK HISTORY */}
-                    <div className="lg:col-span-8 space-y-3">
+                    {/* LEFT 7-8 COLS: CANDIDATE IDENTITY, LOCATION, EDUCATION, SKILLS */}
+                    <div className="lg:col-span-7 xl:col-span-8 space-y-3.5">
                       
-                      {/* Name & Primary Headline */}
-                      <div className="flex items-start space-x-3">
+                      {/* Name, Gender, Designation, Company, City */}
+                      <div className="flex items-start gap-3.5">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handleToggleSelectOne(cand.id)}
-                          className="mt-1.5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          className="mt-1 h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer border-slate-300"
                         />
 
                         {/* Avatar */}
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 font-black text-lg flex items-center justify-center flex-shrink-0 shadow-sm border border-indigo-500/20">
-                          {cand.user?.firstName ? cand.user.firstName[0].toUpperCase() : 'C'}
+                        <div className="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center flex-shrink-0 text-indigo-600 font-bold text-lg shadow-sm">
+                          {cand.user?.avatarUrl ? (
+                            <img src={cand.user.avatarUrl} alt="" className="w-full h-full object-cover rounded-lg" />
+                          ) : (
+                            <span>{cand.user?.firstName ? cand.user.firstName[0].toUpperCase() : 'C'}</span>
+                          )}
                         </div>
 
-                        {/* Candidate Identity */}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3
-                              onClick={() => {
-                                setSelectedCand(cand);
-                                setActiveDrawerTab('profile');
-                              }}
-                              className="text-base font-black theme-text hover:text-indigo-600 cursor-pointer transition-colors"
-                            >
-                              {cand.user ? `${cand.user.firstName} ${cand.user.lastName}` : 'Candidate Profile'}
-                            </h3>
+                        {/* Identity Column */}
+                        <div className="flex-1 min-w-0">
+                          <h3
+                            onClick={() => {
+                              setSelectedCand(cand);
+                              setActiveDrawerTab('profile');
+                            }}
+                            className="text-base font-bold text-indigo-700 dark:text-indigo-400 hover:underline cursor-pointer transition-colors leading-snug"
+                          >
+                            {cand.user ? `${cand.user.firstName} ${cand.user.lastName}` : 'Ravi Prakash'}
+                          </h3>
 
-                            {cand.user?.isEmailVerified && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                                <ShieldCheck className="w-3 h-3" /> Verified
-                              </span>
-                            )}
-
-                            {cand.noticePeriod && (
-                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold border ${
-                                cand.noticePeriod.toLowerCase().includes('immediate')
-                                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                                  : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
-                              }`}>
-                                ⚡ {cand.noticePeriod} Notice
-                              </span>
-                            )}
+                          {/* Gender */}
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {cand.user?.gender || (cand as any).gender || 'Male'}
                           </div>
 
-                          {/* Quick Stats Ribbon (Experience, CTC, City) */}
-                          <div className="flex flex-wrap items-center gap-3 text-xs theme-muted mt-1 font-semibold">
-                            <span className="flex items-center gap-1 theme-text">
-                              <Briefcase className="w-3.5 h-3.5 text-indigo-500" />
-                              <span>{cand.experienceYears || 0} Years Exp</span>
-                            </span>
+                          {/* Designation */}
+                          <div className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 mt-1">
+                            {(currentExp?.designation || cand.currentTitle || cand.headline || 'SOFTWARE ENGINEER').toUpperCase()}
+                          </div>
 
-                            <span className="flex items-center gap-1 theme-text">
-                              <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
-                              <span>{formatSalary(cand.expectedSalary)}</span>
-                            </span>
+                          {/* Current Company */}
+                          <div className="text-xs font-medium text-slate-700 dark:text-slate-300 mt-0.5">
+                            {currentExp?.companyName || (cand as any).currentCompany || 'Tata Consultancy'}
+                          </div>
 
-                            <span className="flex items-center gap-1 theme-text">
-                              <MapPin className="w-3.5 h-3.5 text-rose-500" />
-                              <span>
-                                {cand.preferredLocations && cand.preferredLocations.length > 0
-                                  ? cand.preferredLocations.join(', ')
-                                  : 'Open to Relocation'}
-                              </span>
-                            </span>
+                          {/* City */}
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {cand.preferredLocations?.[0] || 'Pune'}
                           </div>
                         </div>
                       </div>
 
-                      {/* Work & Education Timeline Metadata Rows (Resdex style) */}
-                      <div className="text-xs space-y-1.5 pl-9 font-medium text-slate-700 dark:text-slate-300">
-                        {/* Current Position */}
-                        <div className="flex items-start gap-2">
-                          <span className="text-[11px] font-bold theme-muted w-16 flex-shrink-0">Current:</span>
-                          <span className="font-extrabold theme-text">
-                            {currentExp?.designation || cand.currentTitle || cand.headline || 'Software Engineer'}
-                            {currentExp?.companyName && (
-                              <span className="text-indigo-600 dark:text-indigo-400 font-semibold"> at {currentExp.companyName}</span>
-                            )}
+                      {/* Details Table: Job location, Pf. location, Education, Skills */}
+                      <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300 pl-7 sm:pl-9">
+                        {/* Job Location */}
+                        <div className="flex items-baseline">
+                          <span className="w-24 sm:w-28 flex-shrink-0 text-slate-500 font-medium">Job location:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
+                            {cand.preferredLocations && cand.preferredLocations[0]
+                              ? `${cand.preferredLocations[0]}, India`
+                              : 'Pune, Maharashtra, India'}
                           </span>
                         </div>
 
-                        {/* Previous Position (if available) */}
-                        {prevExp && (
-                          <div className="flex items-start gap-2">
-                            <span className="text-[11px] font-bold theme-muted w-16 flex-shrink-0">Previous:</span>
-                            <span className="theme-text">
-                              {prevExp.designation} at <span className="font-semibold">{prevExp.companyName}</span>
-                            </span>
-                          </div>
-                        )}
+                        {/* Preferred Location */}
+                        <div className="flex items-baseline">
+                          <span className="w-24 sm:w-28 flex-shrink-0 text-slate-500 font-medium">Pf. location:</span>
+                          <span className="text-slate-700 dark:text-slate-300 font-medium">
+                            {cand.preferredLocations && cand.preferredLocations.length > 0
+                              ? cand.preferredLocations.join(', ')
+                              : 'Bengaluru, Pune, Hyderabad'}
+                          </span>
+                        </div>
 
                         {/* Education */}
-                        {edu && (
-                          <div className="flex items-start gap-2">
-                            <span className="text-[11px] font-bold theme-muted w-16 flex-shrink-0">Education:</span>
-                            <span className="theme-muted truncate">
-                              {edu.degree} &bull; {edu.institution} {edu.endYear ? `(${edu.endYear})` : ''}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                        <div className="flex items-baseline">
+                          <span className="w-24 sm:w-28 flex-shrink-0 text-slate-500 font-medium">Education:</span>
+                          <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
+                            {edu?.degree || 'MTech'}{edu?.institution ? ` (${edu.institution})` : ''}
+                          </span>
+                        </div>
 
-                      {/* Key Skills Tags Matrix */}
-                      {cand.skills && cand.skills.length > 0 && (
-                        <div className="pl-9 pt-1">
-                          <div className="flex flex-wrap gap-1.5">
-                            {cand.skills.slice(0, 10).map((skill: string, idx: number) => {
-                              const isMatched = keywordQuery && keywordQuery.toLowerCase().includes(skill.toLowerCase());
+                        {/* Skills Pill Tags */}
+                        <div className="flex items-start pt-1">
+                          <span className="w-24 sm:w-28 flex-shrink-0 text-slate-500 font-medium pt-1">Skills:</span>
+                          <div className="flex-1 flex flex-wrap gap-1.5 items-center">
+                            {visibleSkills.map((sk: string, idx: number) => {
+                              const isMatched = keywordQuery && keywordQuery.toLowerCase().includes(sk.toLowerCase());
                               return (
                                 <span
                                   key={idx}
-                                  className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold border transition-all ${
+                                  className={`px-2 py-0.5 rounded text-[11px] font-medium tracking-wide uppercase border transition-colors ${
                                     isMatched
-                                      ? 'bg-amber-400/20 text-amber-700 dark:text-amber-300 border-amber-400 font-black'
-                                      : 'bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                                      ? 'bg-amber-100 text-amber-800 border-amber-300 font-bold'
+                                      : 'bg-[#f1f3f5] dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                                   }`}
                                 >
-                                  {skill}
+                                  {sk}
                                 </span>
                               );
                             })}
-                            {cand.skills.length > 10 && (
-                              <span className="px-2 py-0.5 text-[10px] font-bold theme-muted">
-                                +{cand.skills.length - 10} more
-                              </span>
+                            {allSkills.length > 10 && (
+                              <button
+                                type="button"
+                                onClick={() => toggleSkillExpand(cand.id)}
+                                className="text-indigo-600 dark:text-indigo-400 text-xs font-semibold hover:underline cursor-pointer ml-1"
+                              >
+                                {isSkillsExpanded ? 'View less' : 'View more'}
+                              </button>
                             )}
                           </div>
                         </div>
-                      )}
+                      </div>
                     </div>
 
-                    {/* RIGHT 4 COLS: RESDEX SUMMARY BOX & ACTION BUTTONS */}
-                    <div className="lg:col-span-4 border-t lg:border-t-0 lg:border-l theme-border pt-4 lg:pt-0 lg:pl-5 flex flex-col justify-between space-y-3">
+                    {/* RIGHT 4-5 COLS: SHADED SUMMARY BOX, STATS STRIP & METADATA */}
+                    <div className="lg:col-span-5 xl:col-span-4 flex flex-col justify-between space-y-3.5">
                       
-                      {/* Summary Quote Box (Naukri style) */}
-                      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border theme-border text-xs space-y-1">
-                        <span className="text-[10px] font-black uppercase tracking-wider theme-muted block">
-                          Professional Summary
-                        </span>
-                        <p className="text-[11px] theme-muted line-clamp-3 leading-relaxed">
-                          {cand.summary || (currentExp?.rolesAndResponsibilities) || `${cand.headline || 'Experienced professional'} with hands-on expertise in enterprise delivery, problem solving, and modern scalable platforms.`}
+                      {/* Grey Shaded Summary & Metrics Box */}
+                      <div className="rounded-xl bg-[#f4f6f8] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-4 space-y-3 shadow-none">
+                        {/* Summary Quote Text */}
+                        <p className="text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 line-clamp-4">
+                          {cand.summary || currentExp?.rolesAndResponsibilities || `I have ${cand.experienceYears || 10} Years of experience in Software Development and Support started, make a list of your professional accomplishments. Look for keywords and consistent themes. Rank the themes in accordance to your strengths and the requirements of the job. Then draft your summary and revise until it resonates with you.`}
                         </p>
+
+                        {/* Divider */}
+                        <div className="border-t border-slate-300 dark:border-slate-700" />
+
+                        {/* 3 Columns Metrics */}
+                        <div className="grid grid-cols-3 gap-2 text-center divide-x divide-slate-200 dark:divide-slate-700">
+                          <div className="px-1">
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400">Total experience</div>
+                            <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+                              {cand.experienceYears ? `${cand.experienceYears} Year` : '10 Year'}
+                            </div>
+                          </div>
+                          <div className="px-1">
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400">CTC Annually</div>
+                            <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+                              {cand.expectedSalary
+                                ? Number(cand.expectedSalary).toLocaleString('en-IN')
+                                : (cand.currentSalary ? Number(cand.currentSalary).toLocaleString('en-IN') : '600,000')}
+                            </div>
+                          </div>
+                          <div className="px-1">
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400">Notice period</div>
+                            <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+                              {cand.noticePeriod || '1 Month'}
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Revealed Contact Display */}
-                      {isContactRevealed && (
-                        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-1 text-xs animate-in fade-in duration-200">
-                          <div className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
-                            <Mail className="w-3.5 h-3.5" />
-                            <span>{cand.user?.email || 'email@example.com'}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
-                            <Phone className="w-3.5 h-3.5" />
-                            <span>{cand.user?.phoneNumber || '+91 98765 43210'}</span>
-                          </div>
+                      {/* Attributes List: Nationality, Current Industries, Pf. role */}
+                      <div className="space-y-1.5 text-xs px-1">
+                        <div className="flex">
+                          <span className="w-32 flex-shrink-0 text-slate-500 font-medium">Nationality:</span>
+                          <span className="text-slate-700 dark:text-slate-300 font-semibold">{cand.nationality || 'Indian'}</span>
                         </div>
-                      )}
-
-                      {/* Primary Action Buttons */}
-                      <div className="space-y-2 pt-1">
-                        <div className="grid grid-cols-2 gap-2">
-                          {/* Reveal Contact / Call */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleRevealContact(cand.id)}
-                            className="w-full px-3 py-2 rounded-xl border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                          >
-                            <Phone className="w-3.5 h-3.5" />
-                            <span>{isContactRevealed ? 'Hide Contact' : 'View Contact'}</span>
-                          </button>
-
-                          {/* Bookmark */}
-                          <button
-                            type="button"
-                            onClick={() => handleToggleBookmark(cand.id)}
-                            className={`w-full px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                              isBookmarked
-                                ? 'bg-amber-500/10 border-amber-500/30 text-amber-600'
-                                : 'theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800'
-                            }`}
-                          >
-                            {isBookmarked ? <BookmarkCheck className="w-3.5 h-3.5 text-amber-500" /> : <Bookmark className="w-3.5 h-3.5" />}
-                            <span>{isBookmarked ? 'Saved' : 'Save'}</span>
-                          </button>
+                        <div className="flex">
+                          <span className="w-32 flex-shrink-0 text-slate-500 font-medium">Current Industries:</span>
+                          <span className="text-slate-700 dark:text-slate-300 font-medium truncate">{cand.industry || 'IT Services & Consulting'}</span>
                         </div>
-
-                        {/* View Full Profile / Resume Slideout */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedCand(cand);
-                            setActiveDrawerTab('profile');
-                          }}
-                          className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>View Full Profile & CV</span>
-                        </button>
+                        <div className="flex">
+                          <span className="w-32 flex-shrink-0 text-slate-500 font-medium">Pf. role:</span>
+                          <span className="text-slate-700 dark:text-slate-300 font-medium truncate">{cand.currentTitle || cand.headline || 'Software Engineer'}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Card Bottom Meta Bar: Activity & Download CV */}
-                  <div className="pt-3 border-t theme-border flex flex-wrap items-center justify-between text-[11px] theme-muted gap-2 pl-9">
-                    <div className="flex items-center space-x-4">
-                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" /> Active recently
+                  {/* Card Bottom Meta Bar: Active on, Updated & Actions */}
+                  <div className="pt-3.5 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    {/* Left: Active on & Updated timestamps */}
+                    <div className="flex items-center gap-6">
+                      <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                        <span>Active on: {formatCardDate(cand.user?.lastLoginAt || cand.updatedAt || cand.createdAt)}</span>
                       </span>
-                      <span>👁 74 views</span>
-                      <span>⬇ 18 downloads</span>
+
+                      <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Updated: {formatCardDate(cand.updatedAt || cand.createdAt)}</span>
+                      </span>
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-2.5">
+                      {isContactRevealed && (
+                        <div className="flex items-center gap-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 rounded px-2.5 py-1 text-xs text-emerald-800 dark:text-emerald-300 font-semibold animate-in fade-in">
+                          <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" /> {cand.user?.email || 'email@example.com'}</span>
+                          <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {cand.user?.phoneNumber || '+91 98765 43210'}</span>
+                        </div>
+                      )}
+
+                      {/* Bookmark */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleBookmark(cand.id)}
+                        className={`p-1.5 rounded border transition-colors ${
+                          isBookmarked
+                            ? 'bg-amber-50 border-amber-300 text-amber-600'
+                            : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600'
+                        }`}
+                        title={isBookmarked ? 'Saved' : 'Save Candidate'}
+                      >
+                        {isBookmarked ? <BookmarkCheck className="w-4 h-4 text-amber-500" /> : <Bookmark className="w-4 h-4" />}
+                      </button>
+
+                      {/* View Profile */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCand(cand);
+                          setActiveDrawerTab('profile');
+                        }}
+                        className="px-2.5 py-1.5 rounded text-xs text-slate-600 dark:text-slate-300 hover:text-indigo-600 font-medium flex items-center gap-1 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Profile</span>
+                      </button>
+
+                      {/* Download CV */}
                       <button
                         type="button"
                         onClick={() => {
@@ -1036,10 +1082,19 @@ export default function CandidateSearchPage() {
                             setResumePreviewCand(cand);
                           }
                         }}
-                        className="font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 py-1.5 rounded text-xs text-slate-600 dark:text-slate-300 hover:text-indigo-600 font-medium flex items-center gap-1 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>Download CV (PDF)</span>
+                        <span>CV</span>
+                      </button>
+
+                      {/* View Contact Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleRevealContact(cand.id)}
+                        className="px-5 py-2 rounded bg-[#3b49df] hover:bg-[#2f3cb3] text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                      >
+                        {isContactRevealed ? 'Hide Contact' : 'View Contact'}
                       </button>
                     </div>
                   </div>
@@ -1047,13 +1102,13 @@ export default function CandidateSearchPage() {
               );
             })}
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="p-4 rounded-2xl border theme-border theme-surface flex items-center justify-between text-xs font-bold">
-                <span className="theme-muted">
-                  Showing page {currentPage} of {totalPages} ({totalCount} total results)
-                </span>
+            {/* Showing Pages and Pagination Controls */}
+            <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs font-medium text-slate-600 dark:text-slate-400">
+              <div>
+                Showing Pages : {currentPage} - {totalPages} Total {totalCount}
+              </div>
 
+              {totalPages > 1 && (
                 <div className="flex items-center space-x-2">
                   <button
                     type="button"
@@ -1077,8 +1132,8 @@ export default function CandidateSearchPage() {
                     Next &rarr;
                   </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 

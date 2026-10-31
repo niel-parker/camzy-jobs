@@ -452,6 +452,8 @@ let CandidatesService = class CandidatesService {
             languages: c.languages || [],
             socialLinks: c.socialLinks || {},
             visibility: c.visibility || candidate_entity_1.ProfileVisibility.PUBLIC,
+            updatedAt: c.updatedAt,
+            createdAt: c.createdAt,
         };
     }
 };

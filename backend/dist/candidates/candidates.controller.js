@@ -101,6 +101,9 @@ let CandidatesController = class CandidatesController {
             sortBy,
         });
     }
+    async searchAlias(skill, query, excludeKeywords, searchIn, noticePeriod, city, location, minExp, maxExp, minSalary, maxSalary, company, designation, activeIn, page, limit, sortBy) {
+        return this.findAll(skill, query, excludeKeywords, searchIn, noticePeriod, city, location, minExp, maxExp, minSalary, maxSalary, company, designation, activeIn, page, limit, sortBy);
+    }
     async findOne(id) {
         return await this.candidatesService.findOne(id);
     }
@@ -224,6 +227,30 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], CandidatesController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('search'),
+    (0, swagger_1.ApiOperation)({ summary: 'Search candidate talent database alias' }),
+    __param(0, (0, common_1.Query)('skill')),
+    __param(1, (0, common_1.Query)('query')),
+    __param(2, (0, common_1.Query)('excludeKeywords')),
+    __param(3, (0, common_1.Query)('searchIn')),
+    __param(4, (0, common_1.Query)('noticePeriod')),
+    __param(5, (0, common_1.Query)('city')),
+    __param(6, (0, common_1.Query)('location')),
+    __param(7, (0, common_1.Query)('minExp')),
+    __param(8, (0, common_1.Query)('maxExp')),
+    __param(9, (0, common_1.Query)('minSalary')),
+    __param(10, (0, common_1.Query)('maxSalary')),
+    __param(11, (0, common_1.Query)('company')),
+    __param(12, (0, common_1.Query)('designation')),
+    __param(13, (0, common_1.Query)('activeIn')),
+    __param(14, (0, common_1.Query)('page')),
+    __param(15, (0, common_1.Query)('limit')),
+    __param(16, (0, common_1.Query)('sortBy')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], CandidatesController.prototype, "searchAlias", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Get candidate profile details' }),

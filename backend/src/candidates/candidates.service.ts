@@ -27,6 +27,8 @@ export interface CandidateProfileDto {
   }>;
   savedJobIds?: string[];
   skills: string[];
+  updatedAt?: Date | string;
+  createdAt?: Date | string;
   user?: {
     email: string;
     firstName: string;
@@ -543,6 +545,8 @@ export class CandidatesService {
       languages: c.languages || [],
       socialLinks: c.socialLinks || {},
       visibility: c.visibility || ProfileVisibility.PUBLIC,
+      updatedAt: c.updatedAt,
+      createdAt: c.createdAt,
     };
   }
 }

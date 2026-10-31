@@ -180,6 +180,48 @@ export class CandidatesController {
     });
   }
 
+  @Get('search')
+  @ApiOperation({ summary: 'Search candidate talent database alias' })
+  async searchAlias(
+    @Query('skill') skill?: string,
+    @Query('query') query?: string,
+    @Query('excludeKeywords') excludeKeywords?: string,
+    @Query('searchIn') searchIn?: string,
+    @Query('noticePeriod') noticePeriod?: string,
+    @Query('city') city?: string,
+    @Query('location') location?: string,
+    @Query('minExp') minExp?: string,
+    @Query('maxExp') maxExp?: string,
+    @Query('minSalary') minSalary?: string,
+    @Query('maxSalary') maxSalary?: string,
+    @Query('company') company?: string,
+    @Query('designation') designation?: string,
+    @Query('activeIn') activeIn?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: string,
+  ) {
+    return this.findAll(
+      skill,
+      query,
+      excludeKeywords,
+      searchIn,
+      noticePeriod,
+      city,
+      location,
+      minExp,
+      maxExp,
+      minSalary,
+      maxSalary,
+      company,
+      designation,
+      activeIn,
+      page,
+      limit,
+      sortBy,
+    );
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get candidate profile details' })
   async findOne(@Param('id') id: string): Promise<CandidateProfileDto> {
