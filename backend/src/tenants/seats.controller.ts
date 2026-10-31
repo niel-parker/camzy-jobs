@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { User, UserRole } from '../users/entities/user.entity';
 import { Tenant } from './entities/tenant.entity';
 import { TenantSubscription } from '../subscriptions/entities/tenant-subscription.entity';
+import * as bcrypt from 'bcryptjs';
 
 export interface RecruiterMemberDto {
   id: string;
@@ -118,7 +119,7 @@ export class SeatsController {
           lastName: body.lastName || 'Recruiter',
           role: body.role || UserRole.RECRUITER,
           tenantId: tenant.id,
-          passwordHash: '$2b$10$FakeHashForInvitedRecruiterAccount123',
+          passwordHash: bcrypt.hashSync(process.env.DEFAULT_USER_PASSWORD || Math.random().toString(36), 10),
           isEmailVerified: true,
         }),
       );

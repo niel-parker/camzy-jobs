@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 import { User, UserRole, UserStatus } from '../users/entities/user.entity';
 import { Tenant, TenantType, TenantStatus } from '../tenants/entities/tenant.entity';
 import { SubscriptionPlan, PlanCode } from '../subscriptions/entities/subscription-plan.entity';
@@ -220,12 +221,16 @@ export class SeedService implements OnModuleInit {
     let employerUser: User;
     let candidateUser: User;
 
+    const defaultSeedPassword = process.env.DEFAULT_SEED_PASSWORD || process.env.DEFAULT_USER_PASSWORD || 'ChangeMeSecurely@123';
+    const defaultSeedHash = bcrypt.hashSync(defaultSeedPassword, 10);
+    const adminPasswordHash = process.env.SEED_ADMIN_PASSWORD ? bcrypt.hashSync(process.env.SEED_ADMIN_PASSWORD, 10) : defaultSeedHash;
+
     if (userCount === 0) {
       this.logger.log('Seeding Users...');
       superAdminUser = await this.userRepo.save(
         this.userRepo.create({
           email: 'admin@camzyjobs.com',
-          passwordHash: 'admin123',
+          passwordHash: adminPasswordHash,
           firstName: 'Super',
           lastName: 'Admin',
           role: UserRole.SUPER_ADMIN,
@@ -238,7 +243,7 @@ export class SeedService implements OnModuleInit {
       employerUser = await this.userRepo.save(
         this.userRepo.create({
           email: 'recruiter@techcorp.com',
-          passwordHash: 'recruiter123',
+          passwordHash: defaultSeedHash,
           firstName: 'Sarah',
           lastName: 'Jenkins',
           role: UserRole.COMPANY_ADMIN,
@@ -252,7 +257,7 @@ export class SeedService implements OnModuleInit {
       await this.userRepo.save(
         this.userRepo.create({
           email: 'employer@techcorp.com',
-          passwordHash: 'password123',
+          passwordHash: defaultSeedHash,
           firstName: 'TechCorp',
           lastName: 'Hiring Manager',
           role: UserRole.COMPANY_ADMIN,
@@ -266,7 +271,7 @@ export class SeedService implements OnModuleInit {
       candidateUser = await this.userRepo.save(
         this.userRepo.create({
           email: 'candidate@camzyjobs.com',
-          passwordHash: 'password123',
+          passwordHash: defaultSeedHash,
           firstName: 'Alex',
           lastName: 'Candidate',
           role: UserRole.CANDIDATE,
@@ -279,7 +284,7 @@ export class SeedService implements OnModuleInit {
       await this.userRepo.save(
         this.userRepo.create({
           email: 'candidate@example.com',
-          passwordHash: 'candidate123',
+          passwordHash: defaultSeedHash,
           firstName: 'John',
           lastName: 'Doe',
           role: UserRole.CANDIDATE,
@@ -295,7 +300,7 @@ export class SeedService implements OnModuleInit {
         candidateUser = await this.userRepo.save(
           this.userRepo.create({
             email: 'candidate@camzyjobs.com',
-            passwordHash: 'password123',
+            passwordHash: defaultSeedHash,
             firstName: 'Alex',
             lastName: 'Candidate',
             role: UserRole.CANDIDATE,
@@ -1431,10 +1436,11 @@ export class SeedService implements OnModuleInit {
       const created = new Date(Date.now() - (demo.monthsAgo * 30 + 5) * 86400000);
 
       if (!user) {
+        const candidateHash = bcrypt.hashSync(process.env.DEFAULT_SEED_PASSWORD || process.env.DEFAULT_USER_PASSWORD || 'ChangeMeSecurely@123', 10);
         user = await this.userRepo.save(
           this.userRepo.create({
             email: demo.email,
-            passwordHash: 'password123',
+            passwordHash: candidateHash,
             firstName: demo.firstName,
             lastName: demo.lastName,
             role: UserRole.CANDIDATE,

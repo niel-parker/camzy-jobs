@@ -3,9 +3,12 @@ import { Injectable, Logger } from '@nestjs/common';
 @Injectable()
 export class StripeService {
   private readonly logger = new Logger(StripeService.name);
-  private readonly apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51UOPRtIeu7vvxPLc3VaRMJDdlMzK00tDlUoFZUlqWpIccZ1xHoCz4hxkL7qFoMJl3LrXiH2aMK1Zf2qxf4wszWfS00pxU3Dt0W';
+  private readonly apiKey = process.env.STRIPE_SECRET_KEY || '';
 
   async createCheckoutSession(tenantId: string, planId: string): Promise<{ checkoutUrl: string; sessionId: string }> {
+    if (!this.apiKey) {
+      throw new Error('Stripe API key (STRIPE_SECRET_KEY) is not configured in environment.');
+    }
     try {
       const params = new URLSearchParams();
       params.append('mode', 'subscription');

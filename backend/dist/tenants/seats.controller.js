@@ -20,6 +20,7 @@ const typeorm_2 = require("typeorm");
 const user_entity_1 = require("../users/entities/user.entity");
 const tenant_entity_1 = require("./entities/tenant.entity");
 const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-subscription.entity");
+const bcrypt = require("bcryptjs");
 let SeatsController = class SeatsController {
     constructor(userRepo, tenantRepo, subRepo) {
         this.userRepo = userRepo;
@@ -94,7 +95,7 @@ let SeatsController = class SeatsController {
                 lastName: body.lastName || 'Recruiter',
                 role: body.role || user_entity_1.UserRole.RECRUITER,
                 tenantId: tenant.id,
-                passwordHash: '$2b$10$FakeHashForInvitedRecruiterAccount123',
+                passwordHash: bcrypt.hashSync(process.env.DEFAULT_USER_PASSWORD || Math.random().toString(36), 10),
                 isEmailVerified: true,
             }));
         }

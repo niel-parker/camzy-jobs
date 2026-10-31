@@ -7,14 +7,20 @@ export class MailService {
   private transporter: nodemailer.Transporter;
 
   constructor() {
+    const host = process.env.MAIL_HOST || 'smtp.mailgun.org';
+    const port = Number(process.env.MAIL_PORT) || 587;
+    const user = process.env.MAIL_USERNAME;
+    const pass = process.env.MAIL_PASSWORD;
+
+    if (!user || !pass) {
+      this.logger.warn('Mail credentials (MAIL_USERNAME / MAIL_PASSWORD) are not set in environment.');
+    }
+
     this.transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST || 'smtp.mailgun.org',
-      port: Number(process.env.MAIL_PORT) || 587,
+      host,
+      port,
       secure: false, // TLS via port 587
-      auth: {
-        user: process.env.MAIL_USERNAME || 'postmaster@camzyjobs.com',
-        pass: process.env.MAIL_PASSWORD || 'dfc32017356244417addabe87d1e0d6d-6fafb9bf-fcba5c32',
-      },
+      auth: user && pass ? { user, pass } : undefined,
     });
   }
 
@@ -57,9 +63,10 @@ export class MailService {
       </html>
     `;
 
+    const defaultFrom = process.env.MAIL_FROM || (process.env.MAIL_USERNAME ? `"Camzy Jobs" <${process.env.MAIL_USERNAME}>` : '"Camzy Jobs" <no-reply@camzyjobs.com>');
     try {
       const info = await this.transporter.sendMail({
-        from: '"Camzy Jobs Security" <postmaster@camzyjobs.com>',
+        from: defaultFrom,
         to: toEmail,
         subject: `${otpCode} is your Camzy Jobs OTP verification code`,
         html: htmlContent,
@@ -105,9 +112,10 @@ export class MailService {
       </html>
     `;
 
+    const defaultFrom = process.env.MAIL_FROM || (process.env.MAIL_USERNAME ? `"Camzy Jobs" <${process.env.MAIL_USERNAME}>` : '"Camzy Jobs" <no-reply@camzyjobs.com>');
     try {
       await this.transporter.sendMail({
-        from: '"Camzy Jobs" <postmaster@camzyjobs.com>',
+        from: defaultFrom,
         to: toEmail,
         subject: `${senderName} shared a job with you: ${jobTitle} at ${companyName}`,
         html: htmlContent,

@@ -500,9 +500,12 @@ export class AdminController {
     else if (body.role === 'CONSULTANCY_ADMIN') assignedRole = UserRole.CONSULTANCY_ADMIN;
     else if (body.role === 'AGENCY_AGENT') assignedRole = UserRole.AGENCY_AGENT;
 
+    const rawPass = body.password || process.env.DEFAULT_USER_PASSWORD || Math.random().toString(36).slice(-10);
+    const resolvedHash = body.passwordHash || bcrypt.hashSync(rawPass, 10);
+
     const user = this.userRepo.create({
       email: body.email.toLowerCase().trim(),
-      passwordHash: body.passwordHash || 'hashed_default_pass_123',
+      passwordHash: resolvedHash,
       firstName: body.firstName || 'User',
       lastName: body.lastName || '',
       role: assignedRole,
@@ -718,9 +721,10 @@ export class AdminController {
       const cleanEmail = body.adminEmail.toLowerCase().trim();
       const existing = await this.userRepo.findOne({ where: { email: cleanEmail } });
       if (!existing) {
+        const adminPass = body.adminPassword || process.env.DEFAULT_USER_PASSWORD || Math.random().toString(36).slice(-10);
         const u = this.userRepo.create({
           email: cleanEmail,
-          passwordHash: bcrypt.hashSync('password123', 10),
+          passwordHash: bcrypt.hashSync(adminPass, 10),
           firstName: body.adminFirstName?.trim() || 'Admin',
           lastName: body.adminLastName?.trim() || 'User',
           role: UserRole.COMPANY_ADMIN,

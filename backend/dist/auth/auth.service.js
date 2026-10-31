@@ -251,7 +251,7 @@ let AuthService = class AuthService {
         const nameParts = (body.adminName || 'Company Admin').trim().split(' ');
         const firstName = nameParts[0] || 'Company';
         const lastName = nameParts.slice(1).join(' ') || 'Admin';
-        const plainPassword = body.adminPassword || 'password123';
+        const plainPassword = body.adminPassword || process.env.DEFAULT_USER_PASSWORD || Math.random().toString(36).slice(-10);
         const hashedPassword = bcrypt.hashSync(plainPassword, 10);
         const newUser = this.userRepo.create({
             email: cleanEmail,
@@ -299,7 +299,7 @@ let AuthService = class AuthService {
         const nameParts = (body.fullName || 'Candidate User').trim().split(' ');
         const firstName = nameParts[0] || 'Candidate';
         const lastName = nameParts.slice(1).join(' ') || 'User';
-        const plainPassword = body.password || 'password123';
+        const plainPassword = body.password || process.env.DEFAULT_USER_PASSWORD || Math.random().toString(36).slice(-10);
         const hashedPassword = bcrypt.hashSync(plainPassword, 10);
         const newUser = this.userRepo.create({
             email: cleanEmail,

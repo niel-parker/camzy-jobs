@@ -135,7 +135,7 @@ function AdminUserProfilesContent() {
     try {
       await sdk.createAdminUser({
         email: newUserForm.email.trim(),
-        password: newUserForm.password || 'TemporaryPass123!',
+        password: newUserForm.password?.trim() || undefined,
         firstName: newUserForm.firstName.trim(),
         lastName: newUserForm.lastName.trim(),
         role: newUserForm.role,

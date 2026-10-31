@@ -16,19 +16,19 @@ PORT=4000
 NODE_ENV=production
 DB_HOST=localhost
 DB_PORT=3306
-DB_USER=job_user
-DB_PASS=job_password
+DB_USER=your_db_username
+DB_PASS=your_db_password
 DB_NAME=job_portal_db
 REDIS_HOST=localhost
 REDIS_PORT=6379
-JWT_SECRET=super_secret_jwt_key_camzy_jobs_2026_enterprise
-STRIPE_SECRET_KEY=sk_test_51UOPRtIeu7vvxPLc3VaRMJDdlMzK00tDlUoFZUlqWpIccZ1xHoCz4hxkL7qFoMJl3LrXiH2aMK1Zf2qxf4wszWfS00pxU3Dt0W
-STRIPE_WEBHOOK_SECRET=whsec_...
+JWT_SECRET=your_super_secret_jwt_key
+STRIPE_SECRET_KEY=sk_live_your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 MAIL_HOST=smtp.mailgun.org
 MAIL_PORT=587
-MAIL_USERNAME=postmaster@camzyjobs.com
-MAIL_PASSWORD=dfc32017356244417addabe87d1e0d6d-6fafb9bf-fcba5c32
-MAIL_FROM="Camzy Jobs Security" <postmaster@camzyjobs.com>
+MAIL_USERNAME=postmaster@yourdomain.com
+MAIL_PASSWORD=your_mail_password
+MAIL_FROM="Camzy Jobs Security" <postmaster@yourdomain.com>
 ```
 
 ### Frontend (`website/frontend/.env.local`)

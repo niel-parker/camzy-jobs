@@ -12,9 +12,12 @@ const common_1 = require("@nestjs/common");
 let StripeService = StripeService_1 = class StripeService {
     constructor() {
         this.logger = new common_1.Logger(StripeService_1.name);
-        this.apiKey = process.env.STRIPE_SECRET_KEY || 'sk_test_51UOPRtIeu7vvxPLc3VaRMJDdlMzK00tDlUoFZUlqWpIccZ1xHoCz4hxkL7qFoMJl3LrXiH2aMK1Zf2qxf4wszWfS00pxU3Dt0W';
+        this.apiKey = process.env.STRIPE_SECRET_KEY || '';
     }
     async createCheckoutSession(tenantId, planId) {
+        if (!this.apiKey) {
+            throw new Error('Stripe API key (STRIPE_SECRET_KEY) is not configured in environment.');
+        }
         try {
             const params = new URLSearchParams();
             params.append('mode', 'subscription');

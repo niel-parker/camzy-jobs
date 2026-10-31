@@ -17,6 +17,7 @@ exports.SeedService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
+const bcrypt = require("bcryptjs");
 const user_entity_1 = require("../users/entities/user.entity");
 const tenant_entity_1 = require("../tenants/entities/tenant.entity");
 const subscription_plan_entity_1 = require("../subscriptions/entities/subscription-plan.entity");
@@ -198,11 +199,14 @@ let SeedService = SeedService_1 = class SeedService {
         let superAdminUser;
         let employerUser;
         let candidateUser;
+        const defaultSeedPassword = process.env.DEFAULT_SEED_PASSWORD || process.env.DEFAULT_USER_PASSWORD || 'ChangeMeSecurely@123';
+        const defaultSeedHash = bcrypt.hashSync(defaultSeedPassword, 10);
+        const adminPasswordHash = process.env.SEED_ADMIN_PASSWORD ? bcrypt.hashSync(process.env.SEED_ADMIN_PASSWORD, 10) : defaultSeedHash;
         if (userCount === 0) {
             this.logger.log('Seeding Users...');
             superAdminUser = await this.userRepo.save(this.userRepo.create({
                 email: 'admin@camzyjobs.com',
-                passwordHash: 'admin123',
+                passwordHash: adminPasswordHash,
                 firstName: 'Super',
                 lastName: 'Admin',
                 role: user_entity_1.UserRole.SUPER_ADMIN,
@@ -212,7 +216,7 @@ let SeedService = SeedService_1 = class SeedService {
             }));
             employerUser = await this.userRepo.save(this.userRepo.create({
                 email: 'recruiter@techcorp.com',
-                passwordHash: 'recruiter123',
+                passwordHash: defaultSeedHash,
                 firstName: 'Sarah',
                 lastName: 'Jenkins',
                 role: user_entity_1.UserRole.COMPANY_ADMIN,
@@ -223,7 +227,7 @@ let SeedService = SeedService_1 = class SeedService {
             }));
             await this.userRepo.save(this.userRepo.create({
                 email: 'employer@techcorp.com',
-                passwordHash: 'password123',
+                passwordHash: defaultSeedHash,
                 firstName: 'TechCorp',
                 lastName: 'Hiring Manager',
                 role: user_entity_1.UserRole.COMPANY_ADMIN,
@@ -234,7 +238,7 @@ let SeedService = SeedService_1 = class SeedService {
             }));
             candidateUser = await this.userRepo.save(this.userRepo.create({
                 email: 'candidate@camzyjobs.com',
-                passwordHash: 'password123',
+                passwordHash: defaultSeedHash,
                 firstName: 'Alex',
                 lastName: 'Candidate',
                 role: user_entity_1.UserRole.CANDIDATE,
@@ -244,7 +248,7 @@ let SeedService = SeedService_1 = class SeedService {
             }));
             await this.userRepo.save(this.userRepo.create({
                 email: 'candidate@example.com',
-                passwordHash: 'candidate123',
+                passwordHash: defaultSeedHash,
                 firstName: 'John',
                 lastName: 'Doe',
                 role: user_entity_1.UserRole.CANDIDATE,
@@ -258,7 +262,7 @@ let SeedService = SeedService_1 = class SeedService {
             if (!existingCand) {
                 candidateUser = await this.userRepo.save(this.userRepo.create({
                     email: 'candidate@camzyjobs.com',
-                    passwordHash: 'password123',
+                    passwordHash: defaultSeedHash,
                     firstName: 'Alex',
                     lastName: 'Candidate',
                     role: user_entity_1.UserRole.CANDIDATE,
@@ -1264,9 +1268,10 @@ let SeedService = SeedService_1 = class SeedService {
             const lastLogin = new Date(Date.now() - demo.monthsAgo * 30 * 86400000);
             const created = new Date(Date.now() - (demo.monthsAgo * 30 + 5) * 86400000);
             if (!user) {
+                const candidateHash = bcrypt.hashSync(process.env.DEFAULT_SEED_PASSWORD || process.env.DEFAULT_USER_PASSWORD || 'ChangeMeSecurely@123', 10);
                 user = await this.userRepo.save(this.userRepo.create({
                     email: demo.email,
-                    passwordHash: 'password123',
+                    passwordHash: candidateHash,
                     firstName: demo.firstName,
                     lastName: demo.lastName,
                     role: user_entity_1.UserRole.CANDIDATE,

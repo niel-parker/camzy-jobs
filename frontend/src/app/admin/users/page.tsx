@@ -69,6 +69,10 @@ export default function CamzyInternalTeamManagementPage() {
       setErrorMsg('Work email and First Name are required');
       return;
     }
+    if (!form.password || form.password.length < 8) {
+      setErrorMsg('Initial security password is required (minimum 8 characters)');
+      return;
+    }
 
     setSaving(true);
     setErrorMsg(null);
@@ -76,7 +80,7 @@ export default function CamzyInternalTeamManagementPage() {
     try {
       await sdk.createAdminUser({
         email: form.email.trim(),
-        password: form.password || 'AdminSecurity@2026',
+        password: form.password.trim(),
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         role: 'SUPER_ADMIN',
@@ -422,11 +426,12 @@ export default function CamzyInternalTeamManagementPage() {
 
                 <div className="space-y-1">
                   <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                    Initial Security Password
+                    Initial Security Password <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="password"
-                    placeholder="Min 8 characters (default: AdminSecurity@2026)"
+                    required
+                    placeholder="Enter security password (minimum 8 characters)"
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-rose-500"

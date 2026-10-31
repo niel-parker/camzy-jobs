@@ -325,34 +325,6 @@ export default function LoginPage() {
             </button>
           </form>
         )}
-
-        {/* Quick Demo Fill Options */}
-        <div className="pt-4 border-t theme-border text-center space-y-2">
-          <p className="text-[11px] theme-muted font-medium">Quick Demo Candidate Login:</p>
-          <div className="flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode('OTP');
-                setIdentifier('candidate@camzyjobs.com');
-              }}
-              className="px-2.5 py-1 text-[11px] rounded-lg border theme-border hover:bg-indigo-50 dark:hover:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 font-semibold"
-            >
-              candidate@camzyjobs.com
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode('PASSWORD');
-                setEmail('employer@techcorp.com');
-                setPassword('password123');
-              }}
-              className="px-2.5 py-1 text-[11px] rounded-lg border theme-border hover:bg-purple-50 dark:hover:bg-purple-950/30 text-purple-600 dark:text-purple-400 font-semibold"
-            >
-              Employer Login
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
