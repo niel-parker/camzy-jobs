@@ -223,6 +223,12 @@ class JobPortalSdk {
             body: JSON.stringify(jobData),
         });
     }
+    async repostJob(id, jobData) {
+        return this.request(`/jobs/${id}/repost`, {
+            method: 'POST',
+            body: JSON.stringify(jobData),
+        });
+    }
     async updateJob(id, jobData) {
         return this.request(`/jobs/${id}`, {
             method: 'PUT',
@@ -396,10 +402,16 @@ class JobPortalSdk {
             body: JSON.stringify(jobData),
         });
     }
-    async updateAdminJobStatus(id, status) {
+    async updateAdminJobStatus(id, status, isFeatured, expiresAt) {
         return this.request(`/admin/jobs/${id}/status`, {
             method: 'PUT',
-            body: JSON.stringify({ status }),
+            body: JSON.stringify({ status, isFeatured, expiresAt }),
+        });
+    }
+    async updateAdminJobExpiry(id, expiresAt) {
+        return this.request(`/admin/jobs/${id}/expiry`, {
+            method: 'PUT',
+            body: JSON.stringify({ expiresAt }),
         });
     }
     // --- Super Admin Companies Directory ---

@@ -590,6 +590,7 @@ let AdminController = class AdminController {
             skills: j.skills || [],
             applicationCount: j.applicationsCount || 0,
             createdAt: j.createdAt,
+            expiresAt: j.expiresAt,
         }));
     }
     async postJobAsCompany(body) {
@@ -627,19 +628,63 @@ let AdminController = class AdminController {
             applyUrl: body.applyUrl || null,
             status: body.status || 'PUBLISHED',
             screeningQuestions: body.screeningQuestions || [],
-            expiresAt: new Date(Date.now() + 60 * 86400000),
+            expiresAt: body.expiresAt ? new Date(body.expiresAt) : new Date(Date.now() + 30 * 86400000),
         });
         return await this.jobRepo.save(job);
     }
     async updateJobStatus(id, body) {
         const job = await this.jobRepo.findOne({ where: { id } });
         if (!job)
-            throw new Error(`Job ${id} not found`);
-        if (body.status !== undefined)
-            job.status = body.status;
+            throw new common_1.NotFoundException(`Job ${id} not found`);
+        if (body.status !== undefined) {
+            let st = body.status;
+            if (st === 'ACTIVE')
+                st = 'PUBLISHED';
+            if (st === 'CLOSED')
+                st = 'ARCHIVED';
+            job.status = st;
+        }
         if (body.isFeatured !== undefined)
             job.isFeatured = body.isFeatured;
+        if (body.expiresAt !== undefined) {
+            const exp = new Date(body.expiresAt);
+            if (!isNaN(exp.getTime())) {
+                job.expiresAt = exp;
+                if (exp > new Date() && job.status === 'EXPIRED') {
+                    job.status = 'PUBLISHED';
+                }
+                else if (exp <= new Date() && job.status === 'PUBLISHED') {
+                    job.status = 'EXPIRED';
+                }
+            }
+        }
         return await this.jobRepo.save(job);
+    }
+    async updateJobExpiry(id, body) {
+        if (!body.expiresAt) {
+            throw new common_1.BadRequestException('Expiry date (expiresAt) is required');
+        }
+        const job = await this.jobRepo.findOne({ where: { id } });
+        if (!job)
+            throw new common_1.NotFoundException(`Job ${id} not found`);
+        const newExp = new Date(body.expiresAt);
+        if (isNaN(newExp.getTime())) {
+            throw new common_1.BadRequestException('Invalid expiry date format');
+        }
+        job.expiresAt = newExp;
+        if (newExp > new Date() && job.status === 'EXPIRED') {
+            job.status = 'PUBLISHED';
+        }
+        else if (newExp <= new Date() && job.status === 'PUBLISHED') {
+            job.status = 'EXPIRED';
+        }
+        const saved = await this.jobRepo.save(job);
+        return {
+            success: true,
+            id: saved.id,
+            expiresAt: saved.expiresAt,
+            status: saved.status,
+        };
     }
     async getAllCompanies() {
         const companies = await this.tenantRepo.find({
@@ -1848,13 +1893,22 @@ __decorate([
 ], AdminController.prototype, "postJobAsCompany", null);
 __decorate([
     (0, common_1.Put)('jobs/:id/status'),
-    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Toggle status or featured boost for any job' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Toggle status, featured boost, or expiry date for any job' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "updateJobStatus", null);
+__decorate([
+    (0, common_1.Put)('jobs/:id/expiry'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Update job expiry date (Super Admin Exclusive)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "updateJobExpiry", null);
 __decorate([
     (0, common_1.Get)('companies/all'),
     (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Get all registered companies with subscription and job metrics' }),

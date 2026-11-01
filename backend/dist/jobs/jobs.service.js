@@ -27,12 +27,39 @@ let JobsService = class JobsService {
         this.userRepo = userRepo;
         this.subRepo = subRepo;
     }
-    async findAll(category, query, tenantId, location, experienceLevel, minExp, maxExp) {
+    async onModuleInit() {
+        await this.expireOverdueJobs();
+        setInterval(async () => {
+            try {
+                await this.expireOverdueJobs();
+            }
+            catch (err) {
+                console.error('Error in automatic job expiry background check:', err);
+            }
+        }, 10 * 60 * 1000);
+    }
+    async expireOverdueJobs() {
+        const now = new Date();
+        const result = await this.jobRepo.createQueryBuilder()
+            .update(job_posting_entity_1.JobPosting)
+            .set({ status: job_posting_entity_1.JobStatus.EXPIRED })
+            .where('status = :status AND expiresAt <= :now', { status: job_posting_entity_1.JobStatus.PUBLISHED, now })
+            .execute();
+        return result.affected || 0;
+    }
+    async findAll(category, query, tenantId, location, experienceLevel, minExp, maxExp, includeExpired) {
+        await this.expireOverdueJobs();
         const qb = this.jobRepo.createQueryBuilder('job')
-            .leftJoinAndSelect('job.tenant', 'tenant')
-            .where('job.status = :status', { status: job_posting_entity_1.JobStatus.PUBLISHED });
-        if (tenantId && tenantId !== 'undefined' && tenantId !== 'null') {
-            qb.andWhere('(job.tenantId = :tenantId OR tenant.slug = :tenantId)', { tenantId });
+            .leftJoinAndSelect('job.tenant', 'tenant');
+        const isCompanyView = Boolean(tenantId && tenantId !== 'undefined' && tenantId !== 'null');
+        if (isCompanyView || includeExpired) {
+            if (isCompanyView) {
+                qb.where('(job.tenantId = :tenantId OR tenant.slug = :tenantId)', { tenantId });
+            }
+        }
+        else {
+            const now = new Date();
+            qb.where('job.status = :status AND job.expiresAt > :now', { status: job_posting_entity_1.JobStatus.PUBLISHED, now });
         }
         if (category && category !== 'All') {
             qb.andWhere('LOWER(job.category) LIKE LOWER(:category)', { category: `%${category}%` });
@@ -58,6 +85,7 @@ let JobsService = class JobsService {
         return jobs.map((job) => this.mapToDto(job));
     }
     async findOne(id) {
+        await this.expireOverdueJobs();
         const job = await this.jobRepo.findOne({
             where: { id },
             relations: { tenant: true },
@@ -68,6 +96,7 @@ let JobsService = class JobsService {
         return this.mapToDto(job);
     }
     async getActiveJobsCountForTenant(tenantId) {
+        await this.expireOverdueJobs();
         const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
         const effectiveTenantId = tenant ? tenant.id : (await this.tenantRepo.findOne({ where: {} }))?.id;
         if (!effectiveTenantId)
@@ -90,7 +119,7 @@ let JobsService = class JobsService {
         });
         return sub?.plan?.maxActiveJobs || 15;
     }
-    async createJob(jobData) {
+    async createJob(jobData, isSuperAdmin = false) {
         let tenantId = jobData.tenantId;
         if (!tenantId) {
             const firstTenant = await this.tenantRepo.findOne({ where: {} });
@@ -113,11 +142,22 @@ let JobsService = class JobsService {
             if (anyUser)
                 postedByUserId = anyUser.id;
         }
+        const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+        let expiresAt;
+        if (isSuperAdmin && jobData.expiresAt) {
+            const parsed = new Date(jobData.expiresAt);
+            expiresAt = isNaN(parsed.getTime()) ? new Date(Date.now() + THIRTY_DAYS_MS) : parsed;
+        }
+        else {
+            expiresAt = new Date(Date.now() + THIRTY_DAYS_MS);
+        }
+        const slugBase = (jobData.title || 'job').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const slug = `${slugBase}-${Date.now().toString().slice(-4)}`;
         const newJob = this.jobRepo.create({
             tenantId: tenantId || 'tnt-techcorp',
             postedByUserId: postedByUserId,
             title: jobData.title || 'Untitled Role',
-            slug: (jobData.title || 'job').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            slug: slug,
             description: jobData.description || 'Job description details.',
             category: jobData.category || 'Engineering',
             employmentType: jobData.employmentType || job_posting_entity_1.EmploymentType.FULL_TIME,
@@ -137,13 +177,71 @@ let JobsService = class JobsService {
             applyType: jobData.applyType || 'INTERNAL',
             applyUrl: jobData.applyUrl || '',
             status: job_posting_entity_1.JobStatus.PUBLISHED,
-            expiresAt: new Date(Date.now() + 60 * 86400000),
+            expiresAt: expiresAt,
             screeningQuestions: jobData.screeningQuestions || [],
         });
         const saved = await this.jobRepo.save(newJob);
         return this.findOne(saved.id);
     }
-    async updateJob(id, updateData) {
+    async repostJob(originalJobId, editedData, user) {
+        const originalJob = await this.jobRepo.findOne({
+            where: { id: originalJobId },
+            relations: { tenant: true },
+        });
+        if (!originalJob) {
+            throw new common_1.NotFoundException(`Original job posting with ID ${originalJobId} not found`);
+        }
+        const tenantId = user?.tenantId || originalJob.tenantId;
+        if (user?.role !== 'SUPER_ADMIN') {
+            const activeJobs = await this.getActiveJobsCountForTenant(tenantId);
+            const planMaxJobs = await this.getPlanJobLimitForTenant(tenantId);
+            const slotsOccupied = originalJob.status === job_posting_entity_1.JobStatus.PUBLISHED ? activeJobs - 1 : activeJobs;
+            if (slotsOccupied + 1 > planMaxJobs) {
+                throw new common_1.ForbiddenException(`Job posting quota exceeded! Your plan limit is ${planMaxJobs} active jobs. Upgrade your company subscription to repost.`);
+            }
+        }
+        if (originalJob.status === job_posting_entity_1.JobStatus.PUBLISHED) {
+            originalJob.status = job_posting_entity_1.JobStatus.ARCHIVED;
+            await this.jobRepo.save(originalJob);
+        }
+        const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+        const expiresAt = new Date(Date.now() + THIRTY_DAYS_MS);
+        const title = editedData.title?.trim() || originalJob.title;
+        const slugBase = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const slug = `${slugBase}-${Date.now().toString().slice(-6)}`;
+        const newJob = this.jobRepo.create({
+            tenantId: tenantId,
+            postedByUserId: user?.id || originalJob.postedByUserId,
+            title: title,
+            slug: slug,
+            description: editedData.description !== undefined ? editedData.description : originalJob.description,
+            category: editedData.category || originalJob.category,
+            employmentType: editedData.employmentType || originalJob.employmentType,
+            experienceLevel: editedData.experienceLevel || originalJob.experienceLevel,
+            salaryMin: editedData.salaryMin !== undefined ? editedData.salaryMin : originalJob.salaryMin,
+            salaryMax: editedData.salaryMax !== undefined ? editedData.salaryMax : originalJob.salaryMax,
+            currency: editedData.currency || originalJob.currency,
+            isSalaryVisible: editedData.isSalaryVisible !== undefined ? editedData.isSalaryVisible : originalJob.isSalaryVisible,
+            locationCountry: editedData.locationCountry || originalJob.locationCountry,
+            locationState: editedData.locationState !== undefined ? editedData.locationState : originalJob.locationState,
+            locationCity: editedData.locationCity || editedData.location || originalJob.locationCity,
+            minExperience: editedData.minExperience !== undefined ? editedData.minExperience : originalJob.minExperience,
+            maxExperience: editedData.maxExperience !== undefined ? editedData.maxExperience : originalJob.maxExperience,
+            skills: editedData.skills || originalJob.skills || [],
+            isRemote: editedData.isRemote !== undefined ? editedData.isRemote : originalJob.isRemote,
+            isFeatured: editedData.isFeatured !== undefined ? editedData.isFeatured : false,
+            applyType: editedData.applyType || originalJob.applyType,
+            applyUrl: editedData.applyUrl !== undefined ? editedData.applyUrl : originalJob.applyUrl,
+            screeningQuestions: editedData.screeningQuestions || originalJob.screeningQuestions || [],
+            status: job_posting_entity_1.JobStatus.PUBLISHED,
+            expiresAt: expiresAt,
+            viewsCount: 0,
+            applicationsCount: 0,
+        });
+        const saved = await this.jobRepo.save(newJob);
+        return this.findOne(saved.id);
+    }
+    async updateJob(id, updateData, isSuperAdmin = false) {
         const job = await this.jobRepo.findOne({ where: { id } });
         if (!job) {
             throw new common_1.NotFoundException(`Job ${id} not found`);
@@ -192,6 +290,18 @@ let JobsService = class JobsService {
             job.applyUrl = updateData.applyUrl;
         if (updateData.screeningQuestions !== undefined)
             job.screeningQuestions = updateData.screeningQuestions;
+        if (isSuperAdmin && updateData.expiresAt !== undefined) {
+            const newExp = new Date(updateData.expiresAt);
+            if (!isNaN(newExp.getTime())) {
+                job.expiresAt = newExp;
+                if (newExp > new Date() && job.status === job_posting_entity_1.JobStatus.EXPIRED) {
+                    job.status = job_posting_entity_1.JobStatus.PUBLISHED;
+                }
+                else if (newExp <= new Date() && job.status === job_posting_entity_1.JobStatus.PUBLISHED) {
+                    job.status = job_posting_entity_1.JobStatus.EXPIRED;
+                }
+            }
+        }
         await this.jobRepo.save(job);
         return this.findOne(id);
     }
@@ -213,6 +323,7 @@ let JobsService = class JobsService {
         return this.findOne(id);
     }
     mapToDto(job) {
+        const isExpired = job.status === job_posting_entity_1.JobStatus.EXPIRED || (job.expiresAt ? new Date(job.expiresAt) <= new Date() : false);
         return {
             id: job.id,
             tenantId: job.tenantId,
@@ -240,6 +351,9 @@ let JobsService = class JobsService {
             applyType: job.applyType || 'INTERNAL',
             applyUrl: job.applyUrl || undefined,
             screeningQuestions: job.screeningQuestions,
+            status: isExpired ? job_posting_entity_1.JobStatus.EXPIRED : job.status,
+            expiresAt: job.expiresAt ? job.expiresAt.toISOString() : undefined,
+            isExpired: isExpired,
             createdAt: job.createdAt ? job.createdAt.toISOString() : new Date().toISOString(),
         };
     }

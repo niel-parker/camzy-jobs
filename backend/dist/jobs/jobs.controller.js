@@ -21,19 +21,26 @@ let JobsController = class JobsController {
     constructor(jobsService) {
         this.jobsService = jobsService;
     }
-    async findAll(category, query, tenantId, location, experienceLevel, minExp, maxExp) {
+    async findAll(category, query, tenantId, location, experienceLevel, minExp, maxExp, includeExpired) {
         const min = minExp ? parseInt(minExp, 10) : undefined;
         const max = maxExp ? parseInt(maxExp, 10) : undefined;
-        return await this.jobsService.findAll(category, query, tenantId, location, experienceLevel, min, max);
+        const incExp = includeExpired === 'true' || includeExpired === '1';
+        return await this.jobsService.findAll(category, query, tenantId, location, experienceLevel, min, max, incExp);
     }
     async findOne(id) {
         return await this.jobsService.findOne(id);
     }
-    async createJob(body) {
-        return await this.jobsService.createJob(body);
+    async createJob(body, req) {
+        const isSuperAdmin = req?.user?.role === 'SUPER_ADMIN';
+        return await this.jobsService.createJob(body, isSuperAdmin);
     }
-    async updateJob(id, body) {
-        return await this.jobsService.updateJob(id, body);
+    async repostJob(id, body, req) {
+        const user = req?.user || { role: 'COMPANY_ADMIN', tenantId: body.tenantId || '895c2926-0596-4115-a3e5-03a9d8fe042d' };
+        return await this.jobsService.repostJob(id, body, user);
+    }
+    async updateJob(id, body, req) {
+        const isSuperAdmin = req?.user?.role === 'SUPER_ADMIN';
+        return await this.jobsService.updateJob(id, body, isSuperAdmin);
     }
     async deleteJob(id) {
         return await this.jobsService.deleteJob(id);
@@ -53,6 +60,7 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'experienceLevel', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'minExp', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'maxExp', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'includeExpired', required: false }),
     __param(0, (0, common_1.Query)('category')),
     __param(1, (0, common_1.Query)('query')),
     __param(2, (0, common_1.Query)('tenantId')),
@@ -60,8 +68,9 @@ __decorate([
     __param(4, (0, common_1.Query)('experienceLevel')),
     __param(5, (0, common_1.Query)('minExp')),
     __param(6, (0, common_1.Query)('maxExp')),
+    __param(7, (0, common_1.Query)('includeExpired')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String, String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], JobsController.prototype, "findAll", null);
 __decorate([
@@ -80,17 +89,32 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 201, description: 'Job posting created successfully' }),
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Active job posting quota exceeded for company plan' }),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], JobsController.prototype, "createJob", null);
 __decorate([
-    (0, common_1.Put)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Update an existing job posting' }),
+    (0, common_1.Post)(':id/repost'),
+    (0, common_1.UseGuards)(job_quota_guard_1.JobQuotaGuard),
+    (0, swagger_1.ApiOperation)({ summary: 'Repost an existing job position with edits and a fresh 30-day timeline (-1 quota)' }),
+    (0, swagger_1.ApiResponse)({ status: 201, description: 'Job position reposted successfully for 30 days' }),
+    (0, swagger_1.ApiResponse)({ status: 403, description: 'Active job posting quota exceeded' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], JobsController.prototype, "repostJob", null);
+__decorate([
+    (0, common_1.Put)(':id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update an existing job posting (only Super Admin can change expiry date)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], JobsController.prototype, "updateJob", null);
 __decorate([

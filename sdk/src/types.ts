@@ -214,6 +214,9 @@ export interface JobListing {
   benefits?: string[];
   genderPreference?: 'ANY' | 'MALE' | 'FEMALE';
   screeningQuestions?: ScreeningQuestion[];
+  status?: string;
+  expiresAt?: string;
+  isExpired?: boolean;
   createdAt: string;
 }
 
@@ -449,6 +452,7 @@ export interface CrossCompanyJobItem {
   salaryMax?: number;
   skills: string[];
   applicationCount: number;
+  expiresAt?: string;
   createdAt: string;
 }
 

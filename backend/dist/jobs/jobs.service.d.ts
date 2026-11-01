@@ -1,3 +1,4 @@
+import { OnModuleInit } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { JobPosting } from './entities/job-posting.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
@@ -38,20 +39,26 @@ export interface JobListingDto {
         options?: string[];
         isRequired?: boolean;
     }>;
+    status: string;
+    expiresAt?: string;
+    isExpired: boolean;
     createdAt: string;
 }
-export declare class JobsService {
+export declare class JobsService implements OnModuleInit {
     private readonly jobRepo;
     private readonly tenantRepo;
     private readonly userRepo;
     private readonly subRepo;
     constructor(jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, userRepo: Repository<User>, subRepo: Repository<TenantSubscription>);
-    findAll(category?: string, query?: string, tenantId?: string, location?: string, experienceLevel?: string, minExp?: number, maxExp?: number): Promise<JobListingDto[]>;
+    onModuleInit(): Promise<void>;
+    expireOverdueJobs(): Promise<number>;
+    findAll(category?: string, query?: string, tenantId?: string, location?: string, experienceLevel?: string, minExp?: number, maxExp?: number, includeExpired?: boolean): Promise<JobListingDto[]>;
     findOne(id: string): Promise<JobListingDto>;
     getActiveJobsCountForTenant(tenantId: string): Promise<number>;
     getPlanJobLimitForTenant(tenantId: string): Promise<number>;
-    createJob(jobData: Partial<JobListingDto>): Promise<JobListingDto>;
-    updateJob(id: string, updateData: Partial<JobListingDto>): Promise<JobListingDto>;
+    createJob(jobData: Partial<JobListingDto>, isSuperAdmin?: boolean): Promise<JobListingDto>;
+    repostJob(originalJobId: string, editedData: Partial<JobListingDto>, user?: any): Promise<JobListingDto>;
+    updateJob(id: string, updateData: Partial<JobListingDto>, isSuperAdmin?: boolean): Promise<JobListingDto>;
     deleteJob(id: string): Promise<{
         success: boolean;
     }>;

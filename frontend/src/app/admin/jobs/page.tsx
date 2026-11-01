@@ -6,7 +6,8 @@ import { useTheme } from '../../../context/ThemeContext';
 import { CrossCompanyJobItem, CompanyDirectoryItem } from '@job-portal/sdk';
 import { 
   Briefcase, Plus, Search, Building2, MapPin, Users, CheckCircle2, 
-  XCircle, Loader2, RefreshCw, X, Filter, ExternalLink, Sparkles, AlertCircle 
+  XCircle, Loader2, RefreshCw, X, Filter, ExternalLink, Sparkles, AlertCircle,
+  Calendar, Clock, Pencil
 } from 'lucide-react';
 
 export default function AdminCrossCompanyJobsPage() {
@@ -17,6 +18,12 @@ export default function AdminCrossCompanyJobsPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedTenantFilter, setSelectedTenantFilter] = useState<string>('');
+
+  // Edit Job Expiry Modal State (Super Admin Exclusive)
+  const [editingExpiryJob, setEditingExpiryJob] = useState<CrossCompanyJobItem | null>(null);
+  const [newExpiryDate, setNewExpiryDate] = useState<string>('');
+  const [isUpdatingExpiry, setIsUpdatingExpiry] = useState<boolean>(false);
+  const [expiryUpdateSuccess, setExpiryUpdateSuccess] = useState<string | null>(null);
 
   // Post Job on Behalf Modal State
   const [isPostModalOpen, setIsPostModalOpen] = useState<boolean>(false);
@@ -38,6 +45,7 @@ export default function AdminCrossCompanyJobsPage() {
     skills: 'TypeScript, React, Node.js',
     isRemote: true,
     isFeatured: true,
+    expiresAt: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
   });
 
   const loadData = async () => {
@@ -80,6 +88,65 @@ export default function AdminCrossCompanyJobsPage() {
     }
   };
 
+  // Super Admin: Open modal to change expiry date
+  const openEditExpiryModal = (job: CrossCompanyJobItem) => {
+    setEditingExpiryJob(job);
+    const cur = job.expiresAt ? new Date(job.expiresAt).toISOString().split('T')[0] : new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+    setNewExpiryDate(cur);
+    setExpiryUpdateSuccess(null);
+  };
+
+  // Super Admin: Save modified expiry date
+  const handleSaveExpiry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingExpiryJob || !newExpiryDate) return;
+    setIsUpdatingExpiry(true);
+    try {
+      const isoDate = new Date(`${newExpiryDate}T23:59:59.000Z`).toISOString();
+      await sdk.updateAdminJobExpiry(editingExpiryJob.id, isoDate);
+      const isStillActive = new Date(isoDate).getTime() > Date.now();
+      setJobs((prev) =>
+        prev.map((j) =>
+          j.id === editingExpiryJob.id
+            ? {
+                ...j,
+                expiresAt: isoDate,
+                status: isStillActive ? 'ACTIVE' : 'EXPIRED',
+              }
+            : j
+        )
+      );
+      setExpiryUpdateSuccess('Job expiry date successfully updated!');
+      setTimeout(() => {
+        setEditingExpiryJob(null);
+        setExpiryUpdateSuccess(null);
+      }, 1000);
+    } catch (err: any) {
+      alert(err.message || 'Failed to update job expiry date');
+    } finally {
+      setIsUpdatingExpiry(false);
+    }
+  };
+
+  const setExpiryPreset = (days: number) => {
+    const d = new Date(Date.now() + days * 86400000);
+    setNewExpiryDate(d.toISOString().split('T')[0]);
+  };
+
+  const formatExpiryDate = (d?: string) => {
+    if (!d) return '30 Days Standard';
+    const date = new Date(d);
+    return isNaN(date.getTime())
+      ? '30 Days'
+      : date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  const getDaysLeft = (d?: string) => {
+    if (!d) return 30;
+    const diff = new Date(d).getTime() - Date.now();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
   const handlePostJob = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!jobForm.tenantId) {
@@ -115,6 +182,7 @@ export default function AdminCrossCompanyJobsPage() {
         skills: skillsArray,
         isRemote: jobForm.isRemote,
         isFeatured: jobForm.isFeatured,
+        expiresAt: jobForm.expiresAt ? new Date(jobForm.expiresAt).toISOString() : undefined,
       });
 
       setPostSuccess('Job successfully posted on behalf of company (quota bypassed)!');
@@ -275,6 +343,7 @@ export default function AdminCrossCompanyJobsPage() {
                     <th className="py-3 px-4">Job Title & Company</th>
                     <th className="py-3 px-4">Location & Remote</th>
                     <th className="py-3 px-4">Exp & Salary Bracket</th>
+                    <th className="py-3 px-4">Expiry Date</th>
                     <th className="py-3 px-4 text-center">Applications</th>
                     <th className="py-3 px-4 text-center">Status</th>
                     <th className="py-3 px-4 text-right">Actions</th>
@@ -329,6 +398,35 @@ export default function AdminCrossCompanyJobsPage() {
                           ) : (
                             <div className="theme-muted text-[10px]">Competitive</div>
                           )}
+                        </div>
+                      </td>
+
+                      {/* Expiry Date (Super Admin Exclusive Modification) */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <div className="text-xs font-semibold theme-text flex items-center gap-1">
+                              <Calendar className="w-3 h-3 text-indigo-500" />
+                              <span>{formatExpiryDate(job.expiresAt)}</span>
+                            </div>
+                            <div className={`text-[10px] font-bold ${
+                              job.status === 'EXPIRED' || getDaysLeft(job.expiresAt) <= 0
+                                ? 'text-rose-500'
+                                : 'text-emerald-500'
+                            }`}>
+                              {job.status === 'EXPIRED' || getDaysLeft(job.expiresAt) <= 0
+                                ? 'Expired'
+                                : `${getDaysLeft(job.expiresAt)} days left`}
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => openEditExpiryModal(job)}
+                            className="p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors cursor-pointer"
+                            title="Change Expiry Date (Super Admin Exclusive)"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </td>
 
@@ -552,6 +650,20 @@ export default function AdminCrossCompanyJobsPage() {
                 </div>
 
                 <div className="space-y-1">
+                  <label className="text-[11px] font-black uppercase tracking-wider theme-text flex items-center justify-between">
+                    <span>Job Expiry Date (Super Admin Override)</span>
+                    <span className="text-[10px] text-indigo-500 font-bold">Standard 30 Days</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={jobForm.expiresAt}
+                    onChange={(e) => setJobForm({ ...jobForm, expiresAt: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-1">
                   <label className="text-[11px] font-black uppercase tracking-wider theme-text">
                     Job Description
                   </label>
@@ -601,6 +713,113 @@ export default function AdminCrossCompanyJobsPage() {
                   >
                     {posting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>Post Job Now</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* 3. SUPER ADMIN EXCLUSIVE: EDIT JOB EXPIRY MODAL */}
+        {editingExpiryJob && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+            <div className="max-w-md w-full theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden p-6 space-y-4">
+              <div className="flex items-center justify-between border-b theme-border pb-3">
+                <div>
+                  <h3 className="text-base font-black theme-text flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-indigo-600" />
+                    <span>Change Job Expiry Date</span>
+                  </h3>
+                  <p className="text-[10px] theme-muted mt-0.5">Super Admin Exclusive Privilege</p>
+                </div>
+                <button onClick={() => setEditingExpiryJob(null)} className="p-1 rounded-lg theme-muted hover:theme-text">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {expiryUpdateSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                  <span>{expiryUpdateSuccess}</span>
+                </div>
+              )}
+
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border theme-border space-y-0.5">
+                <div className="text-xs font-black theme-text truncate">{editingExpiryJob.title}</div>
+                <div className="text-[11px] theme-muted">{editingExpiryJob.companyName}</div>
+                <div className="text-[10px] font-semibold text-indigo-500 mt-1">
+                  Current Expiry: {formatExpiryDate(editingExpiryJob.expiresAt)} ({getDaysLeft(editingExpiryJob.expiresAt)} days left)
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveExpiry} className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-black uppercase tracking-wider theme-text block mb-1.5">
+                    New Expiry Date
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={newExpiryDate}
+                    onChange={(e) => setNewExpiryDate(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                  />
+                </div>
+
+                {/* Quick Extension Presets */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold theme-muted uppercase tracking-wider block">Extension Presets:</span>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setExpiryPreset(15)}
+                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold border theme-border hover:border-indigo-500 theme-text hover:text-indigo-500 transition-colors cursor-pointer"
+                    >
+                      +15 Days
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setExpiryPreset(30)}
+                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black cursor-pointer"
+                    >
+                      +30 Days (Standard)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setExpiryPreset(60)}
+                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold border theme-border hover:border-indigo-500 theme-text hover:text-indigo-500 transition-colors cursor-pointer"
+                    >
+                      +60 Days
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setExpiryPreset(90)}
+                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold border theme-border hover:border-indigo-500 theme-text hover:text-indigo-500 transition-colors cursor-pointer"
+                    >
+                      +90 Days
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border theme-border text-[11px] theme-muted leading-relaxed">
+                  * Setting a future expiry date will automatically reactivate expired jobs on the candidate job search.
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t theme-border">
+                  <button
+                    type="button"
+                    onClick={() => setEditingExpiryJob(null)}
+                    className="px-3.5 py-2 rounded-xl border theme-border text-xs font-bold theme-text hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUpdatingExpiry}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                  >
+                    {isUpdatingExpiry && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>Update Expiry Date</span>
                   </button>
                 </div>
               </form>

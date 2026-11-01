@@ -193,6 +193,9 @@ export interface JobListing {
     benefits?: string[];
     genderPreference?: 'ANY' | 'MALE' | 'FEMALE';
     screeningQuestions?: ScreeningQuestion[];
+    status?: string;
+    expiresAt?: string;
+    isExpired?: boolean;
     createdAt: string;
 }
 export interface QuotaProgress {
@@ -412,6 +415,7 @@ export interface CrossCompanyJobItem {
     salaryMax?: number;
     skills: string[];
     applicationCount: number;
+    expiresAt?: string;
     createdAt: string;
 }
 export interface CompanyDirectoryItem {

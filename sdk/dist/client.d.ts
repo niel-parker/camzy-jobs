@@ -94,6 +94,7 @@ export declare class JobPortalSdk {
     }): Promise<JobListing[]>;
     getJobById(id: string): Promise<JobListing>;
     createJob(jobData: Partial<JobListing>): Promise<JobListing>;
+    repostJob(id: string, jobData: Partial<JobListing>): Promise<JobListing>;
     updateJob(id: string, jobData: Partial<JobListing>): Promise<JobListing>;
     deleteJob(id: string): Promise<{
         success: boolean;
@@ -153,9 +154,10 @@ export declare class JobPortalSdk {
         search?: string;
     }): Promise<CrossCompanyJobItem[]>;
     postJobAsCompany(jobData: any): Promise<JobListing>;
-    updateAdminJobStatus(id: string, status: string): Promise<{
+    updateAdminJobStatus(id: string, status?: string, isFeatured?: boolean, expiresAt?: string): Promise<{
         success: boolean;
     }>;
+    updateAdminJobExpiry(id: string, expiresAt: string): Promise<any>;
     getAdminCompanies(): Promise<CompanyDirectoryItem[]>;
     registerCompanyDirect(data: {
         name: string;

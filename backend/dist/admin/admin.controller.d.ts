@@ -170,12 +170,22 @@ export declare class AdminController {
         skills: any;
         applicationCount: any;
         createdAt: any;
+        expiresAt: any;
     }[]>;
     postJobAsCompany(body: any): Promise<JobPosting>;
     updateJobStatus(id: string, body: {
         status?: any;
         isFeatured?: boolean;
+        expiresAt?: string | Date;
     }): Promise<JobPosting>;
+    updateJobExpiry(id: string, body: {
+        expiresAt: string | Date;
+    }): Promise<{
+        success: boolean;
+        id: string;
+        expiresAt: Date;
+        status: import("../jobs/entities/job-posting.entity").JobStatus;
+    }>;
     getAllCompanies(): Promise<{
         id: string;
         name: string;

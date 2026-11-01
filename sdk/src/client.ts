@@ -293,6 +293,13 @@ export class JobPortalSdk {
     });
   }
 
+  async repostJob(id: string, jobData: Partial<JobListing>): Promise<JobListing> {
+    return this.request<JobListing>(`/jobs/${id}/repost`, {
+      method: 'POST',
+      body: JSON.stringify(jobData),
+    });
+  }
+
   async updateJob(id: string, jobData: Partial<JobListing>): Promise<JobListing> {
     return this.request<JobListing>(`/jobs/${id}`, {
       method: 'PUT',
@@ -490,10 +497,17 @@ export class JobPortalSdk {
     });
   }
 
-  async updateAdminJobStatus(id: string, status: string): Promise<{ success: boolean }> {
+  async updateAdminJobStatus(id: string, status?: string, isFeatured?: boolean, expiresAt?: string): Promise<{ success: boolean }> {
     return this.request<{ success: boolean }>(`/admin/jobs/${id}/status`, {
       method: 'PUT',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, isFeatured, expiresAt }),
+    });
+  }
+
+  async updateAdminJobExpiry(id: string, expiresAt: string): Promise<any> {
+    return this.request(`/admin/jobs/${id}/expiry`, {
+      method: 'PUT',
+      body: JSON.stringify({ expiresAt }),
     });
   }
 

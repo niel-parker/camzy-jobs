@@ -707,6 +707,7 @@ export class AdminController {
       skills: j.skills || [],
       applicationCount: j.applicationsCount || 0,
       createdAt: j.createdAt,
+      expiresAt: j.expiresAt,
     }));
   }
 
@@ -750,22 +751,68 @@ export class AdminController {
       applyUrl: body.applyUrl || null,
       status: body.status || ('PUBLISHED' as any),
       screeningQuestions: body.screeningQuestions || [],
-      expiresAt: new Date(Date.now() + 60 * 86400000),
+      expiresAt: body.expiresAt ? new Date(body.expiresAt) : new Date(Date.now() + 30 * 86400000),
     });
 
     return await this.jobRepo.save(job);
   }
 
   @Put('jobs/:id/status')
-  @ApiOperation({ summary: 'Super Admin: Toggle status or featured boost for any job' })
-  async updateJobStatus(@Param('id') id: string, @Body() body: { status?: any; isFeatured?: boolean }) {
+  @ApiOperation({ summary: 'Super Admin: Toggle status, featured boost, or expiry date for any job' })
+  async updateJobStatus(@Param('id') id: string, @Body() body: { status?: any; isFeatured?: boolean; expiresAt?: string | Date }) {
     const job = await this.jobRepo.findOne({ where: { id } });
-    if (!job) throw new Error(`Job ${id} not found`);
+    if (!job) throw new NotFoundException(`Job ${id} not found`);
 
-    if (body.status !== undefined) job.status = body.status;
+    if (body.status !== undefined) {
+      let st = body.status;
+      if (st === 'ACTIVE') st = 'PUBLISHED';
+      if (st === 'CLOSED') st = 'ARCHIVED';
+      job.status = st as any;
+    }
     if (body.isFeatured !== undefined) job.isFeatured = body.isFeatured;
+    if (body.expiresAt !== undefined) {
+      const exp = new Date(body.expiresAt);
+      if (!isNaN(exp.getTime())) {
+        job.expiresAt = exp;
+        if (exp > new Date() && job.status === ('EXPIRED' as any)) {
+          job.status = 'PUBLISHED' as any;
+        } else if (exp <= new Date() && job.status === ('PUBLISHED' as any)) {
+          job.status = 'EXPIRED' as any;
+        }
+      }
+    }
 
     return await this.jobRepo.save(job);
+  }
+
+  @Put('jobs/:id/expiry')
+  @ApiOperation({ summary: 'Super Admin: Update job expiry date (Super Admin Exclusive)' })
+  async updateJobExpiry(@Param('id') id: string, @Body() body: { expiresAt: string | Date }) {
+    if (!body.expiresAt) {
+      throw new BadRequestException('Expiry date (expiresAt) is required');
+    }
+    const job = await this.jobRepo.findOne({ where: { id } });
+    if (!job) throw new NotFoundException(`Job ${id} not found`);
+
+    const newExp = new Date(body.expiresAt);
+    if (isNaN(newExp.getTime())) {
+      throw new BadRequestException('Invalid expiry date format');
+    }
+
+    job.expiresAt = newExp;
+    if (newExp > new Date() && job.status === ('EXPIRED' as any)) {
+      job.status = 'PUBLISHED' as any;
+    } else if (newExp <= new Date() && job.status === ('PUBLISHED' as any)) {
+      job.status = 'EXPIRED' as any;
+    }
+
+    const saved = await this.jobRepo.save(job);
+    return {
+      success: true,
+      id: saved.id,
+      expiresAt: saved.expiresAt,
+      status: saved.status,
+    };
   }
 
   // ==========================================

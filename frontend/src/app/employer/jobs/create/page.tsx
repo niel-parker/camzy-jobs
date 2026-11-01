@@ -9,7 +9,7 @@ import { DashboardLayout } from '../../../../components/DashboardLayout';
 import { LocationSearchDropdown } from '../../../../components/LocationSearchDropdown';
 import { SkillKeywordAutocomplete } from '../../../../components/SkillKeywordAutocomplete';
 import { ExperienceRangeSelector } from '../../../../components/ExperienceRangeSelector';
-import { ArrowLeft, Sparkles, AlertCircle, Plus, Trash2, HelpCircle, ExternalLink, FileText, EyeOff, Eye, Gift, Calendar, UserCheck } from 'lucide-react';
+import { ArrowLeft, Sparkles, AlertCircle, Plus, Trash2, HelpCircle, ExternalLink, FileText, EyeOff, Eye, Gift, Calendar, UserCheck, Lock, Clock, RotateCcw } from 'lucide-react';
 
 interface ScreeningQItem {
   id: string;
@@ -22,6 +22,8 @@ interface ScreeningQItem {
 export default function CreateJobPage() {
   const { theme, sdk, user } = useTheme();
   const router = useRouter();
+
+  const [repostFromId, setRepostFromId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -36,7 +38,7 @@ export default function CreateJobPage() {
     isSalaryVisible: true,
     skillsInput: 'TypeScript, Next.js, NestJS',
     genderPreference: 'ANY' as 'ANY' | 'MALE' | 'FEMALE',
-    expiresAt: new Date(Date.now() + 60 * 86400000).toISOString().split('T')[0],
+    expiresAt: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
     description: '',
     isFeatured: false,
     applyType: 'INTERNAL' as 'INTERNAL' | 'EXTERNAL',
@@ -66,6 +68,50 @@ export default function CreateJobPage() {
   const [screeningQuestions, setScreeningQuestions] = useState<ScreeningQItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Check if opened in repost mode (?repostFrom=<jobId>)
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const rf = params.get('repostFrom');
+      if (rf) {
+        setRepostFromId(rf);
+        sdk.getJobById(rf).then((orig: any) => {
+          if (orig) {
+            setFormData((prev) => ({
+              ...prev,
+              title: orig.title || prev.title,
+              category: orig.category || prev.category,
+              employmentType: orig.employmentType || prev.employmentType,
+              experienceLevel: orig.experienceLevel || prev.experienceLevel,
+              location: orig.location || prev.location,
+              isRemote: orig.isRemote ?? prev.isRemote,
+              salaryMin: orig.salaryMin ? String(orig.salaryMin) : prev.salaryMin,
+              salaryMax: orig.salaryMax ? String(orig.salaryMax) : prev.salaryMax,
+              currency: orig.currency || prev.currency,
+              description: orig.description || prev.description,
+              applyType: orig.applyType || prev.applyType,
+              applyUrl: orig.applyUrl || prev.applyUrl,
+            }));
+            if (orig.minExperience !== undefined) setMinExperience(orig.minExperience);
+            if (orig.maxExperience !== undefined) setMaxExperience(orig.maxExperience);
+            if (orig.skills?.length) setSelectedSkills(orig.skills);
+            if (orig.screeningQuestions?.length) {
+              setScreeningQuestions(
+                orig.screeningQuestions.map((q: any) => ({
+                  id: q.id,
+                  questionText: q.questionText,
+                  questionType: q.questionType,
+                  options: Array.isArray(q.options) ? q.options.join(', ') : '',
+                  isRequired: q.isRequired ?? true,
+                }))
+              );
+            }
+          }
+        }).catch((err: any) => console.error('Failed to load job for reposting:', err));
+      }
+    }
+  }, [sdk]);
 
   const availableBenefits = [
     'Health Insurance',
@@ -169,7 +215,7 @@ export default function CreateJobPage() {
           isRequired: q.isRequired,
         }));
 
-      await sdk.createJob({
+      const jobPayload: any = {
         title: formData.title,
         category: formData.category,
         employmentType: formData.employmentType,
@@ -195,11 +241,18 @@ export default function CreateJobPage() {
         companyName: user?.tenantName || 'Company Tenant',
         isConsultancy: false,
         screeningQuestions: formattedQuestions,
-      });
+      };
 
-      router.push('/employer/dashboard');
+      if (repostFromId) {
+        // 2. Repost job: consumes -1 quota, applies fresh 30 days
+        await sdk.repostJob(repostFromId, jobPayload);
+      } else {
+        await sdk.createJob(jobPayload);
+      }
+
+      router.push('/employer/jobs');
     } catch (err: any) {
-      setErrorMsg(err.message || 'Error creating job posting. Quota limit reached.');
+      setErrorMsg(err.message || 'Error processing job posting. Quota limit reached.');
     } finally {
       setIsSubmitting(false);
     }
@@ -208,15 +261,33 @@ export default function CreateJobPage() {
   return (
     <DashboardLayout role="EMPLOYER">
       <div className="max-w-3xl mx-auto space-y-6">
-        <Link href="/employer/dashboard" className="inline-flex items-center gap-2 text-xs font-semibold theme-muted hover:text-indigo-500 transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to Employer Dashboard
+        <Link href="/employer/jobs" className="inline-flex items-center gap-2 text-xs font-semibold theme-muted hover:text-indigo-500 transition-colors">
+          <ArrowLeft className="w-4 h-4" /> Back to Company Jobs
         </Link>
 
         <div className="p-6 rounded-xl border theme-border theme-surface space-y-6 shadow-sm">
           <div>
-            <h1 className="text-2xl font-extrabold theme-text tracking-tight">Post a New Job Opening</h1>
-            <p className="text-xs theme-muted">Configure job requirements, salary visibility, skill badges, perks, and screening questions</p>
+            <h1 className="text-2xl font-extrabold theme-text tracking-tight">
+              {repostFromId ? '🔄 Repost Job Position' : 'Post a New Job Opening'}
+            </h1>
+            <p className="text-xs theme-muted">
+              {repostFromId
+                ? 'Review and edit job requirements before reposting. Consumes 1 active job from your quota.'
+                : 'Configure job requirements, salary visibility, skill badges, perks, and screening questions'}
+            </p>
           </div>
+
+          {repostFromId && (
+            <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-xs space-y-1">
+              <div className="flex items-center gap-2 font-bold text-indigo-700 dark:text-indigo-300">
+                <RotateCcw className="w-4 h-4 text-indigo-600" />
+                <span>Repost Mode Active</span>
+              </div>
+              <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                Submitting will <strong>consume 1 active job</strong> from your plan quota and publish a fresh <strong>30-day listing</strong>. You can modify any requirements below.
+              </p>
+            </div>
+          )}
 
           {errorMsg && (
             <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
@@ -313,15 +384,26 @@ export default function CreateJobPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-indigo-500" /> Job Expiry Date
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-indigo-500" /> Job Expiry Timeline
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
+                    <Lock className="w-3 h-3" /> Locked Policy
+                  </span>
                 </label>
-                <input
-                  type="date"
-                  value={formData.expiresAt}
-                  onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-                  className="w-full px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs theme-text outline-none focus:border-indigo-500 font-medium"
-                />
+                <div className="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                  <span className="font-semibold flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-emerald-500" />
+                    30 Days ({new Date(Date.now() + 30 * 86400000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })})
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                    Standard 30 Days
+                  </span>
+                </div>
+                <p className="text-[10px] theme-muted mt-1">
+                  * Auto-expires after 30 days. Only Super Admin can change expiry date.
+                </p>
               </div>
             </div>
 
@@ -532,7 +614,11 @@ export default function CreateJobPage() {
               className="w-full py-3.5 rounded-xl font-bold text-xs text-white shadow-lg theme-transition hover:opacity-90 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
               style={{ backgroundColor: theme.primaryColor }}
             >
-              {isSubmitting ? 'Publishing Job Posting...' : 'Publish Job Posting'}
+              {isSubmitting ? (
+                repostFromId ? 'Reposting Job...' : 'Publishing Job Posting...'
+              ) : (
+                repostFromId ? 'Confirm & Repost Job (-1 Quota)' : 'Publish Job Posting'
+              )}
             </button>
           </form>
         </div>
