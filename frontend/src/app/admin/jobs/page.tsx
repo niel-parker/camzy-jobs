@@ -19,6 +19,7 @@ export default function AdminCrossCompanyJobsPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedTenantFilter, setSelectedTenantFilter] = useState<string>('');
+  const [jobTab, setJobTab] = useState<'active' | 'expired' | 'all'>('active');
   const [tablePage, setTablePage] = useState<number>(1);
   const TABLE_PAGE_SIZE = 15;
 
@@ -202,8 +203,23 @@ export default function AdminCrossCompanyJobsPage() {
     }
   };
 
-  const activeJobsCount = jobs.filter((j) => j.status === 'ACTIVE').length;
+  const isJobExpired = (j: CrossCompanyJobItem) => {
+    return j.status === 'EXPIRED' || (j.expiresAt ? new Date(j.expiresAt).getTime() <= Date.now() : false);
+  };
+
+  const isJobActive = (j: CrossCompanyJobItem) => {
+    return j.status === 'ACTIVE' && (!j.expiresAt || new Date(j.expiresAt).getTime() > Date.now());
+  };
+
+  const activeJobsCount = jobs.filter(isJobActive).length;
+  const expiredJobsCount = jobs.filter(isJobExpired).length;
   const totalApplications = jobs.reduce((acc, j) => acc + (j.applicationCount || 0), 0);
+
+  const displayedJobs = jobs.filter((j) => {
+    if (jobTab === 'active') return isJobActive(j);
+    if (jobTab === 'expired') return isJobExpired(j);
+    return true; // 'all'
+  });
 
   return (
     <DashboardLayout role="SUPER_ADMIN">
@@ -284,6 +300,78 @@ export default function AdminCrossCompanyJobsPage() {
           </div>
         </div>
 
+        {/* Active & Expired Tabs */}
+        <div className="border-b theme-border flex items-center space-x-2 sm:space-x-6">
+          <button
+            type="button"
+            onClick={() => {
+              setJobTab('active');
+              setTablePage(1);
+            }}
+            className={`pb-3 text-xs font-black transition-all flex items-center space-x-2 border-b-2 cursor-pointer ${
+              jobTab === 'active'
+                ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
+                : 'border-transparent theme-muted hover:theme-text'
+            }`}
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            <span>Active Listings</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              jobTab === 'active'
+                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+            }`}>
+              {activeJobsCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setJobTab('expired');
+              setTablePage(1);
+            }}
+            className={`pb-3 text-xs font-black transition-all flex items-center space-x-2 border-b-2 cursor-pointer ${
+              jobTab === 'expired'
+                ? 'border-rose-600 text-rose-600 dark:text-rose-400'
+                : 'border-transparent theme-muted hover:theme-text'
+            }`}
+          >
+            <Clock className="w-4 h-4 text-rose-500" />
+            <span>Expired Listings</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              jobTab === 'expired'
+                ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+            }`}>
+              {expiredJobsCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setJobTab('all');
+              setTablePage(1);
+            }}
+            className={`pb-3 text-xs font-black transition-all flex items-center space-x-2 border-b-2 cursor-pointer ${
+              jobTab === 'all'
+                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                : 'border-transparent theme-muted hover:theme-text'
+            }`}
+          >
+            <Briefcase className="w-4 h-4 text-indigo-500" />
+            <span>All Listings</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              jobTab === 'all'
+                ? 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+            }`}>
+              {jobs.length}
+            </span>
+          </button>
+        </div>
+
         {/* Filter and Search Bar */}
         <div className="theme-surface border theme-border rounded-2xl p-4 shadow-sm">
           <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row items-center gap-3">
@@ -336,14 +424,20 @@ export default function AdminCrossCompanyJobsPage() {
                 <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
                 <p className="text-xs font-semibold theme-muted">Loading cross-company jobs...</p>
               </div>
-            ) : jobs.length === 0 ? (
+            ) : displayedJobs.length === 0 ? (
               <div className="py-16 text-center space-y-3">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto">
                   <Briefcase className="w-6 h-6" />
                 </div>
-                <h4 className="text-sm font-bold theme-text">No jobs found</h4>
+                <h4 className="text-sm font-bold theme-text">
+                  {jobTab === 'active' ? 'No active jobs found' : jobTab === 'expired' ? 'No expired jobs found' : 'No jobs found'}
+                </h4>
                 <p className="text-xs theme-muted max-w-sm mx-auto">
-                  No jobs matched your current search filters. Try clearing the company or search term.
+                  {jobTab === 'active'
+                    ? 'There are currently no active job listings matching your filters.'
+                    : jobTab === 'expired'
+                    ? 'There are no expired jobs matching your criteria.'
+                    : 'No jobs matched your current search filters.'}
                 </p>
               </div>
             ) : (
@@ -360,7 +454,7 @@ export default function AdminCrossCompanyJobsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y theme-border text-xs">
-                  {jobs
+                  {displayedJobs
                     .slice((tablePage - 1) * TABLE_PAGE_SIZE, tablePage * TABLE_PAGE_SIZE)
                     .map((job) => (
                     <tr
@@ -491,11 +585,11 @@ export default function AdminCrossCompanyJobsPage() {
             )}
 
             {/* Cross-Company Jobs Table Pagination */}
-            {jobs.length > TABLE_PAGE_SIZE && (
+            {displayedJobs.length > TABLE_PAGE_SIZE && (
               <div className="flex flex-col sm:flex-row items-center justify-between p-3.5 border-t theme-border bg-slate-50/50 dark:bg-slate-900/40 text-xs theme-muted gap-3">
                 <span className="font-medium">
                   Showing {(tablePage - 1) * TABLE_PAGE_SIZE + 1} &ndash;{' '}
-                  {Math.min(tablePage * TABLE_PAGE_SIZE, jobs.length)} of {jobs.length} jobs
+                  {Math.min(tablePage * TABLE_PAGE_SIZE, displayedJobs.length)} of {displayedJobs.length} jobs
                 </span>
                 <div className="flex items-center space-x-1.5">
                   <button
@@ -508,16 +602,16 @@ export default function AdminCrossCompanyJobsPage() {
                     <ChevronLeft className="w-4 h-4" />
                   </button>
                   <span className="font-bold text-xs theme-text px-2">
-                    Page {tablePage} of {Math.max(1, Math.ceil(jobs.length / TABLE_PAGE_SIZE))}
+                    Page {tablePage} of {Math.max(1, Math.ceil(displayedJobs.length / TABLE_PAGE_SIZE))}
                   </span>
                   <button
                     type="button"
                     onClick={() =>
                       setTablePage((p) =>
-                        Math.min(Math.max(1, Math.ceil(jobs.length / TABLE_PAGE_SIZE)), p + 1)
+                        Math.min(Math.max(1, Math.ceil(displayedJobs.length / TABLE_PAGE_SIZE)), p + 1)
                       )
                     }
-                    disabled={tablePage >= Math.max(1, Math.ceil(jobs.length / TABLE_PAGE_SIZE))}
+                    disabled={tablePage >= Math.max(1, Math.ceil(displayedJobs.length / TABLE_PAGE_SIZE))}
                     className="p-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     title="Next page"
                   >

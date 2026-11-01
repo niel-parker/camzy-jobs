@@ -17,6 +17,7 @@ export default function EmployerJobListingsPage() {
   const { user, sdk } = useTheme();
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [jobTab, setJobTab] = useState<'active' | 'expired' | 'all'>('active');
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 15;
 
@@ -167,6 +168,23 @@ export default function EmployerJobListingsPage() {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
+  const isJobExpired = (job: JobListing) => {
+    return job.status === 'EXPIRED' || job.isExpired || (job.expiresAt ? new Date(job.expiresAt).getTime() <= Date.now() : false);
+  };
+
+  const isJobActive = (job: JobListing) => {
+    return !isJobExpired(job);
+  };
+
+  const activeJobsCount = jobs.filter(isJobActive).length;
+  const expiredJobsCount = jobs.filter(isJobExpired).length;
+
+  const displayedJobs = jobs.filter((job) => {
+    if (jobTab === 'active') return isJobActive(job);
+    if (jobTab === 'expired') return isJobExpired(job);
+    return true;
+  });
+
   return (
     <DashboardLayout role="EMPLOYER">
       <div className="space-y-6">
@@ -209,6 +227,78 @@ export default function EmployerJobListingsPage() {
           </a>
         </div>
 
+        {/* Active & Expired Tabs */}
+        <div className="border-b theme-border flex items-center space-x-2 sm:space-x-6">
+          <button
+            type="button"
+            onClick={() => {
+              setJobTab('active');
+              setPage(1);
+            }}
+            className={`pb-3 text-xs font-black transition-all flex items-center space-x-2 border-b-2 cursor-pointer ${
+              jobTab === 'active'
+                ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400'
+                : 'border-transparent theme-muted hover:theme-text'
+            }`}
+          >
+            <Check className="w-4 h-4 text-emerald-500" />
+            <span>Active Listings</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              jobTab === 'active'
+                ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+            }`}>
+              {activeJobsCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setJobTab('expired');
+              setPage(1);
+            }}
+            className={`pb-3 text-xs font-black transition-all flex items-center space-x-2 border-b-2 cursor-pointer ${
+              jobTab === 'expired'
+                ? 'border-rose-600 text-rose-600 dark:text-rose-400'
+                : 'border-transparent theme-muted hover:theme-text'
+            }`}
+          >
+            <Clock className="w-4 h-4 text-rose-500" />
+            <span>Expired Listings</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              jobTab === 'expired'
+                ? 'bg-rose-500/20 text-rose-700 dark:text-rose-300'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+            }`}>
+              {expiredJobsCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setJobTab('all');
+              setPage(1);
+            }}
+            className={`pb-3 text-xs font-black transition-all flex items-center space-x-2 border-b-2 cursor-pointer ${
+              jobTab === 'all'
+                ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                : 'border-transparent theme-muted hover:theme-text'
+            }`}
+          >
+            <Briefcase className="w-4 h-4 text-indigo-500" />
+            <span>All Jobs</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              jobTab === 'all'
+                ? 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+            }`}>
+              {jobs.length}
+            </span>
+          </button>
+        </div>
+
         {/* Jobs Table */}
         <div className="theme-surface border theme-border rounded-2xl overflow-hidden shadow-sm">
           {loading ? (
@@ -216,19 +306,29 @@ export default function EmployerJobListingsPage() {
               <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
               <span className="font-semibold">Loading company job postings...</span>
             </div>
-          ) : jobs.length === 0 ? (
+          ) : displayedJobs.length === 0 ? (
             <div className="p-16 text-center theme-muted text-xs space-y-3">
               <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto">
                 <Briefcase className="w-6 h-6" />
               </div>
-              <p className="font-black text-sm theme-text">No Job Postings Found</p>
-              <p className="max-w-md mx-auto">Click &apos;Post New Position&apos; above to create your company posting. Positions auto-expire in 30 days.</p>
-              <a
-                href="/employer/jobs/create"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
-              >
-                <Plus className="w-3.5 h-3.5" /> Post Position Now
-              </a>
+              <p className="font-black text-sm theme-text">
+                {jobTab === 'active' ? 'No Active Job Postings' : jobTab === 'expired' ? 'No Expired Job Postings' : 'No Job Postings Found'}
+              </p>
+              <p className="max-w-md mx-auto">
+                {jobTab === 'active'
+                  ? 'You currently have no active listings. Post a new position to start receiving candidate applications.'
+                  : jobTab === 'expired'
+                  ? 'You have no expired jobs. Jobs automatically move here after 30 days.'
+                  : 'Click "Post New Position" above to create your company posting.'}
+              </p>
+              {jobTab !== 'expired' && (
+                <a
+                  href="/employer/jobs/create"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Post Position Now
+                </a>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -244,7 +344,7 @@ export default function EmployerJobListingsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y theme-border text-xs">
-                  {jobs
+                  {displayedJobs
                     .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
                     .map((job) => {
                     const isExpired = job.status === 'EXPIRED' || job.isExpired || (job.expiresAt ? new Date(job.expiresAt).getTime() <= Date.now() : false);
@@ -376,11 +476,11 @@ export default function EmployerJobListingsPage() {
               </table>
 
               {/* Jobs Table Pagination */}
-              {jobs.length > PAGE_SIZE && (
+              {displayedJobs.length > PAGE_SIZE && (
                 <div className="flex flex-col sm:flex-row items-center justify-between p-3.5 border-t theme-border bg-slate-50/50 dark:bg-slate-900/40 text-xs theme-muted gap-3">
                   <span className="font-medium">
                     Showing {(page - 1) * PAGE_SIZE + 1} &ndash;{' '}
-                    {Math.min(page * PAGE_SIZE, jobs.length)} of {jobs.length} jobs
+                    {Math.min(page * PAGE_SIZE, displayedJobs.length)} of {displayedJobs.length} jobs
                   </span>
                   <div className="flex items-center space-x-1.5">
                     <button
@@ -393,16 +493,16 @@ export default function EmployerJobListingsPage() {
                       <ChevronLeft className="w-4 h-4" />
                     </button>
                     <span className="font-bold text-xs theme-text px-2">
-                      Page {page} of {Math.max(1, Math.ceil(jobs.length / PAGE_SIZE))}
+                      Page {page} of {Math.max(1, Math.ceil(displayedJobs.length / PAGE_SIZE))}
                     </span>
                     <button
                       type="button"
                       onClick={() =>
                         setPage((p) =>
-                          Math.min(Math.max(1, Math.ceil(jobs.length / PAGE_SIZE)), p + 1)
+                          Math.min(Math.max(1, Math.ceil(displayedJobs.length / PAGE_SIZE)), p + 1)
                         )
                       }
-                      disabled={page >= Math.max(1, Math.ceil(jobs.length / PAGE_SIZE))}
+                      disabled={page >= Math.max(1, Math.ceil(displayedJobs.length / PAGE_SIZE))}
                       className="p-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                       title="Next page"
                     >
