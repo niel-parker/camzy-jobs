@@ -176,6 +176,17 @@ export default function JobDetailPage() {
   const handleOpenApplyModal = async () => {
     setApplyError(null);
 
+    // 0. Expiry check - prevent applying to expired jobs
+    const isJobExpired = Boolean(
+      job?.isExpired ||
+      job?.status === 'EXPIRED' ||
+      (job?.expiresAt && new Date(job.expiresAt).getTime() <= Date.now())
+    );
+    if (isJobExpired) {
+      setApplyError('This job posting has expired and is no longer accepting applications.');
+      return;
+    }
+
     // 1. Unauthenticated check - redirect immediately to login page
     if (!user) {
       router.push(`/auth/login?redirect=/jobs/${id}?apply=true`);
@@ -332,12 +343,33 @@ export default function JobDetailPage() {
     );
   }
 
+  const isJobExpired = Boolean(
+    job.isExpired ||
+    job.status === 'EXPIRED' ||
+    (job.expiresAt && new Date(job.expiresAt).getTime() <= Date.now())
+  );
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-8">
       {/* Back Button */}
       <Link href="/jobs" className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <ArrowLeft className="w-4 h-4" /> Back to All Job Listings
       </Link>
+
+      {/* Expired Job Alert Banner */}
+      {isJobExpired && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 flex items-start gap-3 shadow-sm">
+          <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <h4 className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
+              Position Expired & Closed
+            </h4>
+            <p className="text-xs text-amber-800/90 dark:text-amber-300/90 leading-relaxed">
+              This job posting has reached its 30-day listing timeline or was marked expired. It is no longer accepting new applications or candidate submissions.
+            </p>
+          </div>
+        </div>
+      )}
 
       {applyError && (
         <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
@@ -364,7 +396,11 @@ export default function JobDetailPage() {
                 <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 font-bold flex items-center gap-1 border border-emerald-500/20">
                   <ShieldCheck className="w-3 h-3 text-emerald-500" /> Verified Employer
                 </span>
-                {job.applyType === 'INTERNAL' ? (
+                {isJobExpired ? (
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold border border-rose-500/20">
+                    Expired
+                  </span>
+                ) : job.applyType === 'INTERNAL' ? (
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/20">
                     Apply on Camzy Jobs
                   </span>
@@ -400,26 +436,35 @@ export default function JobDetailPage() {
               <Share2 className="w-4 h-4 text-indigo-500" /> Share Job
             </button>
 
-            <button
-              onClick={handleOpenApplyModal}
-              disabled={isApplied}
-              className="px-8 py-3.5 rounded-xl font-extrabold text-xs text-white shadow-lg theme-transition hover:opacity-90 active:scale-95 flex items-center gap-2 disabled:opacity-60 cursor-pointer"
-              style={{ backgroundColor: isApplied ? '#10b981' : theme.primaryColor }}
-            >
-              {isApplied ? (
-                <>
-                  <CheckCircle2 className="w-4.5 h-4.5" /> Application Submitted
-                </>
-              ) : job.applyType === 'EXTERNAL' ? (
-                <>
-                  <Send className="w-4 h-4" /> Apply on Company Site ↗
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" /> Apply on Camzy Jobs
-                </>
-              )}
-            </button>
+            {isJobExpired ? (
+              <button
+                disabled
+                className="px-6 py-3.5 rounded-xl font-extrabold text-xs bg-slate-200 dark:bg-slate-800/90 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700 flex items-center gap-2 cursor-not-allowed opacity-80"
+              >
+                <Clock className="w-4 h-4" /> Position Closed
+              </button>
+            ) : (
+              <button
+                onClick={handleOpenApplyModal}
+                disabled={isApplied}
+                className="px-8 py-3.5 rounded-xl font-extrabold text-xs text-white shadow-lg theme-transition hover:opacity-90 active:scale-95 flex items-center gap-2 disabled:opacity-60 cursor-pointer"
+                style={{ backgroundColor: isApplied ? '#10b981' : theme.primaryColor }}
+              >
+                {isApplied ? (
+                  <>
+                    <CheckCircle2 className="w-4.5 h-4.5" /> Application Submitted
+                  </>
+                ) : job.applyType === 'EXTERNAL' ? (
+                  <>
+                    <Send className="w-4 h-4" /> Apply on Company Site ↗
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" /> Apply on Camzy Jobs
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
@@ -497,80 +542,88 @@ export default function JobDetailPage() {
 
       {/* SHARE JOB MODAL (Email to Friend via Mailgun) */}
       {isShareModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 theme-modal animate-in zoom-in-95">
-            <div className="flex items-center justify-between border-b theme-border pb-3">
-              <h3 className="text-base font-extrabold theme-text flex items-center gap-2">
-                <Share2 className="w-5 h-5 text-indigo-500" /> Share Job with a Friend
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+          <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="flex-shrink-0 p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+              <h3 className="text-base font-extrabold theme-text flex items-center gap-2 min-w-0 truncate">
+                <Share2 className="w-5 h-5 text-indigo-500 flex-shrink-0" /> Share Job with a Friend
               </h3>
-              <button onClick={() => setIsShareModalOpen(null as any)} className="p-1 theme-muted hover:theme-text">
+              <button
+                type="button"
+                onClick={() => setIsShareModalOpen(false)}
+                className="flex-shrink-0 p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                aria-label="Close modal"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {shareSuccess && (
-              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-                {shareSuccess}
-              </div>
-            )}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+              {shareSuccess && (
+                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                  {shareSuccess}
+                </div>
+              )}
 
-            <form onSubmit={handleSendShareJob} className="space-y-3 text-xs">
-              <div>
-                <label className="block font-bold theme-text mb-1">Friend&apos;s Email Address *</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 theme-muted" />
+              <form onSubmit={handleSendShareJob} className="space-y-4 text-xs">
+                <div>
+                  <label className="block font-bold theme-text mb-1">Friend&apos;s Email Address *</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 theme-muted" />
+                    <input
+                      type="email"
+                      required
+                      placeholder="friend@example.com"
+                      value={shareFriendEmail}
+                      onChange={(e) => setShareFriendEmail(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold theme-text mb-1">Your Name</label>
                   <input
-                    type="email"
-                    required
-                    placeholder="friend@example.com"
-                    value={shareFriendEmail}
-                    onChange={(e) => setShareFriendEmail(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:outline-none"
+                    type="text"
+                    value={shareSenderName}
+                    onChange={(e) => setShareSenderName(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:outline-none"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block font-bold theme-text mb-1">Your Name</label>
-                <input
-                  type="text"
-                  value={shareSenderName}
-                  onChange={(e) => setShareSenderName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none"
-                />
-              </div>
+                <div>
+                  <label className="block font-bold theme-text mb-1">Personal Message / Note (Optional)</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Hey, check out this job opening at Camzy Jobs!"
+                    value={shareMessage}
+                    onChange={(e) => setShareMessage(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:outline-none"
+                  />
+                </div>
 
-              <div>
-                <label className="block font-bold theme-text mb-1">Personal Message / Note (Optional)</label>
-                <textarea
-                  rows={2}
-                  placeholder="Hey, check out this job opening at Camzy Jobs!"
-                  value={shareMessage}
-                  onChange={(e) => setShareMessage(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={shareLoading || !shareFriendEmail}
-                className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2"
-              >
-                {shareLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                Send Job Email via Mailgun
-              </button>
-            </form>
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={shareLoading || !shareFriendEmail}
+                    className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {shareLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    Send Job Email via Mailgun
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* NAUKRI.COM STYLE APPLY MODAL */}
       {isModalOpen && user && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 theme-modal animate-in fade-in zoom-in-95 duration-200 relative z-50">
-            
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+          <div className="relative w-full max-w-2xl max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {showSuccessScreen ? (
-              <div className="text-center py-6 space-y-5">
+              <div className="flex-1 overflow-y-auto p-6 sm:p-8 text-center space-y-5 my-auto">
                 <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto border border-emerald-500/20 animate-bounce">
                   <CheckCircle2 className="w-10 h-10" />
                 </div>
@@ -593,105 +646,108 @@ export default function JobDetailPage() {
                       setIsModalOpen(false);
                       setShowSuccessScreen(false);
                     }}
-                    className="px-5 py-2.5 rounded-xl border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                    className="px-5 py-2.5 rounded-xl border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
                   >
                     Back to Job Listing
                   </button>
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleFinalSubmitApplication} className="space-y-5">
-                <div className="flex items-center justify-between border-b theme-border pb-4">
-                  <div>
-                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+              <form onSubmit={handleFinalSubmitApplication} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-shrink-0 p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between gap-3 bg-white dark:bg-slate-900">
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 uppercase tracking-wider inline-block">
                       Apply on Camzy Jobs
                     </span>
-                    <h3 className="text-lg font-black theme-text mt-1">{job.title}</h3>
-                    <p className="text-xs theme-muted">{job.companyName} • {job.location}</p>
+                    <h3 className="text-base sm:text-lg font-black theme-text mt-1 truncate">{job.title}</h3>
+                    <p className="text-xs theme-muted truncate">{job.companyName} • {job.location}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    className="flex-shrink-0 p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    aria-label="Close modal"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
                 {/* Candidate Profile Score & Completeness Card */}
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border theme-border space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-indigo-600 text-white font-extrabold flex items-center justify-center text-sm shadow-sm">
-                        {user?.firstName ? user.firstName[0] : 'C'}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border theme-border space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-indigo-600 text-white font-extrabold flex items-center justify-center text-sm shadow-sm">
+                          {user?.firstName ? user.firstName[0] : 'C'}
+                        </div>
+                        <div>
+                          <p className="text-xs font-extrabold theme-text">{user?.firstName} {user?.lastName}</p>
+                          <p className="text-[11px] theme-muted">{user?.email}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs font-extrabold theme-text">{user?.firstName} {user?.lastName}</p>
-                        <p className="text-[11px] theme-muted">{user?.email}</p>
+
+                      <div className="text-right">
+                        <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                          profileScore >= 80 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                        }`}>
+                          Profile {profileScore}% Complete
+                        </span>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
-                        profileScore >= 80 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
-                      }`}>
-                        Profile {profileScore}% Complete
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-500 ${profileScore >= 80 ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                      style={{ width: `${profileScore}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Screening Questionnaire Grid */}
-                <div className="space-y-4 pt-1">
-                  <h4 className="text-xs font-black theme-text uppercase tracking-wider flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-indigo-500" /> Recruiter Screening Questions
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <div>
-                      <label className="block font-bold theme-text mb-1">Notice Period / Availability</label>
-                      <select
-                        value={noticePeriod}
-                        onChange={(e) => setNoticePeriod(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl theme-surface border theme-border theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none font-bold"
-                      >
-                        <option value="Immediate / 15 Days">Immediate / 15 Days</option>
-                        <option value="30 Days">30 Days</option>
-                        <option value="60 Days">60 Days</option>
-                        <option value="90 Days">90 Days</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block font-bold theme-text mb-1">Current Annual CTC ($)</label>
-                      <input
-                        type="text"
-                        value={currentCtc}
-                        onChange={(e) => setCurrentCtc(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl theme-surface border theme-border theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 ${profileScore >= 80 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                        style={{ width: `${profileScore}%` }}
                       />
+                    </div>
+                  </div>
+
+                  {/* Screening Questionnaire Grid */}
+                  <div className="space-y-4 pt-1">
+                    <h4 className="text-xs font-black theme-text uppercase tracking-wider flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-indigo-500" /> Recruiter Screening Questions
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <label className="block font-bold theme-text mb-1">Notice Period / Availability</label>
+                        <select
+                          value={noticePeriod}
+                          onChange={(e) => setNoticePeriod(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl theme-surface border theme-border theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none font-bold"
+                        >
+                          <option value="Immediate / 15 Days">Immediate / 15 Days</option>
+                          <option value="30 Days">30 Days</option>
+                          <option value="60 Days">60 Days</option>
+                          <option value="90 Days">90 Days</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block font-bold theme-text mb-1">Current Annual CTC ($)</label>
+                        <input
+                          type="text"
+                          value={currentCtc}
+                          onChange={(e) => setCurrentCtc(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl theme-surface border theme-border theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Modal Actions */}
-                <div className="flex items-center justify-between pt-4 border-t theme-border">
-                  <span className="text-[11px] theme-muted">
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-900/80">
+                  <span className="text-[11px] theme-muted truncate">
                     {!isProfileComplete ? '⚠️ Resume required to submit' : '✓ Ready to apply'}
                   </span>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-shrink-0">
                     <button
                       type="button"
                       onClick={() => setIsModalOpen(false)}
-                      className="px-5 py-2.5 rounded-xl border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                      className="px-4 py-2.5 rounded-xl border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -699,7 +755,7 @@ export default function JobDetailPage() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="px-7 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-md transition-all disabled:opacity-50 cursor-pointer"
+                      className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-md transition-all disabled:opacity-50 cursor-pointer"
                     >
                       {isSubmitting ? (
                         <>

@@ -260,162 +260,166 @@ export default function AdminSeoManagementPage() {
 
         {/* Configure / Edit Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in overflow-y-auto">
-            <div className="max-w-xl w-full theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden my-8">
-              <div className="p-4 border-b theme-border flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black theme-text">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-xl max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-inherit">
+                <div className="min-w-0 flex-1 truncate">
+                  <h3 className="text-sm font-black theme-text truncate">
                     {editingConfig ? `Update SEO: ${editingConfig.pageName}` : 'Configure Route SEO'}
                   </h3>
-                  <p className="text-[10px] theme-muted">Google search snippet and metadata</p>
+                  <p className="text-[10px] theme-muted truncate">Google search snippet and metadata</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="p-1.5 rounded-lg theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleSave} className="p-5 space-y-4">
-                {errorMsg && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
+              <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                  {errorMsg && (
+                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>{errorMsg}</span>
+                    </div>
+                  )}
 
-                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                        Page Name <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Job Search Engine"
+                        value={form.pageName}
+                        onChange={(e) => setForm({ ...form, pageName: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                        Route Key Identifier <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. jobs, home, pricing"
+                        value={form.pageKey}
+                        onChange={(e) => setForm({ ...form, pageKey: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                        Page Title Tag (&lt;title&gt;)
+                      </label>
+                      <span className="text-[10px] theme-muted">{form.metaTitle.length}/60 chars (Recommended)</span>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="e.g. Browse 10,000+ Verified Tech Jobs | Camzy Jobs"
+                      value={form.metaTitle}
+                      onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                        Meta Description
+                      </label>
+                      <span className="text-[10px] theme-muted">{form.metaDescription.length}/160 chars (Recommended)</span>
+                    </div>
+                    <textarea
+                      rows={3}
+                      placeholder="Concise overview snippet visible in Google search results..."
+                      value={form.metaDescription}
+                      onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                    />
+                  </div>
+
                   <div className="space-y-1">
                     <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      Page Name <span className="text-rose-500">*</span>
+                      Meta Keywords (Comma separated)
                     </label>
                     <input
                       type="text"
-                      required
-                      placeholder="e.g. Job Search Engine"
-                      value={form.pageName}
-                      onChange={(e) => setForm({ ...form, pageName: e.target.value })}
+                      placeholder="jobs, hiring, remote work, developer careers, engineering"
+                      value={form.metaKeywords}
+                      onChange={(e) => setForm({ ...form, metaKeywords: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      Route Key Identifier <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. jobs, home, pricing"
-                      value={form.pageKey}
-                      onChange={(e) => setForm({ ...form, pageKey: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                        Canonical URL
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://camzyjobs.com/jobs"
+                        value={form.canonicalUrl}
+                        onChange={(e) => setForm({ ...form, canonicalUrl: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                        OpenGraph Image URL
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://camzyjobs.com/og-banner.jpg"
+                        value={form.ogImageUrl}
+                        onChange={(e) => setForm({ ...form, ogImageUrl: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Google Snippet Live Preview */}
+                  <div className="p-3.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 space-y-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-500">
+                      Google Search Preview
+                    </span>
+                    <p className="text-sm font-bold text-blue-600 dark:text-blue-400 truncate">
+                      {form.metaTitle || form.pageName || 'Camzy Jobs Portal'}
+                    </p>
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono truncate">
+                      {form.canonicalUrl || `https://camzyjobs.com/${form.pageKey || ''}`}
+                    </p>
+                    <p className="text-[11px] theme-muted line-clamp-2">
+                      {form.metaDescription || 'Explore career opportunities, post jobs, and connect with top talent on the leading enterprise recruitment portal.'}
+                    </p>
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      Page Title Tag (&lt;title&gt;)
-                    </label>
-                    <span className="text-[10px] theme-muted">{form.metaTitle.length}/60 chars (Recommended)</span>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="e.g. Browse 10,000+ Verified Tech Jobs | Camzy Jobs"
-                    value={form.metaTitle}
-                    onChange={(e) => setForm({ ...form, metaTitle: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      Meta Description
-                    </label>
-                    <span className="text-[10px] theme-muted">{form.metaDescription.length}/160 chars (Recommended)</span>
-                  </div>
-                  <textarea
-                    rows={3}
-                    placeholder="Concise overview snippet visible in Google search results..."
-                    value={form.metaDescription}
-                    onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                    Meta Keywords (Comma separated)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="jobs, hiring, remote work, developer careers, engineering"
-                    value={form.metaKeywords}
-                    onChange={(e) => setForm({ ...form, metaKeywords: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      Canonical URL
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://camzyjobs.com/jobs"
-                      value={form.canonicalUrl}
-                      onChange={(e) => setForm({ ...form, canonicalUrl: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      OpenGraph Image URL
-                    </label>
-                    <input
-                      type="url"
-                      placeholder="https://camzyjobs.com/og-banner.jpg"
-                      value={form.ogImageUrl}
-                      onChange={(e) => setForm({ ...form, ogImageUrl: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Google Snippet Live Preview */}
-                <div className="p-3.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 space-y-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-indigo-500">
-                    Google Search Preview
-                  </span>
-                  <p className="text-sm font-bold text-blue-600 dark:text-blue-400 truncate">
-                    {form.metaTitle || form.pageName || 'Camzy Jobs Portal'}
-                  </p>
-                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-mono">
-                    {form.canonicalUrl || `https://camzyjobs.com/${form.pageKey || ''}`}
-                  </p>
-                  <p className="text-[11px] theme-muted line-clamp-2">
-                    {form.metaDescription || 'Explore career opportunities, post jobs, and connect with top talent on the leading enterprise recruitment portal.'}
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t theme-border flex items-center justify-end space-x-2">
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end space-x-2 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
                     {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>Save SEO Config</span>

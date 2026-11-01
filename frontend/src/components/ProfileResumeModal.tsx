@@ -379,28 +379,28 @@ export const ProfileResumeModal: React.FC<ProfileResumeModalProps> = ({ isOpen, 
 
       {/* MODAL BACKDROP (no-print removed so printable content is never hidden) */}
       <div className="resume-modal-backdrop fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-200">
-        <div className="resume-modal-container relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] overflow-hidden">
+        <div className="resume-modal-container relative w-full max-w-4xl my-auto bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] overflow-hidden">
           
           {/* TOP ACTION BAR (No Print) */}
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
-            <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold">
+          <div className="flex-shrink-0 px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold flex-shrink-0">
                 <Printer className="w-5 h-5" />
               </span>
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-black text-slate-900 dark:text-white">Recruiter View & Executive Resume</h3>
-                  <span className="px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black border border-indigo-500/20">
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white truncate">Recruiter View & Executive Resume</h3>
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black border border-indigo-500/20 flex-shrink-0">
                     Recruiter View
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                   Preview how recruiters view your profile, then download or print your PDF resume
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               {downloadOriginalUrl && (
                 <a
                   href={downloadOriginalUrl}

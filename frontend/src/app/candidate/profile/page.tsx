@@ -1299,24 +1299,30 @@ export default function CandidateProfilePage() {
         {/* DEDICATED EDIT PROFILE MODAL */}
         {/* ========================================================================= */}
         {isEditProfileOpen && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 space-y-5 theme-modal animate-in zoom-in-95 my-8">
-              <div className="flex items-center justify-between border-b theme-border pb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600">
+          <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+            <div className="relative w-full max-w-2xl max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3 bg-inherit">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 flex-shrink-0">
                     <Pencil className="w-5 h-5" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-black theme-text">Edit Candidate Profile & Identity</h3>
-                    <p className="text-xs theme-muted">Update your full name, contact information, headline, and compensation</p>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base sm:text-lg font-black theme-text truncate">Edit Candidate Profile & Identity</h3>
+                    <p className="text-xs theme-muted truncate">Update your full name, contact information, headline, and compensation</p>
                   </div>
                 </div>
-                <button onClick={() => setIsEditProfileOpen(false)} className="p-1.5 theme-muted hover:theme-text rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(false)}
+                  className="flex-shrink-0 p-1.5 theme-muted hover:theme-text rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Profile Photo Upload */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+                {/* Profile Photo Upload */}
               <div className="space-y-2 p-4 rounded-2xl border theme-border bg-slate-50/50 dark:bg-slate-900/50">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-bold theme-text">Profile Picture / Headshot</label>
@@ -1501,12 +1507,13 @@ export default function CandidateProfilePage() {
                   />
                 </div>
               </div>
+              </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t theme-border">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-slate-900/50">
                 <button
                   type="button"
                   onClick={() => setIsEditProfileOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="px-4 py-2.5 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1514,7 +1521,7 @@ export default function CandidateProfilePage() {
                   type="button"
                   onClick={() => handleSaveAll()}
                   disabled={isSaving}
-                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs flex items-center gap-2 shadow-lg disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs flex items-center gap-2 shadow-lg disabled:opacity-50 transition-all cursor-pointer"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   Save Profile Changes
@@ -1526,161 +1533,176 @@ export default function CandidateProfilePage() {
 
         {/* VERIFICATION MODAL WITH 3-MINUTE MAILGUN OTP */}
         {verifyModalTarget && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 theme-modal animate-in zoom-in-95">
-              <div className="flex items-center justify-between border-b theme-border pb-3">
-                <h3 className="text-base font-black theme-text flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-indigo-500" /> Verify {verifyModalTarget === 'EMAIL' ? 'Email Address' : 'Mobile Number'}
+          <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-inherit">
+                <h3 className="text-base font-black theme-text flex items-center gap-2 min-w-0 flex-1 truncate">
+                  <ShieldCheck className="w-5 h-5 text-indigo-500 flex-shrink-0" />
+                  <span className="truncate">Verify {verifyModalTarget === 'EMAIL' ? 'Email Address' : 'Mobile Number'}</span>
                 </h3>
-                <button onClick={() => setVerifyModalTarget(null)} className="p-1 theme-muted hover:theme-text">
+                <button
+                  type="button"
+                  onClick={() => setVerifyModalTarget(null)}
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {verifyMsg && (
-                <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-                  {verifyMsg}
-                </div>
-              )}
-
-              {!verifyOtpSent ? (
-                <div className="space-y-4 text-xs">
-                  <p className="theme-muted">
-                    We will send a 6-digit verification code to <strong>{verifyIdentifier}</strong> via Mailgun SMTP. Valid for <strong>3 minutes</strong>.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleSendVerificationOtp}
-                    disabled={verifyLoading}
-                    className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2"
-                  >
-                    {verifyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-                    Send Verification Code
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4 text-xs">
-                  <div>
-                    <label className="block font-bold theme-text mb-1">Enter 6-Digit OTP</label>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      placeholder="123456"
-                      value={verifyOtpInput}
-                      onChange={(e) => setVerifyOtpInput(e.target.value)}
-                      className="w-full text-center tracking-[0.5em] font-mono text-lg font-bold py-2.5 rounded-xl border theme-border theme-surface theme-text"
-                    />
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                {verifyMsg && (
+                  <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                    {verifyMsg}
                   </div>
+                )}
 
-                  <button
-                    type="button"
-                    onClick={handleConfirmVerificationOtp}
-                    disabled={verifyLoading || verifyOtpInput.length < 6}
-                    className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2"
-                  >
-                    {verifyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                    Confirm Verification
-                  </button>
-
-                  <div className="text-center pt-1">
-                    {resendTimer > 0 ? (
-                      <span className="theme-muted font-mono">Resend available in {formatTimer(resendTimer)}</span>
-                    ) : (
-                      <button type="button" onClick={handleSendVerificationOtp} className="text-indigo-500 font-bold hover:underline">
-                        Resend OTP Code Now
-                      </button>
-                    )}
+                {!verifyOtpSent ? (
+                  <div className="space-y-4 text-xs">
+                    <p className="theme-muted">
+                      We will send a 6-digit verification code to <strong>{verifyIdentifier}</strong> via Mailgun SMTP. Valid for <strong>3 minutes</strong>.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleSendVerificationOtp}
+                      disabled={verifyLoading}
+                      className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {verifyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                      Send Verification Code
+                    </button>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="space-y-4 text-xs">
+                    <div>
+                      <label className="block font-bold theme-text mb-1">Enter 6-Digit OTP</label>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        placeholder="123456"
+                        value={verifyOtpInput}
+                        onChange={(e) => setVerifyOtpInput(e.target.value)}
+                        className="w-full text-center tracking-[0.5em] font-mono text-lg font-bold py-2.5 rounded-xl border theme-border theme-surface theme-text"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleConfirmVerificationOtp}
+                      disabled={verifyLoading || verifyOtpInput.length < 6}
+                      className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {verifyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                      Confirm Verification
+                    </button>
+
+                    <div className="text-center pt-1">
+                      {resendTimer > 0 ? (
+                        <span className="theme-muted font-mono">Resend available in {formatTimer(resendTimer)}</span>
+                      ) : (
+                        <button type="button" onClick={handleSendVerificationOtp} className="text-indigo-500 font-bold hover:underline cursor-pointer">
+                          Resend OTP Code Now
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {/* MODAL FOR ADDING NEW RESUME PDF (REAL SERVER UPLOAD) */}
         {activeModal === 'RESUME' && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 theme-modal animate-in zoom-in-95">
-              <div className="flex items-center justify-between border-b theme-border pb-3">
-                <div>
-                  <h3 className="text-base font-extrabold theme-text">Upload Resume Document</h3>
-                  <p className="text-[11px] theme-muted">Stored directly on backend server (S3-ready architecture)</p>
+          <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-inherit">
+                <div className="min-w-0 flex-1 truncate">
+                  <h3 className="text-base font-extrabold theme-text truncate">Upload Resume Document</h3>
+                  <p className="text-[11px] theme-muted truncate">Stored directly on backend server (S3-ready architecture)</p>
                 </div>
-                <button onClick={() => setActiveModal(null)} className="p-1 theme-muted hover:theme-text">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {uploadError && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 dark:text-rose-400 font-medium">
-                  {uploadError}
-                </div>
-              )}
-
-              <div className="space-y-3 text-xs">
-                <div>
-                  <label className="block font-bold theme-text mb-1">Resume Title / Label *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Lead Architect Resume 2026.pdf"
-                    value={newResumeTitle}
-                    onChange={(e) => setNewResumeTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none font-medium"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold theme-text mb-1">Select File (PDF, DOC, DOCX up to 15MB)</label>
-                  <div className="p-4 border-2 border-dashed theme-border rounded-2xl text-center space-y-2 hover:border-indigo-500 transition-all bg-slate-50/50 dark:bg-slate-900/50">
-                    <Upload className="w-6 h-6 text-indigo-500 mx-auto" />
-                    <input
-                      type="file"
-                      id="resume-file-picker"
-                      accept=".pdf,.doc,.docx"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          const file = e.target.files[0];
-                          setResumeUploadFile(file);
-                          if (!newResumeTitle) {
-                            setNewResumeTitle(file.name);
-                          }
-                        }
-                      }}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="resume-file-picker"
-                      className="inline-block px-4 py-1.5 rounded-lg bg-indigo-600 text-white font-bold text-xs cursor-pointer hover:bg-indigo-700 shadow-sm"
-                    >
-                      Browse File
-                    </label>
-                    {resumeUploadFile ? (
-                      <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                        Selected: {resumeUploadFile.name} ({(resumeUploadFile.size / 1024).toFixed(1)} KB)
-                      </p>
-                    ) : (
-                      <p className="text-[11px] theme-muted">Supported formats: PDF, DOC, DOCX</p>
-                    )}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
+                {uploadError && (
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-600 dark:text-rose-400 font-medium">
+                    {uploadError}
                   </div>
-                </div>
+                )}
 
-                <button
-                  type="button"
-                  onClick={handleAddResume}
-                  disabled={isUploadingResume || !resumeUploadFile}
-                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {isUploadingResume ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" /> Uploading to Backend Server...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" /> Upload & Add to Profile
-                    </>
-                  )}
-                </button>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block font-bold theme-text mb-1">Resume Title / Label *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Lead Architect Resume 2026.pdf"
+                      value={newResumeTitle}
+                      onChange={(e) => setNewResumeTitle(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold theme-text mb-1">Select File (PDF, DOC, DOCX up to 15MB)</label>
+                    <div className="p-4 border-2 border-dashed theme-border rounded-2xl text-center space-y-2 hover:border-indigo-500 transition-all bg-slate-50/50 dark:bg-slate-900/50">
+                      <Upload className="w-6 h-6 text-indigo-500 mx-auto" />
+                      <input
+                        type="file"
+                        id="resume-file-picker"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            const file = e.target.files[0];
+                            setResumeUploadFile(file);
+                            if (!newResumeTitle) {
+                              setNewResumeTitle(file.name);
+                            }
+                          }
+                        }}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="resume-file-picker"
+                        className="inline-block px-4 py-1.5 rounded-lg bg-indigo-600 text-white font-bold text-xs cursor-pointer hover:bg-indigo-700 shadow-sm"
+                      >
+                        Browse File
+                      </label>
+                      {resumeUploadFile ? (
+                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                          Selected: {resumeUploadFile.name} ({(resumeUploadFile.size / 1024).toFixed(1)} KB)
+                        </p>
+                      ) : (
+                        <p className="text-[11px] theme-muted">Supported formats: PDF, DOC, DOCX</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddResume}
+                    disabled={isUploadingResume || !resumeUploadFile}
+                    className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {isUploadingResume ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Uploading to Backend Server...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4" /> Upload & Add to Profile
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1688,18 +1710,24 @@ export default function CandidateProfilePage() {
 
         {/* MODAL FOR ADDING EXPERIENCE */}
         {activeModal === 'EXP' && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 theme-modal animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b theme-border pb-3">
-                <div>
-                  <h3 className="text-base font-extrabold theme-text">Add Employment History</h3>
-                  <p className="text-[11px] theme-muted">Add your past or current job role with key responsibilities</p>
+          <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+            <div className="relative w-full max-w-lg max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-inherit">
+                <div className="min-w-0 flex-1 truncate">
+                  <h3 className="text-base font-extrabold theme-text truncate">Add Employment History</h3>
+                  <p className="text-[11px] theme-muted truncate">Add your past or current job role with key responsibilities</p>
                 </div>
-                <button onClick={() => setActiveModal(null)} className="p-1 theme-muted hover:theme-text">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="space-y-3.5 text-xs">
+
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5 text-xs">
                 <div>
                   <label className="block font-bold theme-text mb-1">Designation / Role *</label>
                   <input
@@ -1812,12 +1840,21 @@ export default function CandidateProfilePage() {
                     className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text leading-relaxed font-sans"
                   />
                 </div>
+              </div>
 
+              <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2.5 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
                 <button
                   type="button"
                   onClick={handleAddExperience}
                   disabled={!expForm.designation || !expForm.companyName}
-                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Briefcase className="w-4 h-4" /> Save Experience
                 </button>
@@ -1828,15 +1865,21 @@ export default function CandidateProfilePage() {
 
         {/* MODAL FOR ADDING EDUCATION */}
         {activeModal === 'EDU' && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 theme-modal animate-in zoom-in-95">
-              <div className="flex items-center justify-between border-b theme-border pb-3">
-                <h3 className="text-base font-extrabold theme-text">Add Education Degree</h3>
-                <button onClick={() => setActiveModal(null)} className="p-1 theme-muted hover:theme-text">
+          <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-inherit">
+                <h3 className="text-base font-extrabold theme-text truncate">Add Education Degree</h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="space-y-3 text-xs">
+
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 text-xs">
                 <div>
                   <label className="block font-bold theme-text mb-1">Degree / Certification *</label>
                   <input
@@ -1881,11 +1924,21 @@ export default function CandidateProfilePage() {
                     />
                   </div>
                 </div>
+              </div>
+
+              <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2.5 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
                 <button
                   type="button"
                   onClick={handleAddEducation}
                   disabled={!eduForm.degree || !eduForm.institution}
-                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold shadow-md transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
                 >
                   Save Education
                 </button>
@@ -1896,15 +1949,21 @@ export default function CandidateProfilePage() {
 
         {/* MODAL FOR ADDING CERTIFICATION */}
         {activeModal === 'CERT' && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 theme-modal animate-in zoom-in-95">
-              <div className="flex items-center justify-between border-b theme-border pb-3">
-                <h3 className="text-base font-extrabold theme-text">Add Professional Certification</h3>
-                <button onClick={() => setActiveModal(null)} className="p-1 theme-muted hover:theme-text">
+          <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-inherit">
+                <h3 className="text-base font-extrabold theme-text truncate">Add Professional Certification</h3>
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="space-y-3 text-xs">
+
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 text-xs">
                 <div>
                   <label className="block font-bold theme-text mb-1">Certificate Title *</label>
                   <input
@@ -1927,11 +1986,21 @@ export default function CandidateProfilePage() {
                     className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text"
                   />
                 </div>
+              </div>
+
+              <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2.5 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
                 <button
                   type="button"
                   onClick={handleAddCertification}
                   disabled={!certForm.title || !certForm.issuingOrganization}
-                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold shadow-md transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
                 >
                   Save Certification
                 </button>

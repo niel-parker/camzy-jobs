@@ -350,22 +350,25 @@ export default function CamzyInternalTeamManagementPage() {
 
         {/* Provision Admin Modal */}
         {isAddModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-            <div className="max-w-md w-full theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
-              <div className="p-4 border-b theme-border flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black theme-text">Add Camzy Internal Team Member</h3>
-                  <p className="text-[10px] theme-muted">Provision a privileged Camzy Infotech superadmin account</p>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-black theme-text truncate">Add Camzy Internal Team Member</h3>
+                  <p className="text-[10px] theme-muted truncate">Provision a privileged Camzy Infotech superadmin account</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="p-1.5 rounded-lg theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleAddAdmin} className="p-5 space-y-4">
+              <form onSubmit={handleAddAdmin} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
                 {errorMsg && (
                   <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -450,8 +453,9 @@ export default function CamzyInternalTeamManagementPage() {
                     className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-rose-500"
                   />
                 </div>
+                </div>
 
-                <div className="pt-4 border-t theme-border flex items-center justify-end space-x-2">
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end space-x-2 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setIsAddModalOpen(false)}

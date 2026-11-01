@@ -44,6 +44,17 @@ let ApplicationsService = class ApplicationsService {
             if (firstJob)
                 jobId = firstJob.id;
         }
+        if (!jobId) {
+            throw new common_1.NotFoundException('Job posting not found');
+        }
+        const job = await this.jobRepo.findOne({ where: { id: jobId } });
+        if (!job) {
+            throw new common_1.NotFoundException(`Job posting with ID ${jobId} not found`);
+        }
+        const isExpired = job.status === job_posting_entity_1.JobStatus.EXPIRED || (job.expiresAt && new Date(job.expiresAt) <= new Date());
+        if (isExpired) {
+            throw new common_1.BadRequestException('This job posting has expired and is no longer accepting applications.');
+        }
         let candidateId = data.candidateId;
         if (candidateId) {
             let cand = await this.candidateRepo.findOne({ where: { id: candidateId } });

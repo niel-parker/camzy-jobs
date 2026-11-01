@@ -625,25 +625,28 @@ export default function AdminCrossCompanyJobsPage() {
 
         {/* Post Job on Behalf Modal */}
         {isPostModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in overflow-y-auto">
-            <div className="max-w-xl w-full theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden my-8">
-              <div className="p-4 border-b theme-border flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black theme-text flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-indigo-500" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-xl max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3 bg-inherit">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-black theme-text flex items-center gap-1.5 truncate">
+                    <Sparkles className="w-4 h-4 text-indigo-500 flex-shrink-0" />
                     Post Job On Behalf of Company
                   </h3>
-                  <p className="text-[10px] theme-muted">Bypasses plan quota checks for administrative posting</p>
+                  <p className="text-[10px] theme-muted mt-0.5">Bypasses plan quota checks for administrative posting</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsPostModalOpen(false)}
-                  className="p-1.5 rounded-lg theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handlePostJob} className="p-5 space-y-4">
+              <form onSubmit={handlePostJob} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
                 {postError && (
                   <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -840,18 +843,20 @@ export default function AdminCrossCompanyJobsPage() {
                   </label>
                 </div>
 
-                <div className="pt-4 border-t theme-border flex items-center justify-end space-x-2">
+                </div>
+
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end space-x-2 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setIsPostModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={posting}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     {posting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>Post Job Now</span>
@@ -864,90 +869,97 @@ export default function AdminCrossCompanyJobsPage() {
 
         {/* 3. SUPER ADMIN EXCLUSIVE: EDIT JOB EXPIRY MODAL */}
         {editingExpiryJob && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-            <div className="max-w-md w-full theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden p-6 space-y-4">
-              <div className="flex items-center justify-between border-b theme-border pb-3">
-                <div>
-                  <h3 className="text-base font-black theme-text flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-indigo-600" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3 bg-inherit">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-black theme-text flex items-center gap-2 truncate">
+                    <Calendar className="w-5 h-5 text-indigo-600 flex-shrink-0" />
                     <span>Change Job Expiry Date</span>
                   </h3>
                   <p className="text-[10px] theme-muted mt-0.5">Super Admin Exclusive Privilege</p>
                 </div>
-                <button onClick={() => setEditingExpiryJob(null)} className="p-1 rounded-lg theme-muted hover:theme-text">
+                <button
+                  type="button"
+                  onClick={() => setEditingExpiryJob(null)}
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {expiryUpdateSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                  <span>{expiryUpdateSuccess}</span>
-                </div>
-              )}
+              <form onSubmit={handleSaveExpiry} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                  {expiryUpdateSuccess && (
+                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                      <span>{expiryUpdateSuccess}</span>
+                    </div>
+                  )}
 
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border theme-border space-y-0.5">
-                <div className="text-xs font-black theme-text truncate">{editingExpiryJob.title}</div>
-                <div className="text-[11px] theme-muted">{editingExpiryJob.companyName}</div>
-                <div className="text-[10px] font-semibold text-indigo-500 mt-1">
-                  Current Expiry: {formatExpiryDate(editingExpiryJob.expiresAt)} ({getDaysLeft(editingExpiryJob.expiresAt)} days left)
-                </div>
-              </div>
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border theme-border space-y-0.5">
+                    <div className="text-xs font-black theme-text truncate">{editingExpiryJob.title}</div>
+                    <div className="text-[11px] theme-muted">{editingExpiryJob.companyName}</div>
+                    <div className="text-[10px] font-semibold text-indigo-500 mt-1">
+                      Current Expiry: {formatExpiryDate(editingExpiryJob.expiresAt)} ({getDaysLeft(editingExpiryJob.expiresAt)} days left)
+                    </div>
+                  </div>
 
-              <form onSubmit={handleSaveExpiry} className="space-y-4">
-                <div>
-                  <label className="text-[11px] font-black uppercase tracking-wider theme-text block mb-1.5">
-                    New Expiry Date
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={newExpiryDate}
-                    onChange={(e) => setNewExpiryDate(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
-                  />
-                </div>
+                  <div>
+                    <label className="text-[11px] font-black uppercase tracking-wider theme-text block mb-1.5">
+                      New Expiry Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={newExpiryDate}
+                      onChange={(e) => setNewExpiryDate(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                    />
+                  </div>
 
-                {/* Quick Extension Presets */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold theme-muted uppercase tracking-wider block">Extension Presets:</span>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setExpiryPreset(15)}
-                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold border theme-border hover:border-indigo-500 theme-text hover:text-indigo-500 transition-colors cursor-pointer"
-                    >
-                      +15 Days
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setExpiryPreset(30)}
-                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black cursor-pointer"
-                    >
-                      +30 Days (Standard)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setExpiryPreset(60)}
-                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold border theme-border hover:border-indigo-500 theme-text hover:text-indigo-500 transition-colors cursor-pointer"
-                    >
-                      +60 Days
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setExpiryPreset(90)}
-                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold border theme-border hover:border-indigo-500 theme-text hover:text-indigo-500 transition-colors cursor-pointer"
-                    >
-                      +90 Days
-                    </button>
+                  {/* Quick Extension Presets */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-bold theme-muted uppercase tracking-wider block">Extension Presets:</span>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setExpiryPreset(15)}
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-bold border theme-border hover:border-indigo-500 theme-text hover:text-indigo-500 transition-colors cursor-pointer"
+                      >
+                        +15 Days
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setExpiryPreset(30)}
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black cursor-pointer"
+                      >
+                        +30 Days (Standard)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setExpiryPreset(60)}
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-bold border theme-border hover:border-indigo-500 theme-text hover:text-indigo-500 transition-colors cursor-pointer"
+                      >
+                        +60 Days
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setExpiryPreset(90)}
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-bold border theme-border hover:border-indigo-500 theme-text hover:text-indigo-500 transition-colors cursor-pointer"
+                      >
+                        +90 Days
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border theme-border text-[11px] theme-muted leading-relaxed">
+                    * Setting a future expiry date will automatically reactivate expired jobs on the candidate job search.
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border theme-border text-[11px] theme-muted leading-relaxed">
-                  * Setting a future expiry date will automatically reactivate expired jobs on the candidate job search.
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2 border-t theme-border">
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex justify-end gap-2 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setEditingExpiryJob(null)}

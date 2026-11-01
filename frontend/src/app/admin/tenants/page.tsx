@@ -280,68 +280,72 @@ export default function SuperAdminTenantsPage() {
 
         {/* Upgrade Plan Modal */}
         {selectedTenant && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-            <div className="w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-6 space-y-6 theme-modal">
-              <div className="flex items-center justify-between border-b theme-border pb-3">
-                <div>
-                  <h3 className="text-base font-extrabold theme-text flex items-center gap-2">
-                    <Award className="w-5 h-5 text-indigo-500" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-3 sm:p-4 md:p-6 overflow-y-auto">
+            <div className="relative w-full max-w-lg max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-extrabold theme-text flex items-center gap-2 truncate">
+                    <Award className="w-5 h-5 text-indigo-500 flex-shrink-0" />
                     <span>Admin Support: Upgrade Company Plan & Billing</span>
                   </h3>
-                  <p className="text-xs theme-muted mt-0.5">{selectedTenant.name}</p>
+                  <p className="text-xs theme-muted mt-0.5 truncate">{selectedTenant.name}</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setSelectedTenant(null)}
-                  className="text-xs font-bold theme-muted hover:theme-text"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
-                  Close
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {upgradeMsg && (
-                <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold text-center">
-                  {upgradeMsg}
-                </div>
-              )}
+              <form onSubmit={handleUpgradePlan} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+                  {upgradeMsg && (
+                    <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold text-center">
+                      {upgradeMsg}
+                    </div>
+                  )}
 
-              <form onSubmit={handleUpgradePlan} className="space-y-5">
-                <div>
-                  <label className="block text-xs font-bold theme-text uppercase tracking-wider mb-2">
-                    Select Target Subscription Tier
-                  </label>
+                  <div>
+                    <label className="block text-xs font-bold theme-text uppercase tracking-wider mb-2">
+                      Select Target Subscription Tier
+                    </label>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { code: 'FREE', name: 'Starter (FREE)', jobs: '2 Jobs', downloads: '0 Downloads', seats: '1 Seat' },
-                      { code: 'GROWTH', name: 'Growth ($99/mo)', jobs: '5 Jobs', downloads: '50 Downloads', seats: '3 Seats' },
-                      { code: 'PRO', name: 'Professional ($199/mo)', jobs: '15 Jobs', downloads: '150 Downloads', seats: '5 Seats' },
-                      { code: 'ENTERPRISE', name: 'Enterprise ($499/mo)', jobs: '50 Jobs', downloads: '500 Downloads', seats: '15 Seats' },
-                    ].map((p) => (
-                      <button
-                        type="button"
-                        key={p.code}
-                        onClick={() => setSelectedPlanCode(p.code as any)}
-                        className={`p-3.5 rounded-xl border text-left transition-all space-y-1 ${
-                          selectedPlanCode === p.code
-                            ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-600 shadow-sm ring-2 ring-indigo-500/30'
-                            : 'theme-border theme-surface hover:bg-slate-50 dark:hover:bg-slate-800'
-                        }`}
-                      >
-                        <div className="font-extrabold text-xs theme-text flex items-center justify-between">
-                          <span>{p.name}</span>
-                        </div>
-                        <p className="text-[11px] theme-muted">{p.jobs} • {p.downloads}</p>
-                        <p className="text-[10px] font-semibold text-indigo-500">{p.seats}</p>
-                      </button>
-                    ))}
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { code: 'FREE', name: 'Starter (FREE)', jobs: '2 Jobs', downloads: '0 Downloads', seats: '1 Seat' },
+                        { code: 'GROWTH', name: 'Growth ($99/mo)', jobs: '5 Jobs', downloads: '50 Downloads', seats: '3 Seats' },
+                        { code: 'PRO', name: 'Professional ($199/mo)', jobs: '15 Jobs', downloads: '150 Downloads', seats: '5 Seats' },
+                        { code: 'ENTERPRISE', name: 'Enterprise ($499/mo)', jobs: '50 Jobs', downloads: '500 Downloads', seats: '15 Seats' },
+                      ].map((p) => (
+                        <button
+                          type="button"
+                          key={p.code}
+                          onClick={() => setSelectedPlanCode(p.code as any)}
+                          className={`p-3.5 rounded-xl border text-left transition-all space-y-1 cursor-pointer ${
+                            selectedPlanCode === p.code
+                              ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-600 shadow-sm ring-2 ring-indigo-500/30'
+                              : 'theme-border theme-surface hover:bg-slate-50 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          <div className="font-extrabold text-xs theme-text flex items-center justify-between">
+                            <span>{p.name}</span>
+                          </div>
+                          <p className="text-[11px] theme-muted">{p.jobs} • {p.downloads}</p>
+                          <p className="text-[10px] font-semibold text-indigo-500">{p.seats}</p>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t theme-border flex items-center justify-end gap-3">
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setSelectedTenant(null)}
-                    className="px-4 py-2 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="px-4 py-2 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -349,7 +353,7 @@ export default function SuperAdminTenantsPage() {
                   <button
                     type="submit"
                     disabled={isUpgrading}
-                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Zap className="w-4 h-4" />
                     <span>{isUpgrading ? 'Upgrading Quota...' : 'Apply Plan Upgrade'}</span>
@@ -362,25 +366,28 @@ export default function SuperAdminTenantsPage() {
 
         {/* Register Company Direct Modal */}
         {isRegisterOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-            <div className="max-w-md w-full theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden my-8">
-              <div className="p-4 border-b theme-border flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black theme-text flex items-center gap-1.5">
-                    <Building2 className="w-4 h-4 text-indigo-500" />
-                    Register New Company Tenant
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-black theme-text flex items-center gap-1.5 truncate">
+                    <Building2 className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                    <span>Register New Company Tenant</span>
                   </h3>
-                  <p className="text-[10px] theme-muted">Provision tenant organization and company admin account</p>
+                  <p className="text-[10px] theme-muted truncate">Provision tenant organization and company admin account</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsRegisterOpen(false)}
-                  className="p-1.5 rounded-lg theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleRegisterCompany} className="p-5 space-y-3.5">
+              <form onSubmit={handleRegisterCompany} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5">
                 {registerError && (
                   <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -483,18 +490,20 @@ export default function SuperAdminTenantsPage() {
                   />
                 </div>
 
-                <div className="pt-4 border-t theme-border flex items-center justify-end space-x-2">
+                </div>
+
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end space-x-2 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setIsRegisterOpen(false)}
-                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={registering}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     {registering && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>Register Company</span>

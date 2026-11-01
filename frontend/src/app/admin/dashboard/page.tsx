@@ -513,32 +513,33 @@ export default function SuperAdminDashboardPage() {
 
       {/* Invoice Viewer Modal */}
       {selectedInvoice && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-indigo-400" />
-                <h3 className="font-extrabold text-sm">Invoice Audit: {selectedInvoice.invoiceNumber}</h3>
+        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto animate-in fade-in duration-200">
+          <div className="relative w-full max-w-2xl max-h-[90vh] my-auto flex flex-col bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="flex-shrink-0 px-4 sm:px-6 py-4 bg-slate-900 text-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0 flex-1 truncate">
+                <FileText className="w-5 h-5 text-indigo-400 flex-shrink-0" />
+                <h3 className="font-extrabold text-sm truncate">Invoice Audit: {selectedInvoice.invoiceNumber}</h3>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => window.print()}
                   className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm"
                 >
-                  <Printer className="w-3.5 h-3.5" /> Print / PDF
+                  <Printer className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Print / PDF</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSelectedInvoice(null)}
                   className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            <div className="p-8 overflow-y-auto space-y-6 text-xs">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 text-xs">
               <div className="flex justify-between items-start pb-6 border-b border-slate-200">
                 <div>
                   <h2 className="text-xl font-black text-slate-950">Camzy Jobs Technologies</h2>
@@ -556,7 +557,7 @@ export default function SuperAdminDashboardPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CLIENT COMPANY</span>
                   <p className="font-extrabold text-slate-900 text-sm mt-0.5">{selectedInvoice.tenantName || 'TechCorp Global'}</p>
@@ -569,24 +570,26 @@ export default function SuperAdminDashboardPage() {
                 </div>
               </div>
 
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px]">
-                    <th className="py-2.5">Item Description</th>
-                    <th className="py-2.5 text-center">Qty</th>
-                    <th className="py-2.5 text-right">Price</th>
-                    <th className="py-2.5 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y border-b border-slate-200">
-                  <tr>
-                    <td className="py-3 font-bold text-slate-900">{selectedInvoice.description}</td>
-                    <td className="py-3 text-center text-slate-600">1</td>
-                    <td className="py-3 text-right text-slate-600">${Number(selectedInvoice.amount).toFixed(2)}</td>
-                    <td className="py-3 text-right font-black text-slate-900">${Number(selectedInvoice.amount).toFixed(2)}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px]">
+                      <th className="py-2.5">Item Description</th>
+                      <th className="py-2.5 text-center">Qty</th>
+                      <th className="py-2.5 text-right">Price</th>
+                      <th className="py-2.5 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y border-b border-slate-200">
+                    <tr>
+                      <td className="py-3 font-bold text-slate-900">{selectedInvoice.description}</td>
+                      <td className="py-3 text-center text-slate-600">1</td>
+                      <td className="py-3 text-right text-slate-600">${Number(selectedInvoice.amount).toFixed(2)}</td>
+                      <td className="py-3 text-right font-black text-slate-900">${Number(selectedInvoice.amount).toFixed(2)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
               <div className="flex justify-end">
                 <div className="w-64 space-y-2 text-right">

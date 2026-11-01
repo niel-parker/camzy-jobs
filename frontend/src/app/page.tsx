@@ -95,7 +95,9 @@ export default function HomePage() {
           maxExp,
         });
         if (!isCancelled) {
-          setJobs(data);
+          // Requirement: Only featured jobs visible on home page, and strictly omit expired jobs
+          const featuredOnly = data.filter((j) => Boolean(j.isFeatured) && !j.isExpired && j.status !== 'EXPIRED');
+          setJobs(featuredOnly);
         }
       } catch (err) {
         console.error('Error fetching jobs:', err);
@@ -345,18 +347,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured & Active Jobs Listing */}
+      {/* Featured Jobs Listing (Only Featured Jobs on Homepage) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Active Job Openings</h2>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/20">
-                {jobs.length} Available
+              <Sparkles className="w-5 h-5 text-amber-500 fill-amber-500/20" />
+              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Featured Job Openings</h2>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">
+                {jobs.length} Featured
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Explore jobs posted by direct employers and placement agencies
+              Hand-picked verified premium positions. Explore all active listings in the job directory.
               {(searchQuery || selectedLocation || selectedCategory !== 'All') && (
                 <span className="ml-1 text-indigo-600 dark:text-indigo-400 font-medium">
                   • Filtered {searchQuery ? `by "${searchQuery}"` : ''} {selectedLocation ? `in ${selectedLocation}` : ''} {selectedCategory !== 'All' ? `[${selectedCategory}]` : ''}
@@ -399,30 +402,48 @@ export default function HomePage() {
 
         {/* Jobs Feed Grid */}
         {isLoadingJobs ? (
-          <div className="py-16 text-center text-slate-500 text-xs animate-pulse">Loading active jobs...</div>
+          <div className="py-16 text-center text-slate-500 text-xs animate-pulse">Loading featured jobs...</div>
         ) : jobs.length === 0 ? (
           <div className="py-16 text-center space-y-3 glass-card rounded-2xl border border-dashed border-slate-300 dark:border-slate-800">
-            <Search className="w-10 h-10 text-slate-400 mx-auto opacity-60" />
-            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">No matching jobs found</h3>
+            <Sparkles className="w-10 h-10 text-amber-500/60 mx-auto" />
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">No featured jobs match your criteria</h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              We couldn&apos;t find any active job postings matching your current keyword, location, or department criteria.
+              We couldn&apos;t find any featured job postings matching your current keyword, location, or department criteria. Browse all active jobs in our directory.
             </p>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedLocation('');
-                setSelectedCategory('All');
-              }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm cursor-pointer transition-all"
-            >
-              Clear all filters
-            </button>
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedLocation('');
+                  setSelectedCategory('All');
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 shadow-sm cursor-pointer transition-all"
+              >
+                Clear all filters
+              </button>
+              <button
+                onClick={() => router.push('/jobs')}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm cursor-pointer transition-all"
+              >
+                Browse All Openings <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {jobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {jobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+            <div className="pt-2 text-center">
+              <button
+                onClick={() => router.push('/jobs')}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white border theme-border shadow-sm transition-all cursor-pointer"
+              >
+                Explore All Job Openings in Directory <ArrowRight className="w-4 h-4 text-indigo-500" />
+              </button>
+            </div>
           </div>
         )}
       </section>

@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ApplicationStage, JobApplication } from './entities/job-application.entity';
-import { JobPosting } from '../jobs/entities/job-posting.entity';
+import { JobPosting, JobStatus } from '../jobs/entities/job-posting.entity';
 import { Candidate } from '../candidates/entities/candidate.entity';
 
 export interface ApplicationDto {
@@ -53,6 +53,21 @@ export class ApplicationsService {
     if (!jobId) {
       const firstJob = await this.jobRepo.findOne({ where: {} });
       if (firstJob) jobId = firstJob.id;
+    }
+
+    if (!jobId) {
+      throw new NotFoundException('Job posting not found');
+    }
+
+    const job = await this.jobRepo.findOne({ where: { id: jobId } });
+    if (!job) {
+      throw new NotFoundException(`Job posting with ID ${jobId} not found`);
+    }
+
+    // 1. Expired job should not be visible publically or anywhere for apply.
+    const isExpired = job.status === JobStatus.EXPIRED || (job.expiresAt && new Date(job.expiresAt) <= new Date());
+    if (isExpired) {
+      throw new BadRequestException('This job posting has expired and is no longer accepting applications.');
     }
 
     let candidateId = data.candidateId;

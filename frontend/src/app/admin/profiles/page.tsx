@@ -735,33 +735,36 @@ function AdminUserProfilesContent() {
         {/* EDIT USER PROFILE MODAL (CANDIDATE, EMPLOYER, STAFF) */}
         {/* ============================================================ */}
         {isEditModalOpen && editingProfile && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-            <div className="max-w-2xl w-full max-h-[90vh] flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-2xl max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
               {/* Modal Header */}
-              <div className="p-4 border-b theme-border flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 flex-shrink-0">
                     <Pencil className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h3 className="text-sm font-black theme-text">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-black theme-text truncate">
                       Edit Profile: {editingProfile.name || editingProfile.email}
                     </h3>
-                    <p className="text-[10px] theme-muted">
+                    <p className="text-[10px] theme-muted truncate">
                       Role: <span className="font-bold">{editingProfile.role}</span> &bull; User ID: {editingProfile.id.slice(0, 8)}...
                     </p>
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="p-1.5 rounded-lg theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Modal Body */}
-              <form onSubmit={handleSaveEdit} className="p-5 overflow-y-auto space-y-4">
+              <form onSubmit={handleSaveEdit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
                 {editError && (
                   <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -1040,13 +1043,14 @@ function AdminUserProfilesContent() {
                     className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
+                </div>
 
                 {/* Modal Footer */}
-                <div className="pt-4 border-t theme-border flex items-center justify-end space-x-2">
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end space-x-2 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setIsEditModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1068,29 +1072,32 @@ function AdminUserProfilesContent() {
         {/* DEDICATED RESET PASSWORD MODAL (ALL ROLES) */}
         {/* ============================================================ */}
         {isResetPasswordOpen && resetPasswordUser && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-            <div className="max-w-md w-full theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
               {/* Header */}
-              <div className="p-4 border-b theme-border flex items-center justify-between bg-rose-500/5">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3 bg-rose-500/5">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="p-2 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex-shrink-0">
                     <KeyRound className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h3 className="text-sm font-black theme-text">Reset Password</h3>
-                    <p className="text-[10px] theme-muted">Admin credential override & security reset</p>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-black theme-text truncate">Reset Password</h3>
+                    <p className="text-[10px] theme-muted truncate">Admin credential override & security reset</p>
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsResetPasswordOpen(false)}
-                  className="p-1.5 rounded-lg theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Body */}
-              <form onSubmit={handleResetPassword} className="p-5 space-y-4">
+              <form onSubmit={handleResetPassword} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
                 {/* Target User Summary Card */}
                 <div className="p-3.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/40 flex items-center space-x-3">
                   <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-black flex items-center justify-center text-xs flex-shrink-0">
@@ -1182,13 +1189,14 @@ function AdminUserProfilesContent() {
                 <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-[11px] leading-relaxed">
                   <strong>Notice:</strong> This immediately updates the user's encrypted credentials in the database. Provide the user with the new password so they can log in.
                 </div>
+                </div>
 
                 {/* Footer */}
-                <div className="pt-3 border-t theme-border flex items-center justify-end space-x-2">
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end space-x-2 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setIsResetPasswordOpen(false)}
-                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1210,22 +1218,25 @@ function AdminUserProfilesContent() {
         {/* ADD NEW USER MODAL */}
         {/* ============================================================ */}
         {isAddModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-            <div className="max-w-md w-full theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
-              <div className="p-4 border-b theme-border flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black theme-text">Add New User</h3>
-                  <p className="text-[10px] theme-muted">Provision a candidate, employer, or administrator account</p>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-black theme-text truncate">Add New User</h3>
+                  <p className="text-[10px] theme-muted truncate">Provision a candidate, employer, or administrator account</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="p-1.5 rounded-lg theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleCreateUser} className="p-5 space-y-3.5">
+              <form onSubmit={handleCreateUser} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5">
                 {addError && (
                   <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -1339,19 +1350,20 @@ function AdminUserProfilesContent() {
                     className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
+                </div>
 
-                <div className="pt-4 border-t theme-border flex items-center justify-end space-x-2">
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end space-x-2 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setIsAddModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={addingUser}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     {addingUser && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>Create User</span>

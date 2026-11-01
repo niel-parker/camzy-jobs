@@ -1465,53 +1465,66 @@ export default function CandidateSearchPage() {
 
         {/* Saved Searches Modal */}
         {showSavedSearchesModal && (
-          <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-            <div className="max-w-lg w-full theme-surface border theme-border rounded-2xl shadow-2xl p-5 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b theme-border">
-                <h3 className="text-sm font-black theme-text flex items-center gap-1.5">
-                  <Bookmark className="w-4 h-4 text-indigo-500" />
+          <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto animate-fade-in">
+            <div className="relative w-full max-w-lg max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-inherit">
+                <h3 className="text-sm font-black theme-text flex items-center gap-1.5 truncate">
+                  <Bookmark className="w-4 h-4 text-indigo-500 flex-shrink-0" />
                   <span>Saved Sourcing Searches ({savedSearches.length})</span>
                 </h3>
                 <button
                   type="button"
                   onClick={() => setShowSavedSearchesModal(false)}
-                  className="p-1 rounded-lg theme-muted hover:theme-text"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {savedSearches.length === 0 ? (
-                <p className="text-xs theme-muted py-6 text-center">No saved searches yet. Save your custom filters using the &quot;Save Search&quot; button.</p>
-              ) : (
-                <div className="space-y-2 max-h-72 overflow-y-auto text-xs">
-                  {savedSearches.map((s) => (
-                    <div
-                      key={s.id}
-                      className="p-3 rounded-xl border theme-border hover:border-indigo-500 transition-colors flex items-center justify-between gap-3"
-                    >
-                      <div>
-                        <h4 className="font-bold theme-text">{s.name}</h4>
-                        <p className="text-[11px] theme-muted">Saved on {s.date}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setKeywordQuery(s.keyword || '');
-                          setLocationQuery(s.location || '');
-                          setMinExp(s.minExp || '');
-                          setMaxExp(s.maxExp || '');
-                          setShowSavedSearchesModal(false);
-                          fetchCandidates(1);
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs cursor-pointer"
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
+                {savedSearches.length === 0 ? (
+                  <p className="text-xs theme-muted py-6 text-center">No saved searches yet. Save your custom filters using the &quot;Save Search&quot; button.</p>
+                ) : (
+                  <div className="space-y-2 text-xs">
+                    {savedSearches.map((s) => (
+                      <div
+                        key={s.id}
+                        className="p-3 rounded-xl border theme-border hover:border-indigo-500 transition-colors flex items-center justify-between gap-3"
                       >
-                        Load Search
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                        <div className="min-w-0 flex-1 truncate">
+                          <h4 className="font-bold theme-text truncate">{s.name}</h4>
+                          <p className="text-[11px] theme-muted truncate">Saved on {s.date}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setKeywordQuery(s.keyword || '');
+                            setLocationQuery(s.location || '');
+                            setMinExp(s.minExp || '');
+                            setMaxExp(s.maxExp || '');
+                            setShowSavedSearchesModal(false);
+                            fetchCandidates(1);
+                          }}
+                          className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs cursor-pointer"
+                        >
+                          Load Search
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex justify-end bg-slate-50/50 dark:bg-slate-900/50">
+                <button
+                  type="button"
+                  onClick={() => setShowSavedSearchesModal(false)}
+                  className="px-4 py-2 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -39,98 +39,7 @@ interface JobItem {
   screeningQuestions?: ScreeningQ[];
 }
 
-const MOCK_JOBS: JobItem[] = [
-  {
-    id: 'job-101',
-    title: 'Senior Full Stack Engineer (Next.js & NestJS)',
-    companyName: 'TechCorp Global',
-    companySlug: 'techcorp-global',
-    companyType: 'Product Based',
-    location: 'San Francisco, CA',
-    category: 'Engineering',
-    workMode: 'Remote',
-    experienceYears: '3-5 Yrs',
-    salary: '$140,000 - $180,000',
-    salaryMin: 140000,
-    isFeatured: true,
-    postedAt: '2 hours ago',
-    description: 'Lead architecture of scalable multi-tenant SaaS systems, Next.js frontend micro-services, and TypeORM NestJS backend services.',
-    tags: ['React', 'Next.js', 'NestJS', 'TypeScript', 'MySQL'],
-    matchScore: 96,
-  },
-  {
-    id: 'job-102',
-    title: 'Lead AI Application & Agentic Systems Engineer',
-    companyName: 'Innovate AI Labs',
-    companySlug: 'innovate-ai-labs',
-    companyType: 'Unicorn',
-    location: 'New York, NY',
-    category: 'Artificial Intelligence',
-    workMode: 'Hybrid',
-    experienceYears: '5-8 Yrs',
-    salary: '$180,000 - $230,000',
-    salaryMin: 180000,
-    isFeatured: true,
-    postedAt: '5 hours ago',
-    description: 'Drive LLM integration, agentic frameworks, vector database architectures, and real-time streaming interfaces for high-scale clients.',
-    tags: ['Python', 'PyTorch', 'LangChain', 'OpenAI API', 'VectorDB'],
-    matchScore: 92,
-  },
-  {
-    id: 'job-103',
-    title: 'Senior Product Designer (Design Systems)',
-    companyName: 'Creative Design Co',
-    companySlug: 'creative-design-co',
-    companyType: 'Startup',
-    location: 'Austin, TX',
-    category: 'Design & Creative',
-    workMode: 'Remote',
-    experienceYears: '3-5 Yrs',
-    salary: '$120,000 - $150,000',
-    salaryMin: 120000,
-    isFeatured: false,
-    postedAt: '1 day ago',
-    description: 'Craft high-contrast light & dark theme systems, component libraries, dynamic combobox interfaces, and mobile responsive layouts.',
-    tags: ['Figma', 'UI/UX Design', 'Design Systems', 'Tailwind CSS'],
-    matchScore: 88,
-  },
-  {
-    id: 'job-104',
-    title: 'DevOps & Kubernetes Infrastructure Specialist',
-    companyName: 'CloudScale Solutions',
-    companySlug: 'cloudscale-solutions',
-    companyType: 'MNC',
-    location: 'Seattle, WA',
-    category: 'DevOps & Architecture',
-    workMode: 'Onsite',
-    experienceYears: '5-8 Yrs',
-    salary: '$150,000 - $190,000',
-    salaryMin: 150000,
-    isFeatured: false,
-    postedAt: '2 days ago',
-    description: 'Manage Kubernetes clusters, multi-stage Docker container deployments, AWS infrastructure, and GitHub Actions CI/CD automation.',
-    tags: ['Docker', 'Kubernetes', 'AWS', 'Terraform', 'CI/CD'],
-    matchScore: 85,
-  },
-  {
-    id: 'job-105',
-    title: 'Growth Marketing & Analytics Lead',
-    companyName: 'Nexus Metrics',
-    companySlug: 'nexus-metrics',
-    companyType: 'Product Based',
-    location: 'Boston, MA',
-    category: 'Marketing',
-    workMode: 'Remote',
-    experienceYears: '1-3 Yrs',
-    salary: '$110,000 - $140,000',
-    salaryMin: 110000,
-    isFeatured: false,
-    postedAt: '3 days ago',
-    description: 'Architect customer acquisition funnels, subscription analytics, content marketing strategy, and employer campaign optimization.',
-    tags: ['Growth Hacking', 'SEO', 'Product Analytics', 'B2B'],
-    matchScore: 81,
-  },
-];
+const MOCK_JOBS: JobItem[] = [];
 
 const LOCATION_OPTIONS = [
   { value: 'all', label: 'All Locations' },
@@ -173,8 +82,8 @@ function JobDirectoryContent() {
   const [savedJobsMap, setSavedJobsMap] = useState<Record<string, boolean>>({});
 
   // Dynamic Jobs List
-  const [jobsList, setJobsList] = useState<JobItem[]>(MOCK_JOBS);
-  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
+  const [jobsList, setJobsList] = useState<JobItem[]>([]);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(true);
 
   // Workday-Style Suggestions State
   const [workdaySuggestions, setWorkdaySuggestions] = useState<string[]>([]);
@@ -245,8 +154,10 @@ function JobDirectoryContent() {
       setIsLoadingJobs(true);
       try {
         const fetched = await sdk.request<any[]>('/jobs');
-        if (fetched && Array.isArray(fetched) && fetched.length > 0) {
-          const mappedJobs: JobItem[] = fetched.map((j) => ({
+        if (fetched && Array.isArray(fetched)) {
+          // Strictly exclude any expired jobs from public search
+          const activeOnly = fetched.filter((j) => !j.isExpired && j.status !== 'EXPIRED');
+          const mappedJobs: JobItem[] = activeOnly.map((j) => ({
             id: j.id,
             title: j.title,
             companyName: j.companyName || 'Verified Corporate Partner',
@@ -272,9 +183,12 @@ function JobDirectoryContent() {
             screeningQuestions: j.screeningQuestions,
           }));
           setJobsList(mappedJobs);
+        } else {
+          setJobsList([]);
         }
       } catch (err) {
         console.warn('Backend job fetch fallback:', err);
+        setJobsList([]);
       } finally {
         setIsLoadingJobs(false);
       }

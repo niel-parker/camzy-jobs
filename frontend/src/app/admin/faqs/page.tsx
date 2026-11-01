@@ -333,127 +333,131 @@ export default function AdminFaqManagementPage() {
 
         {/* Add / Edit Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in overflow-y-auto">
-            <div className="max-w-xl w-full theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden my-8">
-              <div className="p-4 border-b theme-border flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black theme-text">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-xl max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-inherit">
+                <div className="min-w-0 flex-1 truncate">
+                  <h3 className="text-sm font-black theme-text truncate">
                     {editingFaq ? 'Edit FAQ Item' : 'Add New FAQ Item'}
                   </h3>
-                  <p className="text-[10px] theme-muted">Customer self-service answer entry</p>
+                  <p className="text-[10px] theme-muted truncate">Customer self-service answer entry</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="p-1.5 rounded-lg theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleSave} className="p-5 space-y-4">
-                {errorMsg && (
-                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
+              <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                  {errorMsg && (
+                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span>{errorMsg}</span>
+                    </div>
+                  )}
 
-                <div className="space-y-1">
-                  <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                    Question <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. How do I download candidate resumes in PDF format?"
-                    value={form.question}
-                    onChange={(e) => setForm({ ...form, question: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      Category
+                      Question <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Billing, Resumes, Jobs"
-                      value={form.category}
-                      onChange={(e) => setForm({ ...form, category: e.target.value })}
+                      required
+                      placeholder="e.g. How do I download candidate resumes in PDF format?"
+                      value={form.question}
+                      onChange={(e) => setForm({ ...form, question: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      Target Audience
-                    </label>
-                    <select
-                      value={form.targetAudience}
-                      onChange={(e) => setForm({ ...form, targetAudience: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="ALL">All Audiences (Public)</option>
-                      <option value="CANDIDATES">Candidates Only</option>
-                      <option value="EMPLOYERS">Employers & Recruiters Only</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                    Detailed Answer <span className="text-rose-500">*</span>
-                  </label>
-                  <textarea
-                    rows={4}
-                    required
-                    placeholder="Provide clear step-by-step guidance..."
-                    value={form.answer}
-                    onChange={(e) => setForm({ ...form, answer: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      Display Order Index
-                    </label>
-                    <input
-                      type="number"
-                      value={form.orderIndex}
-                      onChange={(e) => setForm({ ...form, orderIndex: parseInt(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-
-                  <div className="pt-4 flex items-center">
-                    <label className="flex items-center gap-2 cursor-pointer">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                        Category
+                      </label>
                       <input
-                        type="checkbox"
-                        checked={form.isActive}
-                        onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                        type="text"
+                        placeholder="e.g. Billing, Resumes, Jobs"
+                        value={form.category}
+                        onChange={(e) => setForm({ ...form, category: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       />
-                      <span className="text-xs font-bold theme-text">Show on Public FAQ</span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                        Target Audience
+                      </label>
+                      <select
+                        value={form.targetAudience}
+                        onChange={(e) => setForm({ ...form, targetAudience: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="ALL">All Audiences (Public)</option>
+                        <option value="CANDIDATES">Candidates Only</option>
+                        <option value="EMPLOYERS">Employers & Recruiters Only</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                      Detailed Answer <span className="text-rose-500">*</span>
                     </label>
+                    <textarea
+                      rows={4}
+                      required
+                      placeholder="Provide clear step-by-step guidance..."
+                      value={form.answer}
+                      onChange={(e) => setForm({ ...form, answer: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                        Display Order Index
+                      </label>
+                      <input
+                        type="number"
+                        value={form.orderIndex}
+                        onChange={(e) => setForm({ ...form, orderIndex: parseInt(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+
+                    <div className="pt-2 sm:pt-4 flex items-center">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.isActive}
+                          onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                          className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                        />
+                        <span className="text-xs font-bold theme-text">Show on Public FAQ</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t theme-border flex items-center justify-end space-x-2">
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end space-x-2 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
                     {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>{editingFaq ? 'Save Changes' : 'Create FAQ'}</span>

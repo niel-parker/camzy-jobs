@@ -635,24 +635,27 @@ export default function AdminManageLocationsPage() {
 
         {/* ADD / EDIT CITY MODAL (With Country & State Dropdowns) */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-            <div className="max-w-md w-full theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
-              <div className="p-4 border-b theme-border flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black theme-text">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-black theme-text truncate">
                     {editingLocation ? 'Edit Master Location' : 'Add City to Master Registry'}
                   </h3>
-                  <p className="text-[10px] theme-muted">Select Country & State from dropdowns, or add new ones</p>
+                  <p className="text-[10px] theme-muted truncate">Select Country & State from dropdowns, or add new ones</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="p-1.5 rounded-lg theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveLocation} className="p-5 space-y-4">
+              <form onSubmit={handleSaveLocation} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
                 {errorMsg && (
                   <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -787,7 +790,9 @@ export default function AdminManageLocationsPage() {
                   </label>
                 </div>
 
-                <div className="pt-4 border-t theme-border flex items-center justify-end space-x-2">
+                </div>
+
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end space-x-2 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
@@ -811,92 +816,96 @@ export default function AdminManageLocationsPage() {
 
         {/* DEDICATED QUICK ADD COUNTRY MODAL */}
         {isAddCountryModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-            <div className="max-w-md w-full theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
-              <div className="p-4 border-b theme-border flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black theme-text flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-indigo-500" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-black theme-text flex items-center gap-2 truncate">
+                    <Globe className="w-4 h-4 text-indigo-500 flex-shrink-0" />
                     <span>Register New Country</span>
                   </h3>
-                  <p className="text-[10px] theme-muted">Adds country to the master dropdown registry</p>
+                  <p className="text-[10px] theme-muted truncate">Adds country to the master dropdown registry</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsAddCountryModalOpen(false)}
-                  className="p-1.5 rounded-lg theme-muted hover:theme-text"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveCountryOnly} className="p-5 space-y-4">
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="col-span-2 space-y-1">
+              <form onSubmit={handleSaveCountryOnly} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-2 space-y-1">
+                      <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                        Country Name <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Switzerland, Sweden, France"
+                        value={newCountryForm.countryName}
+                        onChange={(e) => setNewCountryForm({ ...newCountryForm, countryName: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                        ISO Code
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={3}
+                        placeholder="e.g. CH"
+                        value={newCountryForm.countryCode}
+                        onChange={(e) => setNewCountryForm({ ...newCountryForm, countryCode: e.target.value.toUpperCase() })}
+                        className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text font-mono text-center focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
                     <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      Country Name <span className="text-rose-500">*</span>
+                      Primary Hub or Capital City (Optional)
                     </label>
                     <input
                       type="text"
-                      required
-                      placeholder="e.g. Switzerland, Sweden, France"
-                      value={newCountryForm.countryName}
-                      onChange={(e) => setNewCountryForm({ ...newCountryForm, countryName: e.target.value })}
+                      placeholder="e.g. Zurich, Stockholm, Paris"
+                      value={newCountryForm.capitalCity}
+                      onChange={(e) => setNewCountryForm({ ...newCountryForm, capitalCity: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
+
                   <div className="space-y-1">
                     <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      ISO Code
+                      Initial State or Region (Optional)
                     </label>
                     <input
                       type="text"
-                      maxLength={3}
-                      placeholder="e.g. CH"
-                      value={newCountryForm.countryCode}
-                      onChange={(e) => setNewCountryForm({ ...newCountryForm, countryCode: e.target.value.toUpperCase() })}
-                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text font-mono text-center focus:outline-none"
+                      placeholder="e.g. Zurich Canton, Stockholm County"
+                      value={newCountryForm.stateName}
+                      onChange={(e) => setNewCountryForm({ ...newCountryForm, stateName: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                    Primary Hub or Capital City (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Zurich, Stockholm, Paris"
-                    value={newCountryForm.capitalCity}
-                    onChange={(e) => setNewCountryForm({ ...newCountryForm, capitalCity: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                    Initial State or Region (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Zurich Canton, Stockholm County"
-                    value={newCountryForm.stateName}
-                    onChange={(e) => setNewCountryForm({ ...newCountryForm, stateName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="pt-4 border-t theme-border flex items-center justify-end space-x-2">
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end space-x-2 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setIsAddCountryModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20"
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>Save Country</span>
@@ -909,77 +918,81 @@ export default function AdminManageLocationsPage() {
 
         {/* DEDICATED QUICK ADD STATE MODAL */}
         {isAddStateModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-            <div className="max-w-md w-full theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
-              <div className="p-4 border-b theme-border flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-black theme-text flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-indigo-500" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-black theme-text flex items-center gap-2 truncate">
+                    <Building2 className="w-4 h-4 text-indigo-500 flex-shrink-0" />
                     <span>Register New State / Province</span>
                   </h3>
-                  <p className="text-[10px] theme-muted">Adds state under any country to the master dropdowns</p>
+                  <p className="text-[10px] theme-muted truncate">Adds state under any country to the master dropdowns</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsAddStateModalOpen(false)}
-                  className="p-1.5 rounded-lg theme-muted hover:theme-text"
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveStateOnly} className="p-5 space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                    Country <span className="text-rose-500">*</span>
-                  </label>
-                  <SearchableSelect
-                    value={newStateForm.country}
-                    onChange={(val) => setNewStateForm({ ...newStateForm, country: val })}
-                    placeholder="Select country..."
-                    searchPlaceholder="Search country..."
-                    options={availableCountries.map((c) => ({ value: c, label: c }))}
-                  />
+              <form onSubmit={handleSaveStateOnly} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                      Country <span className="text-rose-500">*</span>
+                    </label>
+                    <SearchableSelect
+                      value={newStateForm.country}
+                      onChange={(val) => setNewStateForm({ ...newStateForm, country: val })}
+                      placeholder="Select country..."
+                      searchPlaceholder="Search country..."
+                      options={availableCountries.map((c) => ({ value: c, label: c }))}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                      State / Province Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Goa, Nevada, Bavaria, Queensland"
+                      value={newStateForm.stateName}
+                      onChange={(e) => setNewStateForm({ ...newStateForm, stateName: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                      Primary / Capital City (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Panaji, Las Vegas, Munich, Brisbane"
+                      value={newStateForm.primaryCity}
+                      onChange={(e) => setNewStateForm({ ...newStateForm, primaryCity: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                    State / Province Name <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Goa, Nevada, Bavaria, Queensland"
-                    value={newStateForm.stateName}
-                    onChange={(e) => setNewStateForm({ ...newStateForm, stateName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                    Primary / Capital City (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Panaji, Las Vegas, Munich, Brisbane"
-                    value={newStateForm.primaryCity}
-                    onChange={(e) => setNewStateForm({ ...newStateForm, primaryCity: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                <div className="pt-4 border-t theme-border flex items-center justify-end space-x-2">
+                <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end space-x-2 bg-slate-50/50 dark:bg-slate-900/50">
                   <button
                     type="button"
                     onClick={() => setIsAddStateModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20"
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     <span>Save State</span>
