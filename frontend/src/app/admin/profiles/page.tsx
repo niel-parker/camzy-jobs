@@ -9,9 +9,11 @@ import { AdminUserProfile, CompanyDirectoryItem } from '@job-portal/sdk';
 import { 
   Users, UserCheck, ShieldCheck, Search, Plus, Download, Eye, 
   Building2, Mail, Phone, CheckCircle2, XCircle, Loader2, RefreshCw, X, AlertCircle, Activity, ArrowUpRight,
-  Pencil, KeyRound, Copy, Check, EyeOff, Lock, Briefcase, MapPin, DollarSign, Clock, Sparkles
+  Pencil, KeyRound, Copy, Check, EyeOff, Lock, Briefcase, MapPin, DollarSign, Clock, Sparkles,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { ProfileResumeModal } from '../../../components/ProfileResumeModal';
+import { SearchableSelect } from '../../../components/SearchableSelect';
 
 function AdminUserProfilesContent() {
   const { sdk } = useTheme();
@@ -27,6 +29,8 @@ function AdminUserProfilesContent() {
   const [companies, setCompanies] = useState<CompanyDirectoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const PAGE_SIZE = 20;
 
   // Candidate Resume / Detail Preview Modal State
   const [previewCandidate, setPreviewCandidate] = useState<any>(null);
@@ -145,6 +149,7 @@ function AdminUserProfilesContent() {
 
   const handleTabChange = (tab: 'candidates' | 'employers' | 'admins') => {
     setActiveTab(tab);
+    setPage(1);
     router.push(`/admin/profiles?tab=${tab}`);
   };
 
@@ -482,12 +487,18 @@ function AdminUserProfilesContent() {
               type="text"
               placeholder={`Search ${activeTab} by name, email, or headline...`}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
               className="w-full pl-9 pr-4 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery('')}
+                onClick={() => {
+                  setSearchQuery('');
+                  setPage(1);
+                }}
                 className="absolute right-3 top-2.5 theme-muted hover:theme-text"
               >
                 <X className="w-4 h-4" />
@@ -533,7 +544,9 @@ function AdminUserProfilesContent() {
                   </tr>
                 </thead>
                 <tbody className="divide-y theme-border text-xs">
-                  {filteredProfiles.map((p) => (
+                  {filteredProfiles
+                    .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+                    .map((p) => (
                     <tr
                       key={p.id}
                       className="hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition-colors"
@@ -677,6 +690,43 @@ function AdminUserProfilesContent() {
                   ))}
                 </tbody>
               </table>
+            )}
+
+            {/* Profiles Table Pagination */}
+            {filteredProfiles.length > PAGE_SIZE && (
+              <div className="flex flex-col sm:flex-row items-center justify-between p-3.5 border-t theme-border bg-slate-50/50 dark:bg-slate-900/40 text-xs theme-muted gap-3">
+                <span className="font-medium">
+                  Showing {(page - 1) * PAGE_SIZE + 1} &ndash;{' '}
+                  {Math.min(page * PAGE_SIZE, filteredProfiles.length)} of {filteredProfiles.length} profiles
+                </span>
+                <div className="flex items-center space-x-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    className="p-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Previous page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="font-bold text-xs theme-text px-2">
+                    Page {page} of {Math.max(1, Math.ceil(filteredProfiles.length / PAGE_SIZE))}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPage((p) =>
+                        Math.min(Math.max(1, Math.ceil(filteredProfiles.length / PAGE_SIZE)), p + 1)
+                      )
+                    }
+                    disabled={page >= Math.max(1, Math.ceil(filteredProfiles.length / PAGE_SIZE))}
+                    className="p-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Next page"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -822,18 +872,22 @@ function AdminUserProfilesContent() {
                         <Building2 className="w-3.5 h-3.5 text-indigo-500" />
                         <span>Assigned Company / Tenant</span>
                       </label>
-                      <select
+                      <SearchableSelect
                         value={editForm.tenantId}
-                        onChange={(e) => setEditForm({ ...editForm, tenantId: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      >
-                        <option value="">-- No Company Assigned --</option>
-                        {companies.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(val) => setEditForm({ ...editForm, tenantId: val })}
+                        placeholder="-- Choose Company / Tenant --"
+                        searchPlaceholder="Search company..."
+                        clearable
+                        icon={<Building2 className="w-3.5 h-3.5" />}
+                        options={[
+                          { value: '', label: '-- No Company Assigned --' },
+                          ...companies.map((c) => ({
+                            value: c.id,
+                            label: c.name,
+                            sublabel: `${c.planName || 'Plan'} • ${c.activeJobs || 0} active jobs`,
+                          })),
+                        ]}
+                      />
                     </div>
                   )}
                 </div>
@@ -1258,19 +1312,18 @@ function AdminUserProfilesContent() {
                     <label className="text-[11px] font-black uppercase tracking-wider theme-text">
                       Assign Company <span className="text-rose-500">*</span>
                     </label>
-                    <select
-                      required
+                    <SearchableSelect
                       value={newUserForm.tenantId}
-                      onChange={(e) => setNewUserForm({ ...newUserForm, tenantId: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      <option value="">-- Choose Company --</option>
-                      {companies.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => setNewUserForm({ ...newUserForm, tenantId: val })}
+                      placeholder="-- Choose Company --"
+                      searchPlaceholder="Search company..."
+                      icon={<Building2 className="w-3.5 h-3.5" />}
+                      options={companies.map((c) => ({
+                        value: c.id,
+                        label: c.name,
+                        sublabel: `${c.planName || 'Plan'} • ${c.activeJobs || 0} active jobs`,
+                      }))}
+                    />
                   </div>
                 )}
 

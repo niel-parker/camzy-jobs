@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, MapPin, Briefcase, DollarSign, Filter, Sparkles, Building2, Clock, ChevronRight, CheckCircle2, ArrowRight, Bookmark, SlidersHorizontal, RotateCcw, Award, Tag, X } from 'lucide-react';
+import { Search, MapPin, Briefcase, DollarSign, Filter, Sparkles, Building2, Clock, ChevronRight, ChevronLeft, CheckCircle2, ArrowRight, Bookmark, SlidersHorizontal, RotateCcw, Award, Tag, X } from 'lucide-react';
 import { SearchableSelect } from '../../components/SearchableSelect';
 import { useTheme } from '../../context/ThemeContext';
 import { LocationSearchDropdown } from '../../components/LocationSearchDropdown';
@@ -183,6 +183,8 @@ function JobDirectoryContent() {
   // Dynamic Master Experience Ranges
   const [masterExpRanges, setMasterExpRanges] = useState<ExperienceRangeItem[]>([]);
   const [selectedExpRangeId, setSelectedExpRangeId] = useState<string>('all');
+  const [page, setPage] = useState<number>(1);
+  const PAGE_SIZE = 15;
 
   // Initialize search filters from URL parameters
   useEffect(() => {
@@ -386,6 +388,8 @@ function JobDirectoryContent() {
       matchesSalary
     );
   });
+
+  const pagedJobs = filteredJobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const clearAllFilters = () => {
     setKeyword('');
@@ -629,7 +633,7 @@ function JobDirectoryContent() {
               </button>
             </div>
           ) : (
-            filteredJobs.map((job) => (
+            pagedJobs.map((job) => (
               <div
                 key={job.id}
                 className={`p-6 rounded-2xl border transition-all duration-200 theme-surface hover:shadow-lg space-y-4 ${
@@ -719,6 +723,43 @@ function JobDirectoryContent() {
                 </div>
               </div>
             ))
+          )}
+
+          {/* Job Feed Pagination */}
+          {filteredJobs.length > PAGE_SIZE && (
+            <div className="flex flex-col sm:flex-row items-center justify-between p-4 border theme-border theme-surface rounded-2xl text-xs theme-muted gap-3 shadow-sm">
+              <span className="font-medium">
+                Showing {(page - 1) * PAGE_SIZE + 1} &ndash;{' '}
+                {Math.min(page * PAGE_SIZE, filteredJobs.length)} of {filteredJobs.length} jobs
+              </span>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="p-1.5 px-3 rounded-xl border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Previous page"
+                >
+                  <ChevronLeft className="w-4 h-4 inline mr-1" /> Prev
+                </button>
+                <span className="font-bold text-xs theme-text px-2">
+                  Page {page} of {Math.max(1, Math.ceil(filteredJobs.length / PAGE_SIZE))}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPage((p) =>
+                      Math.min(Math.max(1, Math.ceil(filteredJobs.length / PAGE_SIZE)), p + 1)
+                    )
+                  }
+                  disabled={page >= Math.max(1, Math.ceil(filteredJobs.length / PAGE_SIZE))}
+                  className="p-1.5 px-3 rounded-xl border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Next page"
+                >
+                  Next <ChevronRight className="w-4 h-4 inline ml-1" />
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>

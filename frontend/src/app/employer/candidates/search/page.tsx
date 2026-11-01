@@ -12,6 +12,7 @@ import {
   Send, Printer, Copy, CheckSquare, Square, EyeOff, Tag, HelpCircle, ArrowUpRight
 } from 'lucide-react';
 import { ProfileResumeModal } from '../../../../components/ProfileResumeModal';
+import { LocationSearchDropdown } from '../../../../components/LocationSearchDropdown';
 
 // Sample pre-configured searches for instant 1-click recruiter recall
 const RECENT_SEARCHES = [
@@ -503,12 +504,12 @@ export default function CandidateSearchPage() {
                 <MapPin className="w-3.5 h-3.5 text-indigo-500" />
                 <span>Candidate City / Location</span>
               </label>
-              <input
-                type="text"
-                placeholder="e.g. Pune, Bangalore, Mumbai, Remote"
+              <LocationSearchDropdown
                 value={locationQuery}
-                onChange={(e) => setLocationQuery(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none"
+                onChange={(val, details) => {
+                  setLocationQuery(details?.city || val);
+                }}
+                placeholder="Search city, state, or country..."
               />
             </div>
 
@@ -1103,31 +1104,49 @@ export default function CandidateSearchPage() {
             })}
 
             {/* Showing Pages and Pagination Controls */}
-            <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs font-medium text-slate-600 dark:text-slate-400">
-              <div>
-                Showing Pages : {currentPage} - {totalPages} Total {totalCount}
+            <div className="pt-3 pb-2 flex flex-wrap items-center justify-between gap-4 text-xs font-medium text-slate-600 dark:text-slate-400 border-t theme-border">
+              <div className="flex items-center gap-3">
+                <span className="font-bold theme-text">
+                  Showing Pages : {currentPage} - {totalPages} Total {totalCount.toLocaleString()}
+                </span>
+                <div className="flex items-center gap-1.5 text-[11px]">
+                  <span>Per page:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      const newSize = Number(e.target.value);
+                      setPageSize(newSize);
+                    }}
+                    className="px-2 py-1 rounded-lg border theme-border theme-surface theme-text font-bold text-xs"
+                  >
+                    <option value={15}>15</option>
+                    <option value={20}>20</option>
+                    <option value={35}>35</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
               </div>
 
               {totalPages > 1 && (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1.5">
                   <button
                     type="button"
                     disabled={currentPage <= 1 || isLoading}
                     onClick={() => fetchCandidates(currentPage - 1)}
-                    className="px-3.5 py-1.5 rounded-xl border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition-all cursor-pointer font-bold"
                   >
                     &larr; Previous
                   </button>
 
-                  <span className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-extrabold">
-                    {currentPage}
+                  <span className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-extrabold text-xs">
+                    Page {currentPage} of {totalPages}
                   </span>
 
                   <button
                     type="button"
                     disabled={currentPage >= totalPages || isLoading}
                     onClick={() => fetchCandidates(currentPage + 1)}
-                    className="px-3.5 py-1.5 rounded-xl border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 transition-all cursor-pointer font-bold"
                   >
                     Next &rarr;
                   </button>

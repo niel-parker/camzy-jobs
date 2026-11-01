@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useTheme } from '../../../../context/ThemeContext';
 import { DashboardLayout } from '../../../../components/DashboardLayout';
+import { SearchableSelect } from '../../../../components/SearchableSelect';
 import {
   Star,
   ArrowLeft,
@@ -269,18 +270,18 @@ export default function EmployerKanbanPage() {
 
           <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
             {/* Job Filter Dropdown */}
-            <div className="flex items-center gap-1.5 text-xs">
-              <Briefcase className="w-3.5 h-3.5 theme-muted hidden sm:block" />
-              <select
+            <div className="w-52">
+              <SearchableSelect
                 value={selectedJobFilter}
-                onChange={(e) => setSelectedJobFilter(e.target.value)}
-                className="px-2.5 py-2 rounded-xl border theme-border theme-input theme-text text-xs outline-none font-semibold cursor-pointer max-w-[180px] truncate"
-              >
-                <option value="ALL">All Jobs ({uniqueJobs.length})</option>
-                {uniqueJobs.map((j) => (
-                  <option key={j} value={j}>{j}</option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedJobFilter(val || 'ALL')}
+                placeholder={`All Jobs (${uniqueJobs.length})`}
+                searchPlaceholder="Search jobs..."
+                icon={<Briefcase className="w-3.5 h-3.5 text-indigo-500" />}
+                options={[
+                  { value: 'ALL', label: `All Jobs (${uniqueJobs.length})` },
+                  ...uniqueJobs.map((j) => ({ value: j, label: j })),
+                ]}
+              />
             </div>
 
             {/* Stage Filter Dropdown */}

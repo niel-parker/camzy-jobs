@@ -4,18 +4,21 @@ import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '../../../components/DashboardLayout';
 import { 
   Briefcase, Plus, Sparkles, Users, Loader2, Pencil, Trash2, X, Check, 
-  RotateCcw, Calendar, Clock, AlertCircle, Info, Lock 
+  RotateCcw, Calendar, Clock, AlertCircle, Info, Lock, ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import { JobListing } from '@job-portal/sdk';
 import { LocationSearchDropdown } from '../../../components/LocationSearchDropdown';
 import { ExperienceRangeSelector } from '../../../components/ExperienceRangeSelector';
 import { SkillKeywordAutocomplete } from '../../../components/SkillKeywordAutocomplete';
+import { SearchableSelect } from '../../../components/SearchableSelect';
 
 export default function EmployerJobListingsPage() {
   const { user, sdk } = useTheme();
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 15;
 
   // Edit / Repost Modal State
   const [editingJob, setEditingJob] = useState<JobListing | null>(null);
@@ -241,7 +244,9 @@ export default function EmployerJobListingsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y theme-border text-xs">
-                  {jobs.map((job) => {
+                  {jobs
+                    .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+                    .map((job) => {
                     const isExpired = job.status === 'EXPIRED' || job.isExpired || (job.expiresAt ? new Date(job.expiresAt).getTime() <= Date.now() : false);
                     const daysRemaining = getDaysRemaining(job.expiresAt);
 
@@ -369,6 +374,43 @@ export default function EmployerJobListingsPage() {
                   })}
                 </tbody>
               </table>
+
+              {/* Jobs Table Pagination */}
+              {jobs.length > PAGE_SIZE && (
+                <div className="flex flex-col sm:flex-row items-center justify-between p-3.5 border-t theme-border bg-slate-50/50 dark:bg-slate-900/40 text-xs theme-muted gap-3">
+                  <span className="font-medium">
+                    Showing {(page - 1) * PAGE_SIZE + 1} &ndash;{' '}
+                    {Math.min(page * PAGE_SIZE, jobs.length)} of {jobs.length} jobs
+                  </span>
+                  <div className="flex items-center space-x-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 1}
+                      className="p-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      title="Previous page"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="font-bold text-xs theme-text px-2">
+                      Page {page} of {Math.max(1, Math.ceil(jobs.length / PAGE_SIZE))}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPage((p) =>
+                          Math.min(Math.max(1, Math.ceil(jobs.length / PAGE_SIZE)), p + 1)
+                        )
+                      }
+                      disabled={page >= Math.max(1, Math.ceil(jobs.length / PAGE_SIZE))}
+                      className="p-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      title="Next page"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -457,18 +499,22 @@ export default function EmployerJobListingsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold theme-text mb-1">Category</label>
-                  <select
+                  <SearchableSelect
                     value={editForm.category}
-                    onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                    className="w-full px-3 py-2 text-xs rounded-xl theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="Engineering">Engineering</option>
-                    <option value="Product">Product</option>
-                    <option value="Design">Design</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Sales">Sales</option>
-                    <option value="Finance">Finance</option>
-                  </select>
+                    onChange={(val) => setEditForm({ ...editForm, category: val })}
+                    placeholder="Select category..."
+                    searchPlaceholder="Search category..."
+                    options={[
+                      { value: 'Engineering', label: 'Engineering & Technology' },
+                      { value: 'Product', label: 'Product Management' },
+                      { value: 'Design', label: 'UI/UX & Design' },
+                      { value: 'Marketing', label: 'Marketing & Growth' },
+                      { value: 'Sales', label: 'Sales & Business Development' },
+                      { value: 'Finance', label: 'Finance & Accounting' },
+                      { value: 'Human Resources', label: 'Human Resources & Talent' },
+                      { value: 'Operations', label: 'Operations & Logistics' },
+                    ]}
+                  />
                 </div>
 
                 <div>

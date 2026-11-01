@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../../../components/DashboardLayout';
 import { useTheme } from '../../../context/ThemeContext';
+import { SearchableSelect } from '../../../components/SearchableSelect';
 import { CrossCompanyJobItem, CompanyDirectoryItem } from '@job-portal/sdk';
 import { 
   Briefcase, Plus, Search, Building2, MapPin, Users, CheckCircle2, 
   XCircle, Loader2, RefreshCw, X, Filter, ExternalLink, Sparkles, AlertCircle,
-  Calendar, Clock, Pencil
+  Calendar, Clock, Pencil, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 export default function AdminCrossCompanyJobsPage() {
@@ -18,6 +19,8 @@ export default function AdminCrossCompanyJobsPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedTenantFilter, setSelectedTenantFilter] = useState<string>('');
+  const [tablePage, setTablePage] = useState<number>(1);
+  const TABLE_PAGE_SIZE = 15;
 
   // Edit Job Expiry Modal State (Super Admin Exclusive)
   const [editingExpiryJob, setEditingExpiryJob] = useState<CrossCompanyJobItem | null>(null);
@@ -50,6 +53,7 @@ export default function AdminCrossCompanyJobsPage() {
 
   const loadData = async () => {
     setLoading(true);
+    setTablePage(1);
     try {
       const [jobsData, companiesData] = await Promise.all([
         sdk.getAdminJobs({
@@ -294,19 +298,25 @@ export default function AdminCrossCompanyJobsPage() {
               />
             </div>
 
-            <div className="w-full sm:w-64">
-              <select
+            <div className="w-full sm:w-72">
+              <SearchableSelect
                 value={selectedTenantFilter}
-                onChange={(e) => setSelectedTenantFilter(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">All Companies ({companies.length})</option>
-                {companies.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => {
+                  setSelectedTenantFilter(val);
+                }}
+                placeholder={`All Companies (${companies.length})`}
+                searchPlaceholder="Search company..."
+                clearable
+                icon={<Building2 className="w-3.5 h-3.5" />}
+                options={[
+                  { value: '', label: `All Companies (${companies.length})` },
+                  ...companies.map((c) => ({
+                    value: c.id,
+                    label: c.name,
+                    sublabel: `${c.planName || 'Plan'} • ${c.activeJobs || 0} active jobs`,
+                  })),
+                ]}
+              />
             </div>
 
             <button
@@ -350,7 +360,9 @@ export default function AdminCrossCompanyJobsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y theme-border text-xs">
-                  {jobs.map((job) => (
+                  {jobs
+                    .slice((tablePage - 1) * TABLE_PAGE_SIZE, tablePage * TABLE_PAGE_SIZE)
+                    .map((job) => (
                     <tr
                       key={job.id}
                       className="hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition-colors"
@@ -477,6 +489,43 @@ export default function AdminCrossCompanyJobsPage() {
                 </tbody>
               </table>
             )}
+
+            {/* Cross-Company Jobs Table Pagination */}
+            {jobs.length > TABLE_PAGE_SIZE && (
+              <div className="flex flex-col sm:flex-row items-center justify-between p-3.5 border-t theme-border bg-slate-50/50 dark:bg-slate-900/40 text-xs theme-muted gap-3">
+                <span className="font-medium">
+                  Showing {(tablePage - 1) * TABLE_PAGE_SIZE + 1} &ndash;{' '}
+                  {Math.min(tablePage * TABLE_PAGE_SIZE, jobs.length)} of {jobs.length} jobs
+                </span>
+                <div className="flex items-center space-x-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setTablePage((p) => Math.max(1, p - 1))}
+                    disabled={tablePage <= 1}
+                    className="p-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Previous page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="font-bold text-xs theme-text px-2">
+                    Page {tablePage} of {Math.max(1, Math.ceil(jobs.length / TABLE_PAGE_SIZE))}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setTablePage((p) =>
+                        Math.min(Math.max(1, Math.ceil(jobs.length / TABLE_PAGE_SIZE)), p + 1)
+                      )
+                    }
+                    disabled={tablePage >= Math.max(1, Math.ceil(jobs.length / TABLE_PAGE_SIZE))}
+                    className="p-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Next page"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -519,19 +568,18 @@ export default function AdminCrossCompanyJobsPage() {
                   <label className="text-[11px] font-black uppercase tracking-wider theme-text">
                     Select Target Company <span className="text-rose-500">*</span>
                   </label>
-                  <select
-                    required
+                  <SearchableSelect
                     value={jobForm.tenantId}
-                    onChange={(e) => setJobForm({ ...jobForm, tenantId: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">-- Choose Company --</option>
-                    {companies.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.planName || 'Plan'} - {c.activeJobs || 0} active jobs)
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setJobForm({ ...jobForm, tenantId: val })}
+                    placeholder="-- Choose Company --"
+                    searchPlaceholder="Search company by name..."
+                    icon={<Building2 className="w-3.5 h-3.5" />}
+                    options={companies.map((c) => ({
+                      value: c.id,
+                      label: c.name,
+                      sublabel: `${c.planName || 'Plan'} • ${c.activeJobs || 0} active jobs`,
+                    }))}
+                  />
                 </div>
 
                 <div className="space-y-1">

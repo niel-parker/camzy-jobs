@@ -6,8 +6,10 @@ import { useTheme } from '../../../context/ThemeContext';
 import { LocationItem } from '@job-portal/sdk';
 import { 
   MapPin, Plus, Search, Edit3, Trash2, Star, 
-  CheckCircle2, Loader2, RefreshCw, X, AlertCircle, Globe, Building2 
+  CheckCircle2, Loader2, RefreshCw, X, AlertCircle, Globe, Building2,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
+import { SearchableSelect } from '../../../components/SearchableSelect';
 
 const DEFAULT_STATES_BY_COUNTRY: Record<string, string[]> = {
   'India': [
@@ -89,6 +91,8 @@ export default function AdminManageLocationsPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [popularFilter, setPopularFilter] = useState<'all' | 'popular'>('all');
+  const [page, setPage] = useState<number>(1);
+  const PAGE_SIZE = 20;
 
   // Add / Edit City Modal State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -172,6 +176,7 @@ export default function AdminManageLocationsPage() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setPage(1);
     loadLocations();
   };
 
@@ -523,7 +528,9 @@ export default function AdminManageLocationsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y theme-border text-xs">
-                  {filteredLocations.map((loc) => (
+                  {filteredLocations
+                    .slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+                    .map((loc) => (
                     <tr
                       key={loc.id}
                       className="hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition-colors"
@@ -585,6 +592,43 @@ export default function AdminManageLocationsPage() {
                   ))}
                 </tbody>
               </table>
+            )}
+
+            {/* Locations Table Pagination */}
+            {filteredLocations.length > PAGE_SIZE && (
+              <div className="flex flex-col sm:flex-row items-center justify-between p-3.5 border-t theme-border bg-slate-50/50 dark:bg-slate-900/40 text-xs theme-muted gap-3">
+                <span className="font-medium">
+                  Showing {(page - 1) * PAGE_SIZE + 1} &ndash;{' '}
+                  {Math.min(page * PAGE_SIZE, filteredLocations.length)} of {filteredLocations.length} locations
+                </span>
+                <div className="flex items-center space-x-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    className="p-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Previous page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="font-bold text-xs theme-text px-2">
+                    Page {page} of {Math.max(1, Math.ceil(filteredLocations.length / PAGE_SIZE))}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPage((p) =>
+                        Math.min(Math.max(1, Math.ceil(filteredLocations.length / PAGE_SIZE)), p + 1)
+                      )
+                    }
+                    disabled={page >= Math.max(1, Math.ceil(filteredLocations.length / PAGE_SIZE))}
+                    className="p-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    title="Next page"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -652,18 +696,18 @@ export default function AdminManageLocationsPage() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-4 gap-2">
-                      <select
-                        value={form.country}
-                        onChange={(e) => handleCountryDropdownChange(e.target.value)}
-                        className="col-span-3 px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      >
-                        {availableCountries.map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
-                        ))}
-                        <option value="__ADD_NEW__">+ Add New Country...</option>
-                      </select>
+                      <div className="col-span-3">
+                        <SearchableSelect
+                          value={form.country}
+                          onChange={(val) => handleCountryDropdownChange(val)}
+                          placeholder="Select country..."
+                          searchPlaceholder="Search country..."
+                          options={[
+                            ...availableCountries.map((c) => ({ value: c, label: c })),
+                            { value: '__ADD_NEW__', label: '+ Add New Country...' },
+                          ]}
+                        />
+                      </div>
 
                       <input
                         type="text"
@@ -702,22 +746,16 @@ export default function AdminManageLocationsPage() {
                       className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   ) : (
-                    <select
+                    <SearchableSelect
                       value={form.state}
-                      onChange={(e) => handleStateDropdownChange(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      {availableStatesForCountry.length === 0 ? (
-                        <option value="">No states found — click Add New State</option>
-                      ) : (
-                        availableStatesForCountry.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))
-                      )}
-                      <option value="__ADD_NEW__">+ Add New State...</option>
-                    </select>
+                      onChange={(val) => handleStateDropdownChange(val)}
+                      placeholder="Select state..."
+                      searchPlaceholder="Search state..."
+                      options={[
+                        ...availableStatesForCountry.map((s) => ({ value: s, label: s })),
+                        { value: '__ADD_NEW__', label: '+ Add New State...' },
+                      ]}
+                    />
                   )}
                 </div>
 
@@ -894,17 +932,13 @@ export default function AdminManageLocationsPage() {
                   <label className="text-[11px] font-black uppercase tracking-wider theme-text">
                     Country <span className="text-rose-500">*</span>
                   </label>
-                  <select
+                  <SearchableSelect
                     value={newStateForm.country}
-                    onChange={(e) => setNewStateForm({ ...newStateForm, country: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {availableCountries.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setNewStateForm({ ...newStateForm, country: val })}
+                    placeholder="Select country..."
+                    searchPlaceholder="Search country..."
+                    options={availableCountries.map((c) => ({ value: c, label: c }))}
+                  />
                 </div>
 
                 <div className="space-y-1">
