@@ -82,11 +82,12 @@ export default function AdminCrossCompanyJobsPage() {
   };
 
   const handleToggleStatus = async (jobId: string, currentStatus: string) => {
-    const nextStatus = currentStatus === 'ACTIVE' ? 'CLOSED' : 'ACTIVE';
+    const isCurrentlyActive = currentStatus === 'ACTIVE' || currentStatus === 'PUBLISHED';
+    const nextStatus = isCurrentlyActive ? 'CLOSED' : 'ACTIVE';
     try {
       await sdk.updateAdminJobStatus(jobId, nextStatus);
       setJobs((prev) =>
-        prev.map((j) => (j.id === jobId ? { ...j, status: nextStatus } : j))
+        prev.map((j) => (j.id === jobId ? { ...j, status: nextStatus === 'ACTIVE' ? 'PUBLISHED' : 'ARCHIVED' } : j))
       );
     } catch (err: any) {
       alert(err.message || 'Failed to update job status');
@@ -108,7 +109,7 @@ export default function AdminCrossCompanyJobsPage() {
     setIsUpdatingExpiry(true);
     try {
       const isoDate = new Date(`${newExpiryDate}T23:59:59.000Z`).toISOString();
-      await sdk.updateAdminJobExpiry(editingExpiryJob.id, isoDate);
+      const res = await sdk.updateAdminJobExpiry(editingExpiryJob.id, isoDate);
       const isStillActive = new Date(isoDate).getTime() > Date.now();
       setJobs((prev) =>
         prev.map((j) =>
@@ -116,7 +117,7 @@ export default function AdminCrossCompanyJobsPage() {
             ? {
                 ...j,
                 expiresAt: isoDate,
-                status: isStillActive ? 'ACTIVE' : 'EXPIRED',
+                status: res?.status || (isStillActive ? 'PUBLISHED' : 'EXPIRED'),
               }
             : j
         )
@@ -208,7 +209,7 @@ export default function AdminCrossCompanyJobsPage() {
   };
 
   const isJobActive = (j: CrossCompanyJobItem) => {
-    return j.status === 'ACTIVE' && (!j.expiresAt || new Date(j.expiresAt).getTime() > Date.now());
+    return (j.status === 'ACTIVE' || j.status === 'PUBLISHED') && (!j.expiresAt || new Date(j.expiresAt).getTime() > Date.now());
   };
 
   const activeJobsCount = jobs.filter(isJobActive).length;
@@ -547,16 +548,23 @@ export default function AdminCrossCompanyJobsPage() {
                         <button
                           onClick={() => handleToggleStatus(job.id, job.status)}
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                            job.status === 'ACTIVE'
+                            isJobActive(job)
                               ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20'
+                              : isJobExpired(job)
+                              ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/20'
                               : 'bg-slate-500/10 text-slate-500 border border-slate-500/20 hover:bg-slate-500/20'
                           }`}
                           title="Click to toggle status"
                         >
-                          {job.status === 'ACTIVE' ? (
+                          {isJobActive(job) ? (
                             <>
                               <CheckCircle2 className="w-3 h-3" />
                               ACTIVE
+                            </>
+                          ) : isJobExpired(job) ? (
+                            <>
+                              <Clock className="w-3 h-3" />
+                              EXPIRED
                             </>
                           ) : (
                             <>
