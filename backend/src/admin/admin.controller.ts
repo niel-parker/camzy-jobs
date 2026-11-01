@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { AppConfigDto, AppConfigService } from './app-config.service';
 import { JobPosting } from '../jobs/entities/job-posting.entity';
+import { normalizeEmploymentType, normalizeExperienceLevel } from '../jobs/jobs.service';
 import { Tenant, TenantType, TenantStatus } from '../tenants/entities/tenant.entity';
 import { Candidate } from '../candidates/entities/candidate.entity';
 import { JobApplication } from '../applications/entities/job-application.entity';
@@ -733,8 +734,8 @@ export class AdminController {
       slug: `${slug}-${Date.now().toString().slice(-4)}`,
       description: body.description || 'Job posting description.',
       category: body.category || 'Engineering',
-      employmentType: body.employmentType || ('Full-time' as any),
-      experienceLevel: body.experienceLevel || ('Mid' as any),
+      employmentType: normalizeEmploymentType(body.employmentType || (body as any).jobType),
+      experienceLevel: normalizeExperienceLevel(body.experienceLevel),
       locationCity: body.locationCity || body.location || 'Remote',
       locationState: body.locationState || null,
       locationCountry: body.locationCountry || 'India',

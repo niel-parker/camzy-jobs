@@ -20,6 +20,7 @@ const typeorm_2 = require("typeorm");
 const bcrypt = require("bcryptjs");
 const app_config_service_1 = require("./app-config.service");
 const job_posting_entity_1 = require("../jobs/entities/job-posting.entity");
+const jobs_service_1 = require("../jobs/jobs.service");
 const tenant_entity_1 = require("../tenants/entities/tenant.entity");
 const candidate_entity_1 = require("../candidates/entities/candidate.entity");
 const job_application_entity_1 = require("../applications/entities/job-application.entity");
@@ -610,8 +611,8 @@ let AdminController = class AdminController {
             slug: `${slug}-${Date.now().toString().slice(-4)}`,
             description: body.description || 'Job posting description.',
             category: body.category || 'Engineering',
-            employmentType: body.employmentType || 'Full-time',
-            experienceLevel: body.experienceLevel || 'Mid',
+            employmentType: (0, jobs_service_1.normalizeEmploymentType)(body.employmentType || body.jobType),
+            experienceLevel: (0, jobs_service_1.normalizeExperienceLevel)(body.experienceLevel),
             locationCity: body.locationCity || body.location || 'Remote',
             locationState: body.locationState || null,
             locationCountry: body.locationCountry || 'India',

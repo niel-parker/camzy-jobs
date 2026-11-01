@@ -79,11 +79,11 @@ __decorate([
     __metadata("design:type", String)
 ], JobPosting.prototype, "category", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: EmploymentType, default: EmploymentType.FULL_TIME }),
+    (0, typeorm_1.Column)({ type: 'varchar', length: 100, default: 'Full-time' }),
     __metadata("design:type", String)
 ], JobPosting.prototype, "employmentType", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: ExperienceLevel, default: ExperienceLevel.MID }),
+    (0, typeorm_1.Column)({ type: 'varchar', length: 100, default: 'Mid' }),
     __metadata("design:type", String)
 ], JobPosting.prototype, "experienceLevel", void 0);
 __decorate([

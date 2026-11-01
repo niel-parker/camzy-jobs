@@ -1,6 +1,6 @@
 import { OnModuleInit } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { JobPosting } from './entities/job-posting.entity';
+import { JobPosting, EmploymentType, ExperienceLevel } from './entities/job-posting.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { User } from '../users/entities/user.entity';
 import { TenantSubscription } from '../subscriptions/entities/tenant-subscription.entity';
@@ -44,6 +44,8 @@ export interface JobListingDto {
     isExpired: boolean;
     createdAt: string;
 }
+export declare function normalizeEmploymentType(input?: any): EmploymentType;
+export declare function normalizeExperienceLevel(input?: any): ExperienceLevel;
 export declare class JobsService implements OnModuleInit {
     private readonly jobRepo;
     private readonly tenantRepo;

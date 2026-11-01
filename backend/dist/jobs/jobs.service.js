@@ -13,6 +13,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.JobsService = void 0;
+exports.normalizeEmploymentType = normalizeEmploymentType;
+exports.normalizeExperienceLevel = normalizeExperienceLevel;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
@@ -20,6 +22,49 @@ const job_posting_entity_1 = require("./entities/job-posting.entity");
 const tenant_entity_1 = require("../tenants/entities/tenant.entity");
 const user_entity_1 = require("../users/entities/user.entity");
 const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-subscription.entity");
+function normalizeEmploymentType(input) {
+    if (!input)
+        return job_posting_entity_1.EmploymentType.FULL_TIME;
+    const s = String(input).trim().toLowerCase();
+    if (s.includes('part'))
+        return job_posting_entity_1.EmploymentType.PART_TIME;
+    if (s.includes('contract') || s.includes('freelance') || s.includes('consult'))
+        return job_posting_entity_1.EmploymentType.CONTRACT;
+    if (s.includes('intern') || s.includes('trainee') || s.includes('student'))
+        return job_posting_entity_1.EmploymentType.INTERNSHIP;
+    if (s.includes('remote'))
+        return job_posting_entity_1.EmploymentType.REMOTE;
+    if (s.includes('full') || s.includes('perm'))
+        return job_posting_entity_1.EmploymentType.FULL_TIME;
+    const match = Object.values(job_posting_entity_1.EmploymentType).find((v) => v.toLowerCase() === s || v.toLowerCase().replace('-', ' ') === s.replace('-', ' '));
+    if (match)
+        return match;
+    return job_posting_entity_1.EmploymentType.FULL_TIME;
+}
+function normalizeExperienceLevel(input) {
+    if (!input)
+        return job_posting_entity_1.ExperienceLevel.MID;
+    const s = String(input).trim().toLowerCase();
+    if (s.includes('entry') || s.includes('fresher') || s.includes('trainee') || s.includes('student') || s.includes('intern')) {
+        return job_posting_entity_1.ExperienceLevel.ENTRY;
+    }
+    if (s.includes('senior') || s.includes('sr')) {
+        return job_posting_entity_1.ExperienceLevel.SENIOR;
+    }
+    if (s.includes('lead') || s.includes('head') || s.includes('principal') || s.includes('manager')) {
+        return job_posting_entity_1.ExperienceLevel.LEAD;
+    }
+    if (s.includes('exec') || s.includes('director') || s.includes('president') || s.includes('ceo') || s.includes('gm') || s.includes('vp')) {
+        return job_posting_entity_1.ExperienceLevel.EXECUTIVE;
+    }
+    if (s.includes('mid') || s.includes('experien') || s.includes('prof')) {
+        return job_posting_entity_1.ExperienceLevel.MID;
+    }
+    const match = Object.values(job_posting_entity_1.ExperienceLevel).find((v) => v.toLowerCase() === s);
+    if (match)
+        return match;
+    return job_posting_entity_1.ExperienceLevel.MID;
+}
 let JobsService = class JobsService {
     constructor(jobRepo, tenantRepo, userRepo, subRepo) {
         this.jobRepo = jobRepo;
@@ -160,8 +205,8 @@ let JobsService = class JobsService {
             slug: slug,
             description: jobData.description || 'Job description details.',
             category: jobData.category || 'Engineering',
-            employmentType: jobData.employmentType || job_posting_entity_1.EmploymentType.FULL_TIME,
-            experienceLevel: jobData.experienceLevel || job_posting_entity_1.ExperienceLevel.MID,
+            employmentType: normalizeEmploymentType(jobData.employmentType || jobData.jobType),
+            experienceLevel: normalizeExperienceLevel(jobData.experienceLevel),
             salaryMin: jobData.salaryMin || 500000,
             salaryMax: jobData.salaryMax || 1500000,
             currency: jobData.currency || 'INR',
@@ -216,8 +261,8 @@ let JobsService = class JobsService {
             slug: slug,
             description: editedData.description !== undefined ? editedData.description : originalJob.description,
             category: editedData.category || originalJob.category,
-            employmentType: editedData.employmentType || originalJob.employmentType,
-            experienceLevel: editedData.experienceLevel || originalJob.experienceLevel,
+            employmentType: normalizeEmploymentType(editedData.employmentType || editedData.jobType || originalJob.employmentType),
+            experienceLevel: normalizeExperienceLevel(editedData.experienceLevel || originalJob.experienceLevel),
             salaryMin: editedData.salaryMin !== undefined ? editedData.salaryMin : originalJob.salaryMin,
             salaryMax: editedData.salaryMax !== undefined ? editedData.salaryMax : originalJob.salaryMax,
             currency: editedData.currency || originalJob.currency,
@@ -254,10 +299,12 @@ let JobsService = class JobsService {
             job.description = updateData.description;
         if (updateData.category !== undefined)
             job.category = updateData.category;
-        if (updateData.employmentType !== undefined)
-            job.employmentType = updateData.employmentType;
-        if (updateData.experienceLevel !== undefined)
-            job.experienceLevel = updateData.experienceLevel;
+        if (updateData.employmentType !== undefined) {
+            job.employmentType = normalizeEmploymentType(updateData.employmentType || updateData.jobType);
+        }
+        if (updateData.experienceLevel !== undefined) {
+            job.experienceLevel = normalizeExperienceLevel(updateData.experienceLevel);
+        }
         if (updateData.salaryMin !== undefined)
             job.salaryMin = updateData.salaryMin;
         if (updateData.salaryMax !== undefined)

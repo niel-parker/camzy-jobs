@@ -47,6 +47,48 @@ export interface JobListingDto {
   createdAt: string;
 }
 
+export function normalizeEmploymentType(input?: any): EmploymentType {
+  if (!input) return EmploymentType.FULL_TIME;
+  const s = String(input).trim().toLowerCase();
+  if (s.includes('part')) return EmploymentType.PART_TIME;
+  if (s.includes('contract') || s.includes('freelance') || s.includes('consult')) return EmploymentType.CONTRACT;
+  if (s.includes('intern') || s.includes('trainee') || s.includes('student')) return EmploymentType.INTERNSHIP;
+  if (s.includes('remote')) return EmploymentType.REMOTE;
+  if (s.includes('full') || s.includes('perm')) return EmploymentType.FULL_TIME;
+
+  const match = Object.values(EmploymentType).find(
+    (v) => v.toLowerCase() === s || v.toLowerCase().replace('-', ' ') === s.replace('-', ' ')
+  );
+  if (match) return match;
+
+  return EmploymentType.FULL_TIME;
+}
+
+export function normalizeExperienceLevel(input?: any): ExperienceLevel {
+  if (!input) return ExperienceLevel.MID;
+  const s = String(input).trim().toLowerCase();
+  if (s.includes('entry') || s.includes('fresher') || s.includes('trainee') || s.includes('student') || s.includes('intern')) {
+    return ExperienceLevel.ENTRY;
+  }
+  if (s.includes('senior') || s.includes('sr')) {
+    return ExperienceLevel.SENIOR;
+  }
+  if (s.includes('lead') || s.includes('head') || s.includes('principal') || s.includes('manager')) {
+    return ExperienceLevel.LEAD;
+  }
+  if (s.includes('exec') || s.includes('director') || s.includes('president') || s.includes('ceo') || s.includes('gm') || s.includes('vp')) {
+    return ExperienceLevel.EXECUTIVE;
+  }
+  if (s.includes('mid') || s.includes('experien') || s.includes('prof')) {
+    return ExperienceLevel.MID;
+  }
+
+  const match = Object.values(ExperienceLevel).find((v) => v.toLowerCase() === s);
+  if (match) return match;
+
+  return ExperienceLevel.MID;
+}
+
 @Injectable()
 export class JobsService implements OnModuleInit {
   constructor(
@@ -237,8 +279,8 @@ export class JobsService implements OnModuleInit {
       slug: slug,
       description: jobData.description || 'Job description details.',
       category: jobData.category || 'Engineering',
-      employmentType: (jobData.employmentType as EmploymentType) || EmploymentType.FULL_TIME,
-      experienceLevel: (jobData.experienceLevel as ExperienceLevel) || ExperienceLevel.MID,
+      employmentType: normalizeEmploymentType(jobData.employmentType || (jobData as any).jobType),
+      experienceLevel: normalizeExperienceLevel(jobData.experienceLevel),
       salaryMin: jobData.salaryMin || 500000,
       salaryMax: jobData.salaryMax || 1500000,
       currency: jobData.currency || 'INR',
@@ -319,8 +361,8 @@ export class JobsService implements OnModuleInit {
       slug: slug,
       description: editedData.description !== undefined ? editedData.description : originalJob.description,
       category: editedData.category || originalJob.category,
-      employmentType: (editedData.employmentType as EmploymentType) || originalJob.employmentType,
-      experienceLevel: (editedData.experienceLevel as ExperienceLevel) || originalJob.experienceLevel,
+      employmentType: normalizeEmploymentType(editedData.employmentType || (editedData as any).jobType || originalJob.employmentType),
+      experienceLevel: normalizeExperienceLevel(editedData.experienceLevel || originalJob.experienceLevel),
       salaryMin: editedData.salaryMin !== undefined ? editedData.salaryMin : originalJob.salaryMin,
       salaryMax: editedData.salaryMax !== undefined ? editedData.salaryMax : originalJob.salaryMax,
       currency: editedData.currency || originalJob.currency,
@@ -362,8 +404,12 @@ export class JobsService implements OnModuleInit {
     }
     if (updateData.description !== undefined) job.description = updateData.description;
     if (updateData.category !== undefined) job.category = updateData.category;
-    if (updateData.employmentType !== undefined) job.employmentType = updateData.employmentType as EmploymentType;
-    if (updateData.experienceLevel !== undefined) job.experienceLevel = updateData.experienceLevel as ExperienceLevel;
+    if (updateData.employmentType !== undefined) {
+      job.employmentType = normalizeEmploymentType(updateData.employmentType || (updateData as any).jobType);
+    }
+    if (updateData.experienceLevel !== undefined) {
+      job.experienceLevel = normalizeExperienceLevel(updateData.experienceLevel);
+    }
     if (updateData.salaryMin !== undefined) job.salaryMin = updateData.salaryMin;
     if (updateData.salaryMax !== undefined) job.salaryMax = updateData.salaryMax;
     if (updateData.currency !== undefined) job.currency = updateData.currency;

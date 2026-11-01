@@ -57,11 +57,11 @@ export class JobPosting {
   @Column({ length: 100 })
   category: string;
 
-  @Column({ type: 'enum', enum: EmploymentType, default: EmploymentType.FULL_TIME })
-  employmentType: EmploymentType;
+  @Column({ type: 'varchar', length: 100, default: 'Full-time' })
+  employmentType: string;
 
-  @Column({ type: 'enum', enum: ExperienceLevel, default: ExperienceLevel.MID })
-  experienceLevel: ExperienceLevel;
+  @Column({ type: 'varchar', length: 100, default: 'Mid' })
+  experienceLevel: string;
 
   @Column({ type: 'int', default: 0 })
   minExperience: number;

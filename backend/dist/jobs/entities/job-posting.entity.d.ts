@@ -31,8 +31,8 @@ export declare class JobPosting {
     slug: string;
     description: string;
     category: string;
-    employmentType: EmploymentType;
-    experienceLevel: ExperienceLevel;
+    employmentType: string;
+    experienceLevel: string;
     minExperience: number;
     maxExperience: number;
     salaryMin: number;
