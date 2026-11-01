@@ -94,7 +94,7 @@ export default function JobDetailPage() {
   // Check if job is saved by current candidate
   useEffect(() => {
     async function checkSavedStatus() {
-      if (!user || !id) return;
+      if (!user || !id || user.role !== 'CANDIDATE') return;
       try {
         const candidateId = user.candidateId || user.id;
         const profile = await sdk.getCandidateProfile(candidateId);
@@ -133,7 +133,7 @@ export default function JobDetailPage() {
   // Load Candidate Profile to check completeness & resume
   useEffect(() => {
     async function loadCandidateProfile() {
-      if (!user) return;
+      if (!user || user.role !== 'CANDIDATE') return;
       setIsLoadingProfile(true);
       try {
         const profile = await sdk.request<any>(`/candidates/${user.candidateId || user.id}`);
@@ -155,7 +155,7 @@ export default function JobDetailPage() {
       }
     }
 
-    if (user && isModalOpen) {
+    if (user && user.role === 'CANDIDATE' && isModalOpen) {
       loadCandidateProfile();
     }
   }, [user, isModalOpen, sdk]);
@@ -194,7 +194,7 @@ export default function JobDetailPage() {
     }
 
     // 2. Candidate role check
-    if (user.role !== 'CANDIDATE' && user.role !== 'SUPER_ADMIN') {
+    if (user.role !== 'CANDIDATE') {
       setApplyError('Only Candidate accounts can apply for positions. Please sign in with a candidate account.');
       return;
     }

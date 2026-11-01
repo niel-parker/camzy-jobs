@@ -27,7 +27,8 @@ let CandidatesService = class CandidatesService {
     }
     async findAll(params) {
         const qb = this.candidateRepo.createQueryBuilder('candidate')
-            .leftJoinAndSelect('candidate.user', 'user');
+            .innerJoinAndSelect('candidate.user', 'user')
+            .where('user.role = :candRole', { candRole: user_entity_1.UserRole.CANDIDATE });
         const searchKeyword = (params?.query || params?.skill || '').trim();
         if (searchKeyword) {
             const isBoolean = /\b(AND|OR|NOT)\b/i.test(searchKeyword);
@@ -38,7 +39,7 @@ let CandidatesService = class CandidatesService {
                 terms.forEach((term, idx) => {
                     const pName = `term_${idx}`;
                     qParams[pName] = `%${term.toLowerCase()}%`;
-                    conditions.push(`(LOWER(candidate.headline) LIKE :${pName} OR LOWER(candidate.currentTitle) LIKE :${pName} OR LOWER(candidate.skills) LIKE :${pName} OR LOWER(candidate.summary) LIKE :${pName} OR LOWER(candidate.resumeParsedText) LIKE :${pName})`);
+                    conditions.push(`(LOWER(candidate.headline) LIKE :${pName} OR LOWER(candidate.currentTitle) LIKE :${pName} OR LOWER(candidate.skills) LIKE :${pName} OR LOWER(candidate.summary) LIKE :${pName} OR LOWER(candidate.resumeParsedText) LIKE :${pName} OR LOWER(user.firstName) LIKE :${pName} OR LOWER(user.lastName) LIKE :${pName})`);
                 });
                 if (conditions.length > 0) {
                     qb.andWhere(`(${conditions.join(' OR ')})`, qParams);
@@ -51,7 +52,7 @@ let CandidatesService = class CandidatesService {
                 terms.forEach((term, idx) => {
                     const pName = `term_${idx}`;
                     qParams[pName] = `%${term.toLowerCase()}%`;
-                    conditions.push(`(LOWER(candidate.headline) LIKE :${pName} OR LOWER(candidate.currentTitle) LIKE :${pName} OR LOWER(candidate.skills) LIKE :${pName} OR LOWER(candidate.summary) LIKE :${pName} OR LOWER(candidate.resumeParsedText) LIKE :${pName})`);
+                    conditions.push(`(LOWER(candidate.headline) LIKE :${pName} OR LOWER(candidate.currentTitle) LIKE :${pName} OR LOWER(candidate.skills) LIKE :${pName} OR LOWER(candidate.summary) LIKE :${pName} OR LOWER(candidate.resumeParsedText) LIKE :${pName} OR LOWER(user.firstName) LIKE :${pName} OR LOWER(user.lastName) LIKE :${pName})`);
                 });
                 if (conditions.length > 0) {
                     qb.andWhere(`(${conditions.join(' OR ')})`, qParams);
@@ -160,51 +161,63 @@ let CandidatesService = class CandidatesService {
             where: [{ id }, { userId: id }],
             relations: { user: true },
         });
-        if (!candidate) {
-            try {
-                const newCand = this.candidateRepo.create({
-                    userId: id,
-                    headline: 'Software Engineer',
-                    currentTitle: 'Engineer',
-                    experienceYears: 2,
-                    currentSalary: 75000,
-                    expectedSalary: 100000,
-                    noticePeriod: '30 Days',
-                    preferredLocations: ['Bangalore', 'Remote'],
-                    resumeUrl: 'https://example.com/resumes/candidate-resume-2026.pdf',
-                    resumes: [
-                        {
-                            id: 'res-default-1',
-                            title: 'Primary Technical Resume.pdf',
-                            resumeUrl: 'https://example.com/resumes/candidate-resume-2026.pdf',
-                            isDefault: true,
-                            uploadedAt: new Date().toISOString(),
-                        },
-                    ],
-                    skills: ['TypeScript', 'React', 'Node.js'],
-                });
-                candidate = await this.candidateRepo.save(newCand);
-                candidate = await this.candidateRepo.findOne({
-                    where: { id: candidate.id },
-                    relations: { user: true },
-                });
+        if (candidate) {
+            if (candidate.user && candidate.user.role !== user_entity_1.UserRole.CANDIDATE) {
+                throw new common_1.NotFoundException(`Candidate profile ${id} not found.`);
             }
-            catch (err) {
-                throw new common_1.NotFoundException(`Candidate profile ${id} not found`);
-            }
+            return this.mapToDto(candidate);
         }
-        return this.mapToDto(candidate);
+        const user = await this.userRepo.findOne({ where: { id } });
+        if (!user) {
+            throw new common_1.NotFoundException(`Candidate profile ${id} not found`);
+        }
+        if (user.role !== user_entity_1.UserRole.CANDIDATE) {
+            throw new common_1.NotFoundException(`User ${id} is an employer/admin (${user.role}) and does not have a candidate profile.`);
+        }
+        try {
+            const newCand = this.candidateRepo.create({
+                userId: user.id,
+                headline: `${user.firstName} ${user.lastName}`,
+                currentTitle: 'Job Seeker',
+                experienceYears: 0,
+                currentSalary: 0,
+                expectedSalary: 0,
+                noticePeriod: 'Immediate',
+                preferredLocations: ['Remote'],
+                resumes: [],
+                skills: [],
+            });
+            candidate = await this.candidateRepo.save(newCand);
+            candidate = await this.candidateRepo.findOne({
+                where: { id: candidate.id },
+                relations: { user: true },
+            });
+            return this.mapToDto(candidate);
+        }
+        catch (err) {
+            throw new common_1.NotFoundException(`Candidate profile ${id} not found`);
+        }
     }
     async updateProfile(id, partial) {
         let candidate = await this.candidateRepo.findOne({
             where: [{ id }, { userId: id }],
+            relations: { user: true },
         });
-        if (!candidate) {
+        if (candidate) {
+            if (candidate.user && candidate.user.role !== user_entity_1.UserRole.CANDIDATE) {
+                throw new common_1.ForbiddenException(`User has role ${candidate.user.role} and cannot manage candidate profiles.`);
+            }
+        }
+        else {
+            const user = await this.userRepo.findOne({ where: { id } });
+            if (!user || user.role !== user_entity_1.UserRole.CANDIDATE) {
+                throw new common_1.ForbiddenException(`User ${id} is not a candidate.`);
+            }
             candidate = this.candidateRepo.create({
-                userId: id,
-                headline: partial.headline || 'Software Engineer',
+                userId: user.id,
+                headline: partial.headline || `${user.firstName} ${user.lastName}`,
                 summary: partial.summary || '',
-                currentTitle: partial.currentTitle || 'Engineer',
+                currentTitle: partial.currentTitle || 'Job Seeker',
                 experienceYears: partial.experienceYears || 0,
                 expectedSalary: partial.expectedSalary || 0,
                 resumeUrl: partial.resumeUrl || '',
@@ -286,19 +299,23 @@ let CandidatesService = class CandidatesService {
     async toggleSaveJob(candidateOrUserId, jobId) {
         let candidate = await this.candidateRepo.findOne({
             where: [{ id: candidateOrUserId }, { userId: candidateOrUserId }],
+            relations: { user: true },
         });
         if (!candidate) {
             const user = await this.userRepo.findOne({ where: { id: candidateOrUserId } });
-            if (!user) {
-                throw new common_1.NotFoundException(`User or candidate profile ${candidateOrUserId} not found.`);
+            if (!user || user.role !== user_entity_1.UserRole.CANDIDATE) {
+                return { saved: false, savedJobIds: [] };
             }
             const newCand = this.candidateRepo.create({
                 userId: user.id,
-                headline: 'Candidate',
+                headline: `${user.firstName} ${user.lastName}`,
                 savedJobIds: [jobId],
             });
             candidate = await this.candidateRepo.save(newCand);
             return { saved: true, savedJobIds: candidate.savedJobIds || [jobId] };
+        }
+        if (candidate.user && candidate.user.role !== user_entity_1.UserRole.CANDIDATE) {
+            return { saved: false, savedJobIds: [] };
         }
         const currentSaved = Array.isArray(candidate.savedJobIds) ? [...candidate.savedJobIds] : [];
         const index = currentSaved.indexOf(jobId);
@@ -318,8 +335,9 @@ let CandidatesService = class CandidatesService {
     async getSavedJobs(candidateOrUserId) {
         const candidate = await this.candidateRepo.findOne({
             where: [{ id: candidateOrUserId }, { userId: candidateOrUserId }],
+            relations: { user: true },
         });
-        if (!candidate || !candidate.savedJobIds || candidate.savedJobIds.length === 0) {
+        if (!candidate || (candidate.user && candidate.user.role !== user_entity_1.UserRole.CANDIDATE) || !candidate.savedJobIds || candidate.savedJobIds.length === 0) {
             return [];
         }
         const jobs = await this.jobRepo.createQueryBuilder('job')
