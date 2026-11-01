@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { DashboardLayout } from '../../../../components/DashboardLayout';
 import { useTheme } from '../../../../context/ThemeContext';
 import { 
-  Search, Filter, MapPin, DollarSign, Clock, FileText, Download, Briefcase, 
+  Search, Filter, MapPin, IndianRupee, Clock, FileText, Download, Briefcase, 
   ShieldCheck, Sparkles, User, ExternalLink, Loader2, Award, ChevronRight, Check, Eye,
   Phone, Mail, MessageSquare, Bookmark, BookmarkCheck, Calendar, Building2, 
   GraduationCap, X, ChevronDown, ChevronUp, RotateCcw, SlidersHorizontal, Layers, 
@@ -516,7 +516,7 @@ export default function CandidateSearchPage() {
             {/* Annual CTC / Salary Range in Lacs */}
             <div className="space-y-1">
               <label className="block font-bold theme-text flex items-center gap-1">
-                <DollarSign className="w-3.5 h-3.5 text-indigo-500" />
+                <IndianRupee className="w-3.5 h-3.5 text-indigo-500" />
                 <span>Salary / CTC Range (₹ Lacs)</span>
               </label>
               <div className="flex items-center space-x-1.5">
@@ -990,9 +990,9 @@ export default function CandidateSearchPage() {
                           <div className="px-1">
                             <div className="text-[11px] text-slate-500 dark:text-slate-400">CTC Annually</div>
                             <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">
-                              {cand.expectedSalary
+                              ₹{cand.expectedSalary
                                 ? Number(cand.expectedSalary).toLocaleString('en-IN')
-                                : (cand.currentSalary ? Number(cand.currentSalary).toLocaleString('en-IN') : '600,000')}
+                                : (cand.currentSalary ? Number(cand.currentSalary).toLocaleString('en-IN') : '6,00,000')}
                             </div>
                           </div>
                           <div className="px-1">

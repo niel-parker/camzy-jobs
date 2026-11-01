@@ -9,7 +9,7 @@ import { AdminUserProfile, CompanyDirectoryItem } from '@job-portal/sdk';
 import { 
   Users, UserCheck, ShieldCheck, Search, Plus, Download, Eye, 
   Building2, Mail, Phone, CheckCircle2, XCircle, Loader2, RefreshCw, X, AlertCircle, Activity, ArrowUpRight,
-  Pencil, KeyRound, Copy, Check, EyeOff, Lock, Briefcase, MapPin, DollarSign, Clock, Sparkles,
+  Pencil, KeyRound, Copy, Check, EyeOff, Lock, Briefcase, MapPin, IndianRupee, Clock, Sparkles,
   ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { ProfileResumeModal } from '../../../components/ProfileResumeModal';
@@ -969,7 +969,7 @@ function AdminUserProfilesContent() {
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold theme-text">Current Salary (Annual)</label>
+                        <label className="text-[11px] font-bold theme-text">Current Salary (Annual ₹)</label>
                         <input
                           type="number"
                           placeholder="e.g. 900000"
@@ -980,7 +980,7 @@ function AdminUserProfilesContent() {
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-[11px] font-bold theme-text">Expected Salary (Annual)</label>
+                        <label className="text-[11px] font-bold theme-text">Expected Salary (Annual ₹)</label>
                         <input
                           type="number"
                           placeholder="e.g. 1200000"

@@ -5,7 +5,7 @@ import { DashboardLayout } from '../../../components/DashboardLayout';
 import { useTheme } from '../../../context/ThemeContext';
 import { 
   Receipt, Search, Eye, Download, Printer, CheckCircle2, 
-  XCircle, Loader2, RefreshCw, X, Building2, CreditCard, DollarSign 
+  XCircle, Loader2, RefreshCw, X, Building2, CreditCard, IndianRupee 
 } from 'lucide-react';
 
 export default function AdminPaymentHistoryPage() {
@@ -80,11 +80,11 @@ export default function AdminPaymentHistoryPage() {
           <div className="theme-surface border theme-border rounded-2xl p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold theme-muted">Total Revenue Settled</p>
-              <h3 className="text-2xl font-black theme-text mt-0.5">${totalAmount.toLocaleString()}</h3>
+              <h3 className="text-2xl font-black theme-text mt-0.5">₹{totalAmount.toLocaleString('en-IN')}</h3>
               <p className="text-[10px] text-emerald-500 font-bold mt-1">Platform Invoiced</p>
             </div>
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black">
-              <DollarSign className="w-5 h-5" />
+              <IndianRupee className="w-5 h-5" />
             </div>
           </div>
 
@@ -191,7 +191,7 @@ export default function AdminPaymentHistoryPage() {
                       </td>
 
                       <td className="py-3.5 px-4 font-mono font-bold theme-text">
-                        ${txn.amount}
+                        ₹{Number(txn.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
 
                       <td className="py-3.5 px-4 text-center">
@@ -280,7 +280,7 @@ export default function AdminPaymentHistoryPage() {
                     <tr className="border-b theme-border text-[10px] uppercase font-black tracking-wider theme-muted">
                       <th className="py-2">Description</th>
                       <th className="py-2 text-center">Period</th>
-                      <th className="py-2 text-right">Amount (USD)</th>
+                      <th className="py-2 text-right">Amount (₹ / INR)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y theme-border text-xs">
@@ -290,19 +290,19 @@ export default function AdminPaymentHistoryPage() {
                         <span className="text-[11px] theme-muted">Unlimited ATS access, resume downloads, team workspace</span>
                       </td>
                       <td className="py-3 text-center theme-muted font-mono">Monthly</td>
-                      <td className="py-3 text-right font-mono font-bold theme-text">${selectedInvoice.amount}</td>
+                      <td className="py-3 text-right font-mono font-bold theme-text">₹{Number(selectedInvoice.amount).toFixed(2)}</td>
                     </tr>
                     <tr>
                       <td className="py-2 theme-muted text-right pr-4" colSpan={2}>Subtotal:</td>
-                      <td className="py-2 text-right font-mono font-bold theme-text">${selectedInvoice.amount}</td>
+                      <td className="py-2 text-right font-mono font-bold theme-text">₹{Number(selectedInvoice.amount).toFixed(2)}</td>
                     </tr>
                     <tr>
                       <td className="py-2 theme-muted text-right pr-4" colSpan={2}>Sales Tax / GST (0%):</td>
-                      <td className="py-2 text-right font-mono font-bold theme-text">$0.00</td>
+                      <td className="py-2 text-right font-mono font-bold theme-text">₹0.00</td>
                     </tr>
                     <tr className="border-t theme-border">
                       <td className="py-3 text-sm font-black theme-text text-right pr-4" colSpan={2}>Total Amount Paid:</td>
-                      <td className="py-3 text-base font-black text-emerald-500 text-right font-mono">${selectedInvoice.amount}</td>
+                      <td className="py-3 text-base font-black text-emerald-500 text-right font-mono">₹{Number(selectedInvoice.amount).toFixed(2)}</td>
                     </tr>
                   </tbody>
                 </table>

@@ -316,9 +316,9 @@ export default function SuperAdminTenantsPage() {
                     <div className="grid grid-cols-2 gap-3">
                       {[
                         { code: 'FREE', name: 'Starter (FREE)', jobs: '2 Jobs', downloads: '0 Downloads', seats: '1 Seat' },
-                        { code: 'GROWTH', name: 'Growth ($99/mo)', jobs: '5 Jobs', downloads: '50 Downloads', seats: '3 Seats' },
-                        { code: 'PRO', name: 'Professional ($199/mo)', jobs: '15 Jobs', downloads: '150 Downloads', seats: '5 Seats' },
-                        { code: 'ENTERPRISE', name: 'Enterprise ($499/mo)', jobs: '50 Jobs', downloads: '500 Downloads', seats: '15 Seats' },
+                        { code: 'GROWTH', name: 'Growth (₹99/mo)', jobs: '5 Jobs', downloads: '50 Downloads', seats: '3 Seats' },
+                        { code: 'PRO', name: 'Professional (₹199/mo)', jobs: '15 Jobs', downloads: '150 Downloads', seats: '5 Seats' },
+                        { code: 'ENTERPRISE', name: 'Enterprise (₹499/mo)', jobs: '50 Jobs', downloads: '500 Downloads', seats: '15 Seats' },
                       ].map((p) => (
                         <button
                           type="button"

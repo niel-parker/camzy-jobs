@@ -215,10 +215,10 @@ export default function AdminSubscriptionPackagesPage() {
                   <div>
                     <h3 className="text-base font-black theme-text">{pkg.name}</h3>
                     <div className="mt-2 flex items-baseline">
-                      <span className="text-3xl font-black theme-text">${pkg.priceMonthly}</span>
+                      <span className="text-3xl font-black theme-text">₹{pkg.priceMonthly}</span>
                       <span className="text-xs theme-muted ml-1">/ month</span>
                     </div>
-                    <p className="text-[11px] theme-muted mt-0.5">${pkg.priceYearly} billed annually</p>
+                    <p className="text-[11px] theme-muted mt-0.5">₹{pkg.priceYearly} billed annually</p>
                   </div>
 
                   {/* Quotas Box */}
@@ -333,7 +333,7 @@ export default function AdminSubscriptionPackagesPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                        Monthly Price ($)
+                        Monthly Price (₹)
                       </label>
                       <input
                         type="number"
@@ -345,7 +345,7 @@ export default function AdminSubscriptionPackagesPage() {
 
                     <div className="space-y-1">
                       <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                        Yearly Price ($)
+                        Yearly Price (₹)
                       </label>
                       <input
                         type="number"

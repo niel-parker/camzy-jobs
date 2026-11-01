@@ -143,7 +143,7 @@ export const PricingTable: React.FC = () => {
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{plan.name}</h3>
 
                   <div className="flex items-baseline gap-1 mb-6">
-                    <span className="text-3xl font-extrabold text-slate-900 dark:text-white">${price}</span>
+                    <span className="text-3xl font-extrabold text-slate-900 dark:text-white">₹{price}</span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">/ month</span>
                   </div>
 

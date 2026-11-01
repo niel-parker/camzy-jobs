@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useTheme } from '../../../context/ThemeContext';
 import { DashboardLayout } from '../../../components/DashboardLayout';
 import { 
-  Building2, DollarSign, Briefcase, Users, ShieldCheck, ShieldAlert, 
+  Building2, IndianRupee, Briefcase, Users, ShieldCheck, ShieldAlert, 
   CheckCircle2, XCircle, TrendingUp, Search, Sparkles, FileText, ArrowRight, 
   Eye, Download, RefreshCw, Printer, X, CreditCard, Loader2 
 } from 'lucide-react';
@@ -181,13 +181,13 @@ export default function SuperAdminDashboardPage() {
           {/* Platform Total Revenue */}
           <div className="p-5 rounded-2xl theme-surface border theme-border space-y-2 shadow-sm">
             <span className="text-xs font-bold theme-muted flex items-center gap-1.5 uppercase tracking-wider">
-              <DollarSign className="w-4 h-4 text-emerald-500" /> Platform Revenue
+              <IndianRupee className="w-4 h-4 text-emerald-500" /> Platform Revenue
             </span>
             <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">
-              ${Number(metrics?.totalRevenue || 2773).toLocaleString()}
+              ₹{Number(metrics?.totalRevenue || 2773).toLocaleString('en-IN')}
             </div>
             <p className="text-[11px] text-emerald-500 font-semibold flex items-center">
-              <TrendingUp className="w-3.5 h-3.5 mr-1" /> MRR: ${metrics?.monthlyRevenue || 398}/mo
+              <TrendingUp className="w-3.5 h-3.5 mr-1" /> MRR: ₹{Number(metrics?.monthlyRevenue || 398).toLocaleString('en-IN')}/mo
             </p>
           </div>
 
@@ -371,7 +371,7 @@ export default function SuperAdminDashboardPage() {
                               {txn.type.replace('_', ' ')}
                             </span>
                           </td>
-                          <td className="py-3.5 px-4 font-black theme-text">${Number(txn.amount).toFixed(2)}</td>
+                          <td className="py-3.5 px-4 font-black theme-text">₹{Number(txn.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                           <td className="py-3.5 px-4 theme-muted text-[11px]">{txn.paymentMethod || 'Stripe Card (•••• 4242)'}</td>
                           <td className="py-3.5 px-4">
                             <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-extrabold border border-emerald-500/20">
@@ -584,8 +584,8 @@ export default function SuperAdminDashboardPage() {
                     <tr>
                       <td className="py-3 font-bold text-slate-900">{selectedInvoice.description}</td>
                       <td className="py-3 text-center text-slate-600">1</td>
-                      <td className="py-3 text-right text-slate-600">${Number(selectedInvoice.amount).toFixed(2)}</td>
-                      <td className="py-3 text-right font-black text-slate-900">${Number(selectedInvoice.amount).toFixed(2)}</td>
+                      <td className="py-3 text-right text-slate-600">₹{Number(selectedInvoice.amount).toFixed(2)}</td>
+                      <td className="py-3 text-right font-black text-slate-900">₹{Number(selectedInvoice.amount).toFixed(2)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -595,15 +595,15 @@ export default function SuperAdminDashboardPage() {
                 <div className="w-64 space-y-2 text-right">
                   <div className="flex justify-between text-slate-600">
                     <span>Subtotal:</span>
-                    <span className="font-bold">${Number(selectedInvoice.amount).toFixed(2)}</span>
+                    <span className="font-bold">₹{Number(selectedInvoice.amount).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>Tax (0%):</span>
-                    <span className="font-bold">$0.00</span>
+                    <span className="font-bold">₹0.00</span>
                   </div>
                   <div className="flex justify-between text-base font-black text-slate-950 pt-2 border-t border-slate-200">
                     <span>Total Paid:</span>
-                    <span className="text-indigo-600">${Number(selectedInvoice.amount).toFixed(2)}</span>
+                    <span className="text-indigo-600">₹{Number(selectedInvoice.amount).toFixed(2)}</span>
                   </div>
                 </div>
               </div>

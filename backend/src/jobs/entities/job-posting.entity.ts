@@ -75,7 +75,7 @@ export class JobPosting {
   @Column({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   salaryMax: number;
 
-  @Column({ length: 10, default: 'USD' })
+  @Column({ length: 10, default: 'INR' })
   currency: string;
 
   @Column({ default: true })

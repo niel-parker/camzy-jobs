@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '../../../components/DashboardLayout';
 import { useTheme } from '../../../context/ThemeContext';
 import { 
-  User, FileText, Upload, Sparkles, Save, CheckCircle2, DollarSign, Briefcase, 
+  User, FileText, Upload, Sparkles, Save, CheckCircle2, IndianRupee, Briefcase, 
   AlertCircle, Loader2, Check, Plus, Trash2, GraduationCap, Award, FolderGit2, Globe, Github, Linkedin, Languages, Pencil, X, ShieldCheck, Clock, MapPin, RefreshCw, Star, Download, ExternalLink, Camera, Phone, Mail, Eye
 } from 'lucide-react';
 import { ProfileResumeModal } from '../../../components/ProfileResumeModal';
@@ -793,7 +793,7 @@ export default function CandidateProfilePage() {
                 </span>
                 <span>•</span>
                 <span className="flex items-center gap-1 font-semibold">
-                  <DollarSign className="w-3.5 h-3.5 text-emerald-500" /> Exp: {Number(profile.expectedSalary).toLocaleString()} INR
+                  <IndianRupee className="w-3.5 h-3.5 text-emerald-500" /> Exp: ₹{Number(profile.expectedSalary).toLocaleString('en-IN')}
                 </span>
               </div>
 

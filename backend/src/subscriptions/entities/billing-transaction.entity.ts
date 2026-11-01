@@ -38,7 +38,7 @@ export class BillingTransaction {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount: number;
 
-  @Column({ length: 10, default: 'USD' })
+  @Column({ length: 10, default: 'INR' })
   currency: string;
 
   @Column({ type: 'enum', enum: TransactionType, default: TransactionType.SUBSCRIPTION })

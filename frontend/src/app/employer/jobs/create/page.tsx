@@ -32,9 +32,9 @@ export default function CreateJobPage() {
     experienceLevel: 'Senior' as const,
     location: '',
     isRemote: true,
-    salaryMin: '120000',
-    salaryMax: '160000',
-    currency: 'USD',
+    salaryMin: '500000',
+    salaryMax: '1500000',
+    currency: 'INR',
     isSalaryVisible: true,
     skillsInput: 'TypeScript, Next.js, NestJS',
     genderPreference: 'ANY' as 'ANY' | 'MALE' | 'FEMALE',
@@ -496,7 +496,7 @@ export default function CreateJobPage() {
             {/* Salary Range & Hide Salary Toggle */}
             <div className="p-4 rounded-xl border theme-border theme-surface space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold theme-text block">Annual Salary Range ($)</label>
+                <label className="text-xs font-bold theme-text block">Annual Salary Range (₹ / INR)</label>
                 <label className="flex items-center space-x-2 text-xs font-bold theme-text cursor-pointer">
                   <input
                     type="checkbox"
@@ -513,7 +513,7 @@ export default function CreateJobPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[11px] font-semibold theme-muted block mb-1">Min Salary ($)</label>
+                  <label className="text-[11px] font-semibold theme-muted block mb-1">Min Salary (₹)</label>
                   <input
                     type="number"
                     value={formData.salaryMin}
@@ -523,7 +523,7 @@ export default function CreateJobPage() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-semibold theme-muted block mb-1">Max Salary ($)</label>
+                  <label className="text-[11px] font-semibold theme-muted block mb-1">Max Salary (₹)</label>
                   <input
                     type="number"
                     value={formData.salaryMax}

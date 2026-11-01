@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '../../../components/DashboardLayout';
-import { Bookmark, Building2, MapPin, DollarSign, Trash2, ArrowRight, Loader2 } from 'lucide-react';
+import { Bookmark, Building2, MapPin, IndianRupee, Trash2, ArrowRight, Loader2 } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import { JobListing } from '@job-portal/sdk';
 
@@ -103,7 +103,7 @@ export default function CandidateSavedJobsPage() {
                       </span>
                       {job.salaryMin && (
                         <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-                          <DollarSign className="w-3.5 h-3.5" /> ${job.salaryMin.toLocaleString()} - ${job.salaryMax?.toLocaleString()}
+                          <IndianRupee className="w-3.5 h-3.5" /> ₹{Number(job.salaryMin).toLocaleString('en-IN')}{job.salaryMax ? ` - ₹${Number(job.salaryMax).toLocaleString('en-IN')}` : ''}
                         </span>
                       )}
                     </div>

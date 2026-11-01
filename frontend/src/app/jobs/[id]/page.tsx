@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from '../../../context/ThemeContext';
 import { JobListing } from '@job-portal/sdk';
 import { 
-  Building2, MapPin, DollarSign, ArrowLeft, CheckCircle2, ShieldCheck, 
+  Building2, MapPin, IndianRupee, ArrowLeft, CheckCircle2, ShieldCheck, 
   AlertCircle, Loader2, Sparkles, FileText, Send, User, Upload, Clock, X, ChevronRight, AlertTriangle, Briefcase, Check, Share2, Mail, Gift, Bookmark
 } from 'lucide-react';
 
@@ -480,9 +480,9 @@ export default function JobDetailPage() {
           <div>
             <span className="text-[11px] text-slate-400 block mb-0.5">Salary Disclosure</span>
             <span className="font-semibold text-slate-900 dark:text-white flex items-center gap-1">
-              <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
+              <IndianRupee className="w-3.5 h-3.5 text-emerald-500" />
               {job.isSalaryVisible && job.salaryMin
-                ? `$${job.salaryMin.toLocaleString()} - $${job.salaryMax?.toLocaleString()}`
+                ? `₹${Number(job.salaryMin).toLocaleString('en-IN')}${job.salaryMax ? ` - ₹${Number(job.salaryMax).toLocaleString('en-IN')}` : ''}`
                 : 'Salary Hidden / Negotiable'}
             </span>
           </div>
@@ -725,7 +725,7 @@ export default function JobDetailPage() {
                       </div>
 
                       <div>
-                        <label className="block font-bold theme-text mb-1">Current Annual CTC ($)</label>
+                        <label className="block font-bold theme-text mb-1">Current Annual CTC (₹ / INR)</label>
                         <input
                           type="text"
                           value={currentCtc}

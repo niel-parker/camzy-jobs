@@ -671,7 +671,7 @@ export default function EmployerJobListingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold theme-text mb-1">Min Salary ($)</label>
+                  <label className="block text-xs font-bold theme-text mb-1">Min Salary (₹ / INR)</label>
                   <input
                     type="number"
                     value={editForm.salaryMin}
@@ -681,7 +681,7 @@ export default function EmployerJobListingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold theme-text mb-1">Max Salary ($)</label>
+                  <label className="block text-xs font-bold theme-text mb-1">Max Salary (₹ / INR)</label>
                   <input
                     type="number"
                     value={editForm.salaryMax}

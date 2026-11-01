@@ -338,7 +338,7 @@ let CandidatesService = class CandidatesService {
             employmentType: job.employmentType || 'Full-time',
             salaryMin: job.salaryMin ? Number(job.salaryMin) : undefined,
             salaryMax: job.salaryMax ? Number(job.salaryMax) : undefined,
-            currency: job.currency || 'USD',
+            currency: job.currency || 'INR',
             isSalaryVisible: job.isSalaryVisible,
             category: job.category,
             experienceLevel: job.experienceLevel || 'Mid',

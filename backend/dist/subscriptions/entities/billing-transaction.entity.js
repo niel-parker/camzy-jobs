@@ -58,7 +58,7 @@ __decorate([
     __metadata("design:type", Number)
 ], BillingTransaction.prototype, "amount", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ length: 10, default: 'USD' }),
+    (0, typeorm_1.Column)({ length: 10, default: 'INR' }),
     __metadata("design:type", String)
 ], BillingTransaction.prototype, "currency", void 0);
 __decorate([

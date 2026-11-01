@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, MapPin, Briefcase, DollarSign, Filter, Sparkles, Building2, Clock, ChevronRight, ChevronLeft, CheckCircle2, ArrowRight, Bookmark, SlidersHorizontal, RotateCcw, Award, Tag, X } from 'lucide-react';
+import { Search, MapPin, Briefcase, IndianRupee, Filter, Sparkles, Building2, Clock, ChevronRight, ChevronLeft, CheckCircle2, ArrowRight, Bookmark, SlidersHorizontal, RotateCcw, Award, Tag, X } from 'lucide-react';
 import { SearchableSelect } from '../../components/SearchableSelect';
 import { useTheme } from '../../context/ThemeContext';
 import { LocationSearchDropdown } from '../../components/LocationSearchDropdown';
@@ -173,7 +173,7 @@ function JobDirectoryContent() {
             experienceYears: `${j.minExperience ?? 2} - ${j.maxExperience ?? 5} Yrs`,
             minExperience: j.minExperience ?? 0,
             maxExperience: j.maxExperience ?? 5,
-            salary: j.isSalaryVisible && j.salaryMin ? `$${j.salaryMin.toLocaleString()} - $${j.salaryMax?.toLocaleString()}` : 'Competitive',
+            salary: j.isSalaryVisible && j.salaryMin ? `₹${Number(j.salaryMin).toLocaleString('en-IN')}${j.salaryMax ? ` - ₹${Number(j.salaryMax).toLocaleString('en-IN')}` : ''}` : 'Competitive',
             salaryMin: j.salaryMin || 0,
             isFeatured: j.isFeatured || false,
             postedAt: 'Verified Position',
@@ -496,21 +496,21 @@ function JobDirectoryContent() {
           {/* Minimum Salary Range Filter */}
           <div className="space-y-2 border-t theme-border pt-4">
             <label className="block text-xs font-bold theme-text uppercase tracking-wider">
-              Min Salary Expectation (${(selectedMinSalary / 1000).toFixed(0)}k+)
+              Min Salary Expectation ({selectedMinSalary === 0 ? 'Any' : (selectedMinSalary >= 100000 ? `₹${(selectedMinSalary / 100000).toFixed(1)} LPA+` : `₹${selectedMinSalary.toLocaleString('en-IN')}+`)})
             </label>
             <input
               type="range"
               min="0"
-              max="200000"
-              step="10000"
+              max="5000000"
+              step="100000"
               value={selectedMinSalary}
               onChange={(e) => setSelectedMinSalary(Number(e.target.value))}
               className="w-full accent-indigo-600 cursor-pointer"
             />
             <div className="flex justify-between text-[10px] theme-muted font-mono">
               <span>Any</span>
-              <span>$100k</span>
-              <span>$200k+</span>
+              <span>₹25L</span>
+              <span>₹50L+</span>
             </div>
           </div>
         </div>
@@ -587,7 +587,7 @@ function JobDirectoryContent() {
                         <Briefcase className="h-3.5 w-3.5 mr-1 text-indigo-500" /> {job.experienceYears}
                       </span>
                       <span className="inline-flex items-center font-bold theme-text">
-                        <DollarSign className="h-3.5 w-3.5 text-emerald-500" /> {job.salary}
+                        <IndianRupee className="h-3.5 w-3.5 text-emerald-500" /> {job.salary}
                       </span>
                       <span className="inline-flex items-center">
                         <MapPin className="h-3.5 w-3.5 mr-1" /> {job.location} ({job.workMode})

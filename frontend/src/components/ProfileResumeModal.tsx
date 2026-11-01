@@ -127,8 +127,8 @@ export const ProfileResumeModal: React.FC<ProfileResumeModalProps> = ({ isOpen, 
   };
 
   const experienceYears = candidate.experienceYears ?? (experiences.length > 0 ? `${experiences.length * 2}` : '0');
-  const currentSalaryFormatted = candidate.currentSalary ? `${Number(candidate.currentSalary).toLocaleString()} INR` : 'Not Disclosed';
-  const expectedSalaryFormatted = candidate.expectedSalary ? `${Number(candidate.expectedSalary).toLocaleString()} INR` : 'Negotiable';
+  const currentSalaryFormatted = candidate.currentSalary ? `₹${Number(candidate.currentSalary).toLocaleString('en-IN')}` : 'Not Disclosed';
+  const expectedSalaryFormatted = candidate.expectedSalary ? `₹${Number(candidate.expectedSalary).toLocaleString('en-IN')}` : 'Negotiable';
 
   const rawResumeUrl = candidate.resumeUrl || (candidate.resumes && candidate.resumes[0] ? (candidate.resumes[0].resumeUrl || candidate.resumes[0].url) : '');
   const downloadOriginalUrl = rawResumeUrl ? resolveResumeUrl(rawResumeUrl) : null;

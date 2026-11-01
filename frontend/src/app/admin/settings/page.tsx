@@ -8,7 +8,7 @@ import {
   Check,
   Globe,
   Shield,
-  DollarSign,
+  IndianRupee,
   Mail,
   Loader2,
   MapPin,
@@ -44,7 +44,7 @@ export default function SuperAdminSettingsPage() {
   // General Settings State
   const [appName, setAppName] = useState('Camzy Jobs');
   const [supportEmail, setSupportEmail] = useState('support@camzyjobs.com');
-  const [currency, setCurrency] = useState<'USD' | 'EUR' | 'GBP' | 'INR'>('USD');
+  const [currency, setCurrency] = useState<'USD' | 'EUR' | 'GBP' | 'INR'>('INR');
   const [enableConsultancies, setEnableConsultancies] = useState(false);
   const [enableFreeJobPosting, setEnableFreeJobPosting] = useState(true);
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -123,7 +123,7 @@ export default function SuperAdminSettingsPage() {
         if (config) {
           setAppName(config.siteName || 'Camzy Jobs');
           setSupportEmail(config.supportEmail || 'support@camzyjobs.com');
-          setCurrency(config.defaultCurrency || 'USD');
+          setCurrency(config.defaultCurrency || 'INR');
           setEnableConsultancies(config.enableConsultancies ?? false);
           setEnableFreeJobPosting(config.enableFreeJobPosting ?? true);
         }
@@ -529,7 +529,7 @@ export default function SuperAdminSettingsPage() {
 
                 <div className="p-6 rounded-2xl border theme-border theme-surface space-y-4 shadow-sm">
                   <h3 className="text-sm font-bold theme-text border-b theme-border pb-3 flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-emerald-500" /> Financial & Governance Rules
+                    <IndianRupee className="w-4 h-4 text-emerald-500" /> Financial & Governance Rules
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -541,10 +541,10 @@ export default function SuperAdminSettingsPage() {
                         onChange={(e) => setCurrency(e.target.value as any)}
                         className="w-full px-3.5 py-2.5 rounded-xl border theme-border theme-input theme-text text-xs focus:ring-2 focus:ring-indigo-500 outline-none font-bold"
                       >
+                        <option value="INR">INR (₹) - Indian Rupee</option>
                         <option value="USD">USD ($) - United States Dollar</option>
                         <option value="EUR">EUR (€) - Euro</option>
                         <option value="GBP">GBP (£) - British Pound</option>
-                        <option value="INR">INR (₹) - Indian Rupee</option>
                       </select>
                     </div>
 

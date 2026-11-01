@@ -427,9 +427,9 @@ export default function CompanyOnboardingPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                 {[
-                  { id: 'STARTER', title: 'Starter Company', price: '$99/mo', jobs: '3 Active Jobs', seats: '2 Seats' },
-                  { id: 'PROFESSIONAL', title: 'Professional Growth', price: '$199/mo', jobs: '10 Active Jobs', seats: '5 Seats', popular: true },
-                  { id: 'ENTERPRISE', title: 'Enterprise Scale', price: '$499/mo', jobs: 'Unlimited Jobs', seats: '20 Seats' },
+                  { id: 'STARTER', title: 'Starter Company', price: '₹99/mo', jobs: '3 Active Jobs', seats: '2 Seats' },
+                  { id: 'PROFESSIONAL', title: 'Professional Growth', price: '₹199/mo', jobs: '10 Active Jobs', seats: '5 Seats', popular: true },
+                  { id: 'ENTERPRISE', title: 'Enterprise Scale', price: '₹499/mo', jobs: 'Unlimited Jobs', seats: '20 Seats' },
                 ].map((p) => (
                   <div
                     key={p.id}

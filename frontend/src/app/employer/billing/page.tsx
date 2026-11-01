@@ -132,7 +132,7 @@ export default function EmployerBillingPage() {
               </h2>
             </div>
             <div className="sm:text-right">
-              <span className="text-3xl font-black theme-text">${plan?.priceMonthly || 199}</span>
+              <span className="text-3xl font-black theme-text">₹{plan?.priceMonthly || 199}</span>
               <span className="text-xs theme-muted"> / month</span>
               <p className="text-[11px] theme-muted mt-0.5">
                 Next billing renewal: {subscription?.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : 'Next Month'}
@@ -214,7 +214,7 @@ export default function EmployerBillingPage() {
                   Resume Boost
                 </span>
                 <h3 className="text-sm font-black theme-text mt-1.5">+50 Resume Downloads</h3>
-                <p className="text-2xl font-black theme-text mt-1">$29 <span className="text-xs font-normal theme-muted">one-time</span></p>
+                <p className="text-2xl font-black theme-text mt-1">₹29 <span className="text-xs font-normal theme-muted">one-time</span></p>
                 <p className="text-[11px] theme-muted mt-1 leading-relaxed">
                   Instantly top up 50 resume download credits to candidate sourcing quota.
                 </p>
@@ -236,7 +236,7 @@ export default function EmployerBillingPage() {
                   Best Value
                 </span>
                 <h3 className="text-sm font-black theme-text mt-1.5">+150 Resume Downloads</h3>
-                <p className="text-2xl font-black theme-text mt-1">$69 <span className="text-xs font-normal theme-muted">one-time</span></p>
+                <p className="text-2xl font-black theme-text mt-1">₹69 <span className="text-xs font-normal theme-muted">one-time</span></p>
                 <p className="text-[11px] theme-muted mt-1 leading-relaxed">
                   Bulk pack saving 20% on resume downloads with instant database quota credit.
                 </p>
@@ -258,7 +258,7 @@ export default function EmployerBillingPage() {
                   Job Expansion
                 </span>
                 <h3 className="text-sm font-black theme-text mt-1.5">+5 Job Posting Slots</h3>
-                <p className="text-2xl font-black theme-text mt-1">$49 <span className="text-xs font-normal theme-muted">one-time</span></p>
+                <p className="text-2xl font-black theme-text mt-1">₹49 <span className="text-xs font-normal theme-muted">one-time</span></p>
                 <p className="text-[11px] theme-muted mt-1 leading-relaxed">
                   Unlock 5 additional concurrent active job openings for this billing cycle.
                 </p>
@@ -280,7 +280,7 @@ export default function EmployerBillingPage() {
                   Team Seats
                 </span>
                 <h3 className="text-sm font-black theme-text mt-1.5">+2 Team Seats Add-on</h3>
-                <p className="text-2xl font-black theme-text mt-1">$39 <span className="text-xs font-normal theme-muted">/ month</span></p>
+                <p className="text-2xl font-black theme-text mt-1">₹39 <span className="text-xs font-normal theme-muted">/ month</span></p>
                 <p className="text-[11px] theme-muted mt-1 leading-relaxed">
                   Invite 2 more recruiters and hiring managers to your company dashboard.
                 </p>
@@ -316,7 +316,7 @@ export default function EmployerBillingPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-3xl font-black theme-text">$99 <span className="text-xs font-normal theme-muted">/mo</span></p>
+                <p className="text-3xl font-black theme-text">₹99 <span className="text-xs font-normal theme-muted">/mo</span></p>
                 <ul className="text-xs theme-muted space-y-2.5 pt-2">
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 5 Active Job Postings</li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 50 Resume DB Downloads</li>
@@ -345,7 +345,7 @@ export default function EmployerBillingPage() {
                     RECOMMENDED
                   </span>
                 </div>
-                <p className="text-3xl font-black theme-text">$199 <span className="text-xs font-normal theme-muted">/mo</span></p>
+                <p className="text-3xl font-black theme-text">₹199 <span className="text-xs font-normal theme-muted">/mo</span></p>
                 <ul className="text-xs theme-muted space-y-2.5 pt-2">
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 15 Active Job Postings</li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 150 Resume DB Downloads</li>
@@ -377,7 +377,7 @@ export default function EmployerBillingPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-3xl font-black theme-text">$499 <span className="text-xs font-normal theme-muted">/mo</span></p>
+                <p className="text-3xl font-black theme-text">₹499 <span className="text-xs font-normal theme-muted">/mo</span></p>
                 <ul className="text-xs theme-muted space-y-2.5 pt-2">
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 50 Active Job Postings</li>
                   <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 500 Resume DB Downloads</li>
@@ -455,7 +455,7 @@ export default function EmployerBillingPage() {
                         </span>
                       </td>
                       <td className="py-3.5 px-4 theme-muted">{txn.paymentMethod || 'Stripe Card (•••• 4242)'}</td>
-                      <td className="py-3.5 px-4 font-black theme-text">${Number(txn.amount).toFixed(2)}</td>
+                      <td className="py-3.5 px-4 font-black theme-text">₹{Number(txn.amount).toFixed(2)}</td>
                       <td className="py-3.5 px-4">
                         <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-extrabold border border-emerald-500/20">
                           {txn.status || 'PAID'}
@@ -538,7 +538,7 @@ export default function EmployerBillingPage() {
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">PAYMENT DETAILS</span>
                   <p className="font-extrabold text-slate-900 text-sm mt-0.5">{selectedInvoice.paymentMethod || 'Stripe Card'}</p>
-                  <p className="text-slate-600 text-[11px]">Currency: {selectedInvoice.currency || 'USD'}</p>
+                  <p className="text-slate-600 text-[11px]">Currency: {selectedInvoice.currency || 'INR'}</p>
                   <p className="text-slate-600 text-[11px]">Type: {selectedInvoice.type}</p>
                 </div>
               </div>
@@ -563,8 +563,8 @@ export default function EmployerBillingPage() {
                         </p>
                       </td>
                       <td className="py-3 text-center text-slate-600">1</td>
-                      <td className="py-3 text-right text-slate-600">${Number(selectedInvoice.amount).toFixed(2)}</td>
-                      <td className="py-3 text-right font-black text-slate-900">${Number(selectedInvoice.amount).toFixed(2)}</td>
+                      <td className="py-3 text-right text-slate-600">₹{Number(selectedInvoice.amount).toFixed(2)}</td>
+                      <td className="py-3 text-right font-black text-slate-900">₹{Number(selectedInvoice.amount).toFixed(2)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -575,15 +575,15 @@ export default function EmployerBillingPage() {
                 <div className="w-64 space-y-2 text-right">
                   <div className="flex justify-between text-slate-600">
                     <span>Subtotal:</span>
-                    <span className="font-bold">${Number(selectedInvoice.amount).toFixed(2)}</span>
+                    <span className="font-bold">₹{Number(selectedInvoice.amount).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>Tax (0%):</span>
-                    <span className="font-bold">$0.00</span>
+                    <span className="font-bold">₹0.00</span>
                   </div>
                   <div className="flex justify-between text-base font-black text-slate-950 pt-2 border-t border-slate-200">
                     <span>Amount Paid:</span>
-                    <span className="text-indigo-600">${Number(selectedInvoice.amount).toFixed(2)}</span>
+                    <span className="text-indigo-600">₹{Number(selectedInvoice.amount).toFixed(2)}</span>
                   </div>
                 </div>
               </div>

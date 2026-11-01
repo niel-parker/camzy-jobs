@@ -42,7 +42,7 @@ const defaultAppConfig: AppConfig = {
   siteTagline: 'Enterprise Multi-Tenant Job Portal for Companies & Employers',
   siteDescription: 'Enterprise talent acquisition platform built for companies to post jobs, manage applicants, and source top talent.',
   supportEmail: 'support@camzyjobs.com',
-  defaultCurrency: 'USD',
+  defaultCurrency: 'INR',
   enableConsultancies: false,
   enableFreeJobPosting: true,
   enableResumeDownloads: true,

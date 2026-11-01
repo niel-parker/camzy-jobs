@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { SearchableSelect } from './SearchableSelect';
-import { X, Palette, Check, RefreshCw, Sun, Moon, Sparkles, Type, Sliders, Save, ShieldCheck, Settings, Globe, ToggleLeft, ToggleRight, DollarSign, Mail } from 'lucide-react';
+import { X, Palette, Check, RefreshCw, Sun, Moon, Sparkles, Type, Sliders, Save, ShieldCheck, Settings, Globe, ToggleLeft, ToggleRight, IndianRupee, Mail } from 'lucide-react';
 
 interface SuperAdminThemeCustomizerProps {
   isOpen: boolean;
@@ -23,10 +23,10 @@ const PRIMARY_COLOR_SWATCHES = [
 const FONTS = ['Inter', 'Plus Jakarta Sans', 'Outfit', 'Roboto', 'Poppins'] as const;
 
 const CURRENCY_OPTIONS = [
+  { value: 'INR', label: 'INR (₹) - Indian Rupee' },
   { value: 'USD', label: 'USD ($) - United States Dollar' },
   { value: 'EUR', label: 'EUR (€) - Euro Currency' },
   { value: 'GBP', label: 'GBP (£) - British Pound Sterling' },
-  { value: 'INR', label: 'INR (₹) - Indian Rupee' },
 ];
 
 export const SuperAdminThemeCustomizer: React.FC<SuperAdminThemeCustomizerProps> = ({ isOpen, onClose }) => {
@@ -371,7 +371,7 @@ export const SuperAdminThemeCustomizer: React.FC<SuperAdminThemeCustomizerProps>
 
                   <div>
                     <span className="text-[11px] font-medium text-slate-300 block mb-1 flex items-center gap-1">
-                      <DollarSign className="w-3.5 h-3.5 text-slate-400" /> Default Platform Currency
+                      <IndianRupee className="w-3.5 h-3.5 text-slate-400" /> Default Platform Currency
                     </span>
                     <SearchableSelect
                       options={CURRENCY_OPTIONS}
