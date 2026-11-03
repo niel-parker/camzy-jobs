@@ -18,6 +18,7 @@ export class JobsController {
   @ApiQuery({ name: 'minExp', required: false })
   @ApiQuery({ name: 'maxExp', required: false })
   @ApiQuery({ name: 'includeExpired', required: false })
+  @ApiQuery({ name: 'skills', required: false })
   async findAll(
     @Query('category') category?: string,
     @Query('query') query?: string,
@@ -27,11 +28,12 @@ export class JobsController {
     @Query('minExp') minExp?: string,
     @Query('maxExp') maxExp?: string,
     @Query('includeExpired') includeExpired?: string,
+    @Query('skills') skills?: string,
   ): Promise<JobListingDto[]> {
     const min = minExp ? parseInt(minExp, 10) : undefined;
     const max = maxExp ? parseInt(maxExp, 10) : undefined;
     const incExp = includeExpired === 'true' || includeExpired === '1';
-    return await this.jobsService.findAll(category, query, tenantId, location, experienceLevel, min, max, incExp);
+    return await this.jobsService.findAll(category, query, tenantId, location, experienceLevel, min, max, incExp, skills);
   }
 
   @Get(':id')

@@ -136,6 +136,7 @@ export class JobsService implements OnModuleInit {
     minExp?: number,
     maxExp?: number,
     includeExpired?: boolean,
+    skills?: string,
   ): Promise<JobListingDto[]> {
     await this.expireOverdueJobs();
 
@@ -179,11 +180,41 @@ export class JobsService implements OnModuleInit {
     }
 
     if (query && query.trim()) {
-      const q = query.trim().toLowerCase();
-      qb.andWhere(
-        '(LOWER(job.title) LIKE :q OR LOWER(job.description) LIKE :q OR LOWER(tenant.name) LIKE :q OR LOWER(job.category) LIKE :q OR LOWER(CAST(job.skills AS CHAR)) LIKE :q)',
-        { q: `%${q}%` },
-      );
+      const terms = query.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
+      if (terms.length > 1) {
+        const orClauses: string[] = [];
+        const orParams: Record<string, string> = {};
+        terms.forEach((term, idx) => {
+          const pName = `q_term_${idx}`;
+          orParams[pName] = `%${term}%`;
+          orClauses.push(
+            `(LOWER(job.title) LIKE :${pName} OR LOWER(job.description) LIKE :${pName} OR LOWER(tenant.name) LIKE :${pName} OR LOWER(job.category) LIKE :${pName} OR LOWER(CAST(job.skills AS CHAR)) LIKE :${pName})`
+          );
+        });
+        qb.andWhere(`(${orClauses.join(' OR ')})`, orParams);
+      } else {
+        const q = query.trim().toLowerCase();
+        qb.andWhere(
+          '(LOWER(job.title) LIKE :q OR LOWER(job.description) LIKE :q OR LOWER(tenant.name) LIKE :q OR LOWER(job.category) LIKE :q OR LOWER(CAST(job.skills AS CHAR)) LIKE :q)',
+          { q: `%${q}%` },
+        );
+      }
+    }
+
+    if (skills && skills.trim()) {
+      const skillTerms = skills.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+      if (skillTerms.length > 0) {
+        const orClauses: string[] = [];
+        const orParams: Record<string, string> = {};
+        skillTerms.forEach((skill, idx) => {
+          const pName = `sk_term_${idx}`;
+          orParams[pName] = `%${skill}%`;
+          orClauses.push(
+            `(LOWER(job.title) LIKE :${pName} OR LOWER(job.description) LIKE :${pName} OR LOWER(CAST(job.skills AS CHAR)) LIKE :${pName})`
+          );
+        });
+        qb.andWhere(`(${orClauses.join(' OR ')})`, orParams);
+      }
     }
 
     qb.orderBy('job.createdAt', 'DESC');

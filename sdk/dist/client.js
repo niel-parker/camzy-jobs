@@ -208,6 +208,8 @@ class JobPortalSdk {
             searchParams.append('minExp', params.minExp.toString());
         if (params?.maxExp !== undefined)
             searchParams.append('maxExp', params.maxExp.toString());
+        if (params?.skills)
+            searchParams.append('skills', params.skills);
         const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
         return this.request(`/jobs${queryString}`);
     }

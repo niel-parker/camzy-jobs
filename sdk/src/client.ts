@@ -257,6 +257,7 @@ export class JobPortalSdk {
     experienceLevel?: string;
     minExp?: number;
     maxExp?: number;
+    skills?: string;
   }): Promise<JobListing[]> {
     const searchParams = new URLSearchParams();
     if (params?.category) searchParams.append('category', params.category);
@@ -266,6 +267,7 @@ export class JobPortalSdk {
     if (params?.experienceLevel) searchParams.append('experienceLevel', params.experienceLevel);
     if (params?.minExp !== undefined) searchParams.append('minExp', params.minExp.toString());
     if (params?.maxExp !== undefined) searchParams.append('maxExp', params.maxExp.toString());
+    if (params?.skills) searchParams.append('skills', params.skills);
     const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
     return this.request<JobListing[]>(`/jobs${queryString}`);
   }
@@ -278,6 +280,7 @@ export class JobPortalSdk {
     experienceLevel?: string;
     minExp?: number;
     maxExp?: number;
+    skills?: string;
   }): Promise<JobListing[]> {
     return this.getJobs(params);
   }

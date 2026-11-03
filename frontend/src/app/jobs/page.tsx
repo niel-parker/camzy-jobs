@@ -7,6 +7,7 @@ import { Search, MapPin, Briefcase, IndianRupee, Filter, Sparkles, Building2, Cl
 import { SearchableSelect } from '../../components/SearchableSelect';
 import { useTheme } from '../../context/ThemeContext';
 import { LocationSearchDropdown } from '../../components/LocationSearchDropdown';
+import { MultiSkillSearchInput } from '../../components/MultiSkillSearchInput';
 import { ExperienceRangeItem } from '@job-portal/sdk';
 
 interface ScreeningQ {
@@ -71,6 +72,7 @@ function JobDirectoryContent() {
   const { theme, sdk, user } = useTheme();
 
   // Search & Filter State
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [keyword, setKeyword] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -85,10 +87,6 @@ function JobDirectoryContent() {
   const [jobsList, setJobsList] = useState<JobItem[]>([]);
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
 
-  // Workday-Style Suggestions State
-  const [workdaySuggestions, setWorkdaySuggestions] = useState<string[]>([]);
-  const [showWorkdaySuggestions, setShowWorkdaySuggestions] = useState(false);
-
   // Dynamic Master Experience Ranges
   const [masterExpRanges, setMasterExpRanges] = useState<ExperienceRangeItem[]>([]);
   const [selectedExpRangeId, setSelectedExpRangeId] = useState<string>('all');
@@ -98,12 +96,22 @@ function JobDirectoryContent() {
   // Initialize search filters from URL parameters
   useEffect(() => {
     if (!searchParams) return;
+    const skillsParam = searchParams.get('skills');
     const q = searchParams.get('query') || searchParams.get('keyword') || searchParams.get('q');
     const loc = searchParams.get('location') || searchParams.get('loc');
     const cat = searchParams.get('category');
     const exp = searchParams.get('expRange') || searchParams.get('exp');
 
-    if (q) setKeyword(q);
+    if (skillsParam) {
+      const parsed = skillsParam.split(',').map((s) => s.trim()).filter(Boolean);
+      setSelectedSkills(parsed);
+    } else if (q && q.includes(',')) {
+      const parsed = q.split(',').map((s) => s.trim()).filter(Boolean);
+      setSelectedSkills(parsed);
+    } else if (q) {
+      setKeyword(q);
+    }
+
     if (loc) setSelectedLocation(loc);
     if (cat) setSelectedCategory(cat);
     if (exp) setSelectedExpRangeId(exp);
@@ -122,32 +130,6 @@ function JobDirectoryContent() {
     }
     loadMasterExperienceRanges();
   }, [sdk]);
-
-  // Workday-style keyword suggestions query
-  useEffect(() => {
-    if (!keyword.trim() || keyword.trim().length < 2) {
-      setWorkdaySuggestions([]);
-      setShowWorkdaySuggestions(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        const res = await sdk.suggestSkills(keyword.trim());
-        if (res && res.suggestions && res.suggestions.length > 0) {
-          setWorkdaySuggestions(res.suggestions);
-          setShowWorkdaySuggestions(true);
-        } else {
-          setWorkdaySuggestions([]);
-          setShowWorkdaySuggestions(false);
-        }
-      } catch (err) {
-        console.warn('Error fetching skill suggestions:', err);
-      }
-    }, 150);
-
-    return () => clearTimeout(timer);
-  }, [keyword, sdk]);
 
   useEffect(() => {
     async function loadBackendJobs() {
@@ -247,71 +229,115 @@ function JobDirectoryContent() {
     }
   };
 
-  const filteredJobs = jobsList.filter((job) => {
-    const qLower = keyword.trim().toLowerCase();
-    const matchesKeyword =
-      !qLower ||
-      job.title.toLowerCase().includes(qLower) ||
-      job.companyName.toLowerCase().includes(qLower) ||
-      job.tags.some((t) => t.toLowerCase().includes(qLower)) ||
-      (job.description && job.description.toLowerCase().includes(qLower)) ||
-      job.location.toLowerCase().includes(qLower);
+  const filteredJobs = jobsList
+    .filter((job) => {
+      // 1. Multi-Skills Matching
+      const matchesSkills = (() => {
+        if (selectedSkills.length === 0) return true;
+        return selectedSkills.some((skill) => {
+          const sLower = skill.toLowerCase();
+          if (job.tags && job.tags.some((t) => t.toLowerCase().includes(sLower) || sLower.includes(t.toLowerCase()))) {
+            return true;
+          }
+          if (job.title && job.title.toLowerCase().includes(sLower)) {
+            return true;
+          }
+          if (job.description && job.description.toLowerCase().includes(sLower)) {
+            return true;
+          }
+          return false;
+        });
+      })();
 
-    const locTerm = (!selectedLocation || selectedLocation === 'all')
-      ? ''
-      : selectedLocation.split(',')[0].trim().toLowerCase();
+      // 2. Keyword Matching (for arbitrary text typed in keyword search)
+      const qLower = keyword.trim().toLowerCase();
+      const matchesKeyword =
+        !qLower ||
+        job.title.toLowerCase().includes(qLower) ||
+        job.companyName.toLowerCase().includes(qLower) ||
+        job.tags.some((t) => t.toLowerCase().includes(qLower)) ||
+        (job.description && job.description.toLowerCase().includes(qLower)) ||
+        job.location.toLowerCase().includes(qLower);
 
-    const matchesLocation =
-      !locTerm ||
-      job.location.toLowerCase().includes(locTerm) ||
-      locTerm.includes(job.location.toLowerCase());
+      // 3. Location Matching
+      const locTerm = (!selectedLocation || selectedLocation === 'all')
+        ? ''
+        : selectedLocation.split(',')[0].trim().toLowerCase();
 
-    const catTerm = (!selectedCategory || selectedCategory === 'all')
-      ? ''
-      : selectedCategory.toLowerCase();
+      const matchesLocation =
+        !locTerm ||
+        job.location.toLowerCase().includes(locTerm) ||
+        locTerm.includes(job.location.toLowerCase());
 
-    const matchesCategory = (() => {
-      if (!catTerm) return true;
-      const jc = job.category.toLowerCase();
-      if (jc === catTerm || jc.includes(catTerm) || catTerm.includes(jc)) return true;
-      const words1 = jc.split(/[\s&,/]+/);
-      const words2 = catTerm.split(/[\s&,/]+/);
-      return words1.some((w) => w.length >= 4 && words2.includes(w));
-    })();
+      // 4. Department / Category Matching (Shifted to Sidebar)
+      const catTerm = (!selectedCategory || selectedCategory === 'all')
+        ? ''
+        : selectedCategory.toLowerCase();
 
-    const matchesWorkMode =
-      selectedWorkMode === 'all' || job.workMode === selectedWorkMode;
+      const matchesCategory = (() => {
+        if (!catTerm) return true;
+        const jc = job.category.toLowerCase();
+        if (jc === catTerm || jc.includes(catTerm) || catTerm.includes(jc)) return true;
+        const words1 = jc.split(/[\s&,/]+/);
+        const words2 = catTerm.split(/[\s&,/]+/);
+        return words1.some((w) => w.length >= 4 && words2.includes(w));
+      })();
 
-    const matchesExp = (() => {
-      if (selectedExpRangeId === 'all') return true;
-      const targetRange = masterExpRanges.find((r) => r.id === selectedExpRangeId);
-      if (!targetRange) return true;
-      const jobMin = job.minExperience ?? 0;
-      const jobMax = job.maxExperience ?? 5;
-      return jobMax >= targetRange.minYears && jobMin <= targetRange.maxYears;
-    })();
+      // 5. Work Mode Matching
+      const matchesWorkMode =
+        selectedWorkMode === 'all' || job.workMode === selectedWorkMode;
 
-    const matchesSalary = job.salaryMin >= selectedMinSalary;
+      // 6. Experience Matching (using masterExpRanges synced across top bar & sidebar)
+      const matchesExp = (() => {
+        if (selectedExpRangeId === 'all') return true;
+        const targetRange = masterExpRanges.find((r) => r.id === selectedExpRangeId);
+        if (!targetRange) return true;
+        const jobMin = job.minExperience ?? 0;
+        const jobMax = job.maxExperience ?? 5;
+        return jobMax >= targetRange.minYears && jobMin <= targetRange.maxYears;
+      })();
 
-    return (
-      matchesKeyword &&
-      matchesLocation &&
-      matchesCategory &&
-      matchesWorkMode &&
-      matchesExp &&
-      matchesSalary
-    );
-  });
+      // 7. Salary Matching
+      const matchesSalary = job.salaryMin >= selectedMinSalary;
+
+      return (
+        matchesSkills &&
+        matchesKeyword &&
+        matchesLocation &&
+        matchesCategory &&
+        matchesWorkMode &&
+        matchesExp &&
+        matchesSalary
+      );
+    })
+    .sort((a, b) => {
+      // If skills selected, prioritize jobs matching more skills
+      if (selectedSkills.length > 0) {
+        const scoreA = selectedSkills.filter((s) => {
+          const sl = s.toLowerCase();
+          return a.tags.some((t) => t.toLowerCase().includes(sl)) || a.title.toLowerCase().includes(sl);
+        }).length;
+        const scoreB = selectedSkills.filter((s) => {
+          const sl = s.toLowerCase();
+          return b.tags.some((t) => t.toLowerCase().includes(sl)) || b.title.toLowerCase().includes(sl);
+        }).length;
+        if (scoreB !== scoreA) return scoreB - scoreA;
+      }
+      return 0;
+    });
 
   const pagedJobs = filteredJobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const clearAllFilters = () => {
+    setSelectedSkills([]);
     setKeyword('');
     setSelectedLocation('all');
     setSelectedCategory('all');
     setSelectedWorkMode('all');
     setSelectedExp('all');
+    setSelectedExpRangeId('all');
     setSelectedMinSalary(0);
+    setPage(1);
   };
 
   return (
@@ -337,76 +363,70 @@ function JobDirectoryContent() {
           </a>
         </div>
 
-        {/* Search Inputs Bar with Workday Autocomplete */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-          {/* Keyword Search with Workday Suggestion Popover */}
-          <div className="relative">
-            <Search className="absolute left-3.5 top-3 h-4 w-4 theme-muted" />
-            <input
-              type="text"
-              placeholder="Designation, skills (e.g. java, python)..."
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onFocus={() => {
-                if (workdaySuggestions.length > 0) setShowWorkdaySuggestions(true);
+        {/* Harmonized Main Filter Bar (Matching Home Page: Skills, Experience, Location, Action) */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center pt-2">
+          {/* 1. Skills Multi-select / Keyword Search */}
+          <div className="md:col-span-5 relative">
+            <MultiSkillSearchInput
+              selectedSkills={selectedSkills}
+              onChangeSkills={(skills) => {
+                setSelectedSkills(skills);
+                setPage(1);
               }}
-              className="w-full pl-10 pr-3 py-2.5 rounded-xl border theme-border theme-input theme-text text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-sm font-medium"
+              inputValue={keyword}
+              onChangeInput={(val) => {
+                setKeyword(val);
+                setPage(1);
+              }}
+              placeholder="Skills, job title, keywords..."
             />
-
-            {/* Workday Popover */}
-            {showWorkdaySuggestions && workdaySuggestions.length > 0 && (
-              <div className="absolute left-0 top-full mt-1.5 w-full min-w-[320px] z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-3 space-y-2 animate-in fade-in slide-in-from-top-2">
-                <div className="flex items-center justify-between text-xs pb-1 border-b border-slate-100 dark:border-slate-800">
-                  <span className="font-black text-[10px] uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> Workday-Style Suggestions for &quot;{keyword}&quot;
-                  </span>
-                  <button
-                    onClick={() => setShowWorkdaySuggestions(false)}
-                    className="text-slate-400 hover:text-slate-600"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pt-1">
-                  {workdaySuggestions.map((suggestion, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setKeyword(suggestion);
-                        setShowWorkdaySuggestions(false);
-                      }}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
-                        suggestion.toLowerCase() === keyword.toLowerCase()
-                          ? 'bg-indigo-600 text-white font-bold'
-                          : 'bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-slate-700 dark:text-slate-200 hover:text-indigo-600'
-                      }`}
-                    >
-                      <Tag className="w-3 h-3 opacity-60" />
-                      <span>{suggestion}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
-          <div>
+          {/* 2. Experience Level Dropdown (masterExpRanges) */}
+          <div className="md:col-span-2">
+            <div className="relative">
+              <select
+                value={selectedExpRangeId}
+                onChange={(e) => {
+                  setSelectedExpRangeId(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full px-3 py-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-medium cursor-pointer appearance-none"
+              >
+                <option value="all">All Experience Levels</option>
+                {masterExpRanges.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-slate-400">
+                <Clock className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Location Dropdown */}
+          <div className="md:col-span-3">
             <LocationSearchDropdown
               value={selectedLocation === 'all' ? '' : selectedLocation}
-              onChange={(val) => setSelectedLocation(val || 'all')}
-              placeholder="All Locations / Master Cities..."
+              onChange={(val) => {
+                setSelectedLocation(val || 'all');
+                setPage(1);
+              }}
+              placeholder="Location (City, Country)..."
             />
           </div>
 
-          <div>
-            <SearchableSelect
-              options={CATEGORY_OPTIONS}
-              value={selectedCategory}
-              onChange={setSelectedCategory}
-              placeholder="Department / Functional area..."
-            />
+          {/* 4. Action: Reset Filters */}
+          <div className="md:col-span-2">
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="w-full py-2.5 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Reset
+            </button>
           </div>
         </div>
       </div>
@@ -428,8 +448,36 @@ function JobDirectoryContent() {
             </button>
           </div>
 
-          {/* Work Mode Filter */}
+          {/* Department / Functional Area Filter (Shifted from Main to Side Filter) */}
           <div className="space-y-2">
+            <label className="block text-xs font-bold theme-text uppercase tracking-wider flex items-center justify-between">
+              <span>Department / Area</span>
+              {selectedCategory !== 'all' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory('all');
+                    setPage(1);
+                  }}
+                  className="text-[10px] text-indigo-500 font-bold hover:underline cursor-pointer"
+                >
+                  Clear
+                </button>
+              )}
+            </label>
+            <SearchableSelect
+              options={CATEGORY_OPTIONS}
+              value={selectedCategory}
+              onChange={(cat) => {
+                setSelectedCategory(cat);
+                setPage(1);
+              }}
+              placeholder="All Departments..."
+            />
+          </div>
+
+          {/* Work Mode Filter */}
+          <div className="space-y-2 border-t theme-border pt-4">
             <label className="block text-xs font-bold theme-text uppercase tracking-wider">
               Work Mode / Environment
             </label>
@@ -440,7 +488,10 @@ function JobDirectoryContent() {
                     type="radio"
                     name="workMode"
                     checked={selectedWorkMode === mode}
-                    onChange={() => setSelectedWorkMode(mode)}
+                    onChange={() => {
+                      setSelectedWorkMode(mode);
+                      setPage(1);
+                    }}
                     className="accent-indigo-600"
                   />
                   <span>{mode === 'all' ? 'All Work Modes' : mode}</span>
@@ -455,8 +506,11 @@ function JobDirectoryContent() {
               <span>Experience Level</span>
               {selectedExpRangeId !== 'all' && (
                 <button
-                  onClick={() => setSelectedExpRangeId('all')}
-                  className="text-[10px] text-indigo-500 font-bold hover:underline"
+                  onClick={() => {
+                    setSelectedExpRangeId('all');
+                    setPage(1);
+                  }}
+                  className="text-[10px] text-indigo-500 font-bold hover:underline cursor-pointer"
                 >
                   Clear
                 </button>
@@ -468,7 +522,10 @@ function JobDirectoryContent() {
                   type="radio"
                   name="expYears"
                   checked={selectedExpRangeId === 'all'}
-                  onChange={() => setSelectedExpRangeId('all')}
+                  onChange={() => {
+                    setSelectedExpRangeId('all');
+                    setPage(1);
+                  }}
                   className="accent-indigo-600"
                 />
                 <span className={selectedExpRangeId === 'all' ? 'font-bold text-indigo-600 dark:text-indigo-400' : ''}>
@@ -482,7 +539,10 @@ function JobDirectoryContent() {
                     type="radio"
                     name="expYears"
                     checked={selectedExpRangeId === rng.id}
-                    onChange={() => setSelectedExpRangeId(rng.id)}
+                    onChange={() => {
+                      setSelectedExpRangeId(rng.id);
+                      setPage(1);
+                    }}
                     className="accent-indigo-600"
                   />
                   <span className={selectedExpRangeId === rng.id ? 'font-bold text-indigo-600 dark:text-indigo-400' : ''}>

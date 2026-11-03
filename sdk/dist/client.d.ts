@@ -82,6 +82,7 @@ export declare class JobPortalSdk {
         experienceLevel?: string;
         minExp?: number;
         maxExp?: number;
+        skills?: string;
     }): Promise<JobListing[]>;
     getJobListings(params?: {
         category?: string;
@@ -91,6 +92,7 @@ export declare class JobPortalSdk {
         experienceLevel?: string;
         minExp?: number;
         maxExp?: number;
+        skills?: string;
     }): Promise<JobListing[]>;
     getJobById(id: string): Promise<JobListing>;
     createJob(jobData: Partial<JobListing>): Promise<JobListing>;

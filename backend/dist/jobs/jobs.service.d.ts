@@ -54,7 +54,7 @@ export declare class JobsService implements OnModuleInit {
     constructor(jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, userRepo: Repository<User>, subRepo: Repository<TenantSubscription>);
     onModuleInit(): Promise<void>;
     expireOverdueJobs(): Promise<number>;
-    findAll(category?: string, query?: string, tenantId?: string, location?: string, experienceLevel?: string, minExp?: number, maxExp?: number, includeExpired?: boolean): Promise<JobListingDto[]>;
+    findAll(category?: string, query?: string, tenantId?: string, location?: string, experienceLevel?: string, minExp?: number, maxExp?: number, includeExpired?: boolean, skills?: string): Promise<JobListingDto[]>;
     findOne(id: string): Promise<JobListingDto>;
     getActiveJobsCountForTenant(tenantId: string): Promise<number>;
     getPlanJobLimitForTenant(tenantId: string): Promise<number>;

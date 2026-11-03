@@ -21,11 +21,11 @@ let JobsController = class JobsController {
     constructor(jobsService) {
         this.jobsService = jobsService;
     }
-    async findAll(category, query, tenantId, location, experienceLevel, minExp, maxExp, includeExpired) {
+    async findAll(category, query, tenantId, location, experienceLevel, minExp, maxExp, includeExpired, skills) {
         const min = minExp ? parseInt(minExp, 10) : undefined;
         const max = maxExp ? parseInt(maxExp, 10) : undefined;
         const incExp = includeExpired === 'true' || includeExpired === '1';
-        return await this.jobsService.findAll(category, query, tenantId, location, experienceLevel, min, max, incExp);
+        return await this.jobsService.findAll(category, query, tenantId, location, experienceLevel, min, max, incExp, skills);
     }
     async findOne(id) {
         return await this.jobsService.findOne(id);
@@ -61,6 +61,7 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'minExp', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'maxExp', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'includeExpired', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'skills', required: false }),
     __param(0, (0, common_1.Query)('category')),
     __param(1, (0, common_1.Query)('query')),
     __param(2, (0, common_1.Query)('tenantId')),
@@ -69,8 +70,9 @@ __decorate([
     __param(5, (0, common_1.Query)('minExp')),
     __param(6, (0, common_1.Query)('maxExp')),
     __param(7, (0, common_1.Query)('includeExpired')),
+    __param(8, (0, common_1.Query)('skills')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, String, String, String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], JobsController.prototype, "findAll", null);
 __decorate([

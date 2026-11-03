@@ -7,6 +7,7 @@ import { JobCard } from '../components/JobCard';
 import { PricingTable } from '../components/PricingTable';
 import { SearchableSelect } from '../components/SearchableSelect';
 import { LocationSearchDropdown } from '../components/LocationSearchDropdown';
+import { MultiSkillSearchInput } from '../components/MultiSkillSearchInput';
 import { JobListing } from '@job-portal/sdk';
 import { Search, MapPin, Building2, Award, Sparkles, Filter, ShieldCheck, ArrowRight, Palette, CheckCircle2, Tag, X, Clock } from 'lucide-react';
 
@@ -14,6 +15,7 @@ export default function HomePage() {
   const router = useRouter();
   const { theme, sdk, user } = useTheme();
   const [jobs, setJobs] = useState<JobListing[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -48,32 +50,6 @@ export default function HomePage() {
     loadRanges();
   }, [sdk]);
 
-  // Workday-style keyword suggestions query
-  useEffect(() => {
-    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
-      setWorkdaySuggestions([]);
-      setShowWorkdaySuggestions(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        const res = await sdk.suggestSkills(searchQuery.trim());
-        if (res && res.suggestions && res.suggestions.length > 0) {
-          setWorkdaySuggestions(res.suggestions);
-          setShowWorkdaySuggestions(true);
-        } else {
-          setWorkdaySuggestions([]);
-          setShowWorkdaySuggestions(false);
-        }
-      } catch (err) {
-        console.warn('Error fetching skill suggestions:', err);
-      }
-    }, 150);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, sdk]);
-
   // Fetch live matching jobs for homepage
   useEffect(() => {
     let isCancelled = false;
@@ -87,16 +63,33 @@ export default function HomePage() {
         const minExp = selectedRange ? selectedRange.minYears : undefined;
         const maxExp = selectedRange ? selectedRange.maxYears : undefined;
 
+        const skillsQuery = selectedSkills.length > 0 ? selectedSkills.join(', ') : (searchQuery.trim() || undefined);
+
         const data = await sdk.getJobs({
           category: cat,
           location: loc,
-          query: searchQuery.trim() || undefined,
+          query: skillsQuery,
+          skills: selectedSkills.length > 0 ? selectedSkills.join(',') : undefined,
           minExp,
           maxExp,
         });
         if (!isCancelled) {
           // Requirement: Only featured jobs visible on home page, and strictly omit expired jobs
-          const featuredOnly = data.filter((j) => Boolean(j.isFeatured) && !j.isExpired && j.status !== 'EXPIRED');
+          let featuredOnly = data.filter((j) => Boolean(j.isFeatured) && !j.isExpired && j.status !== 'EXPIRED');
+          
+          if (selectedSkills.length > 0) {
+            featuredOnly = featuredOnly.filter((j) => {
+              return selectedSkills.some((s) => {
+                const sLower = s.toLowerCase();
+                return (
+                  (j.skills && j.skills.some((sk) => sk.toLowerCase().includes(sLower) || sLower.includes(sk.toLowerCase()))) ||
+                  j.title.toLowerCase().includes(sLower) ||
+                  (j.description && j.description.toLowerCase().includes(sLower))
+                );
+              });
+            });
+          }
+
           setJobs(featuredOnly);
         }
       } catch (err) {
@@ -112,16 +105,17 @@ export default function HomePage() {
       isCancelled = true;
       clearTimeout(debounceTimer);
     };
-  }, [sdk, selectedCategory, selectedLocation, selectedExpRangeId, searchQuery, masterExpRanges]);
+  }, [sdk, selectedCategory, selectedLocation, selectedExpRangeId, searchQuery, selectedSkills, masterExpRanges]);
 
   // Handle Search Submission & Navigation to /jobs
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setShowWorkdaySuggestions(false);
     const params = new URLSearchParams();
+    if (selectedSkills.length > 0) params.append('skills', selectedSkills.join(','));
     if (searchQuery.trim()) params.append('query', searchQuery.trim());
     if (selectedExpRangeId && selectedExpRangeId !== 'all') params.append('expRange', selectedExpRangeId);
-    if (selectedLocation && selectedLocation !== 'all') params.append('location', selectedLocation);
+    if (selectedLocation && selectedLocation !== 'all' && selectedLocation.trim()) params.append('location', selectedLocation);
     if (selectedCategory && selectedCategory !== 'All' && selectedCategory !== 'all') params.append('category', selectedCategory);
 
     router.push(`/jobs?${params.toString()}`);
@@ -149,81 +143,20 @@ export default function HomePage() {
               className="max-w-5xl mx-auto glass-card rounded-2xl p-3 sm:p-4 shadow-xl border-slate-200 dark:border-slate-700/60 mt-8"
             >
               <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
-                {/* 1. Skills, Job Title, Keywords Input with Workday Autocomplete */}
-                <div className="md:col-span-4 relative">
-                  <div className="flex items-center gap-2.5 px-3 py-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500">
-                    <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onFocus={() => {
-                        if (workdaySuggestions.length > 0) setShowWorkdaySuggestions(true);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleSearch(e);
-                        }
-                      }}
-                      placeholder="Skills, Job title, keywords..."
-                      className="w-full bg-transparent text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none font-medium"
-                    />
-                    {searchQuery && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSearchQuery('');
-                          setWorkdaySuggestions([]);
-                        }}
-                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Workday Popover Suggestions Dropdown */}
-                  {showWorkdaySuggestions && workdaySuggestions.length > 0 && (
-                    <div className="absolute left-0 top-full mt-2 w-full min-w-[300px] z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-3 space-y-2 text-left">
-                      <div className="flex items-center justify-between text-xs pb-1 border-b border-slate-100 dark:border-slate-800">
-                        <span className="font-bold text-[10px] uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5" /> Skill Suggestions for &quot;{searchQuery}&quot;
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowWorkdaySuggestions(false)}
-                          className="text-slate-400 hover:text-slate-600"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pt-1">
-                        {workdaySuggestions.map((suggestion, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              setSearchQuery(suggestion);
-                              setShowWorkdaySuggestions(false);
-                            }}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all ${
-                              suggestion.toLowerCase() === searchQuery.toLowerCase()
-                                ? 'bg-indigo-600 text-white font-bold'
-                                : 'bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-slate-700 dark:text-slate-200 hover:text-indigo-600'
-                            }`}
-                          >
-                            <Tag className="w-3 h-3 opacity-60" />
-                            <span>{suggestion}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                {/* 1. Skills Multi-Select with Workday Autocomplete & Chips */}
+                <div className="md:col-span-5 relative">
+                  <MultiSkillSearchInput
+                    selectedSkills={selectedSkills}
+                    onChangeSkills={setSelectedSkills}
+                    inputValue={searchQuery}
+                    onChangeInput={setSearchQuery}
+                    placeholder="Skills, job title, keywords..."
+                    onSearch={handleSearch}
+                  />
                 </div>
 
                 {/* 2. Experience Level Dropdown */}
-                <div className="md:col-span-3">
+                <div className="md:col-span-2">
                   <div className="relative">
                     <select
                       value={selectedExpRangeId}
@@ -360,9 +293,9 @@ export default function HomePage() {
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Hand-picked verified premium positions. Explore all active listings in the job directory.
-              {(searchQuery || selectedLocation || selectedCategory !== 'All') && (
+              {(searchQuery || selectedSkills.length > 0 || selectedLocation || selectedCategory !== 'All') && (
                 <span className="ml-1 text-indigo-600 dark:text-indigo-400 font-medium">
-                  • Filtered {searchQuery ? `by "${searchQuery}"` : ''} {selectedLocation ? `in ${selectedLocation}` : ''} {selectedCategory !== 'All' ? `[${selectedCategory}]` : ''}
+                  • Filtered {selectedSkills.length > 0 ? `[Skills: ${selectedSkills.join(', ')}]` : ''} {searchQuery ? `by "${searchQuery}"` : ''} {selectedLocation ? `in ${selectedLocation}` : ''} {selectedCategory !== 'All' ? `[${selectedCategory}]` : ''}
                 </span>
               )}
             </p>
@@ -383,10 +316,11 @@ export default function HomePage() {
                 {cat.label}
               </button>
             ))}
-            {(searchQuery || selectedLocation || selectedCategory !== 'All') && (
+            {(searchQuery || selectedSkills.length > 0 || selectedLocation || selectedCategory !== 'All') && (
               <button
                 type="button"
                 onClick={() => {
+                  setSelectedSkills([]);
                   setSearchQuery('');
                   setSelectedLocation('');
                   setSelectedCategory('All');
@@ -413,6 +347,7 @@ export default function HomePage() {
             <div className="flex items-center justify-center gap-3 pt-2">
               <button
                 onClick={() => {
+                  setSelectedSkills([]);
                   setSearchQuery('');
                   setSelectedLocation('');
                   setSelectedCategory('All');
