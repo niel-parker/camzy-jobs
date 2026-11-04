@@ -326,3 +326,4 @@ export const GovtJobsCanvasAnalytics: React.FC<GovtJobsCanvasAnalyticsProps> = (
     </div>
   );
 };
+
