@@ -86,3 +86,4 @@ export class GovtJob {
   @UpdateDateColumn()
   updatedAt: Date;
 }
+
