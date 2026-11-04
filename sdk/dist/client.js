@@ -524,6 +524,47 @@ class JobPortalSdk {
             method: 'DELETE',
         });
     }
+    // --- Government Jobs Portal (Bilingual Central & State) ---
+    async getGovtJobs(params) {
+        const q = new URLSearchParams();
+        if (params?.category)
+            q.set('category', params.category);
+        if (params?.state)
+            q.set('state', params.state);
+        if (params?.sector)
+            q.set('sector', params.sector);
+        if (params?.search)
+            q.set('search', params.search);
+        if (params?.status)
+            q.set('status', params.status);
+        const qs = q.toString() ? `?${q.toString()}` : '';
+        return this.request(`/admin/govt-jobs${qs}`);
+    }
+    async getGovtJob(id) {
+        return this.request(`/admin/govt-jobs/${id}`);
+    }
+    async saveGovtJob(job) {
+        if (job.id) {
+            return this.request(`/admin/govt-jobs/${job.id}`, {
+                method: 'PUT',
+                body: JSON.stringify(job),
+            });
+        }
+        return this.request('/admin/govt-jobs', {
+            method: 'POST',
+            body: JSON.stringify(job),
+        });
+    }
+    async deleteGovtJob(id) {
+        return this.request(`/admin/govt-jobs/${id}`, {
+            method: 'DELETE',
+        });
+    }
+    async seedGovtJobDefaults() {
+        return this.request('/admin/govt-jobs/seed-defaults', {
+            method: 'POST',
+        });
+    }
     // --- Super Admin Email Broadcasting ---
     async getBroadcasts() {
         return this.request('/admin/broadcasts');

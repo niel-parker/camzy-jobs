@@ -37,6 +37,7 @@ const faq_item_entity_1 = require("./admin/entities/faq-item.entity");
 const email_broadcast_entity_1 = require("./admin/entities/email-broadcast.entity");
 const restricted_domain_entity_1 = require("./admin/entities/restricted-domain.entity");
 const login_activity_entity_1 = require("./admin/entities/login-activity.entity");
+const govt_job_entity_1 = require("./admin/entities/govt-job.entity");
 const mail_module_1 = require("./mail/mail.module");
 let AppModule = class AppModule {
 };
@@ -72,6 +73,7 @@ exports.AppModule = AppModule = __decorate([
                     email_broadcast_entity_1.EmailBroadcast,
                     restricted_domain_entity_1.RestrictedDomain,
                     login_activity_entity_1.LoginActivity,
+                    govt_job_entity_1.GovtJob,
                 ],
                 synchronize: true,
                 logging: false,

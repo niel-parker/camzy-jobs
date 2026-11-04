@@ -13,6 +13,7 @@ import {
   EmailBroadcastItem,
   ExperienceRangeItem,
   FaqItemData,
+  GovtJobItem,
   JobListing,
   LocationItem,
   SeoConfigItem,
@@ -635,6 +636,53 @@ export class JobPortalSdk {
   async deleteFaq(id: string): Promise<{ success: boolean }> {
     return this.request<{ success: boolean }>(`/admin/faqs/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  // --- Government Jobs Portal (Bilingual Central & State) ---
+  async getGovtJobs(params?: {
+    category?: string;
+    state?: string;
+    sector?: string;
+    search?: string;
+    status?: string;
+  }): Promise<GovtJobItem[]> {
+    const q = new URLSearchParams();
+    if (params?.category) q.set('category', params.category);
+    if (params?.state) q.set('state', params.state);
+    if (params?.sector) q.set('sector', params.sector);
+    if (params?.search) q.set('search', params.search);
+    if (params?.status) q.set('status', params.status);
+    const qs = q.toString() ? `?${q.toString()}` : '';
+    return this.request<GovtJobItem[]>(`/admin/govt-jobs${qs}`);
+  }
+
+  async getGovtJob(id: string): Promise<GovtJobItem> {
+    return this.request<GovtJobItem>(`/admin/govt-jobs/${id}`);
+  }
+
+  async saveGovtJob(job: Partial<GovtJobItem>): Promise<GovtJobItem> {
+    if (job.id) {
+      return this.request<GovtJobItem>(`/admin/govt-jobs/${job.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(job),
+      });
+    }
+    return this.request<GovtJobItem>('/admin/govt-jobs', {
+      method: 'POST',
+      body: JSON.stringify(job),
+    });
+  }
+
+  async deleteGovtJob(id: string): Promise<{ success: boolean; message?: string }> {
+    return this.request<{ success: boolean; message?: string }>(`/admin/govt-jobs/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async seedGovtJobDefaults(): Promise<{ success: boolean; message: string; count: number }> {
+    return this.request<{ success: boolean; message: string; count: number }>('/admin/govt-jobs/seed-defaults', {
+      method: 'POST',
     });
   }
 

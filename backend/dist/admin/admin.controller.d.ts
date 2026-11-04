@@ -19,6 +19,7 @@ import { FaqItem } from './entities/faq-item.entity';
 import { EmailBroadcast } from './entities/email-broadcast.entity';
 import { RestrictedDomain } from './entities/restricted-domain.entity';
 import { LoginActivity } from './entities/login-activity.entity';
+import { GovtJob } from './entities/govt-job.entity';
 export declare class AdminController {
     private readonly appConfigService;
     private readonly jobRepo;
@@ -41,7 +42,8 @@ export declare class AdminController {
     private readonly broadcastRepo;
     private readonly domainRepo;
     private readonly loginActivityRepo;
-    constructor(appConfigService: AppConfigService, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, txnRepo: Repository<BillingTransaction>, userRepo: Repository<User>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>, domainRepo: Repository<RestrictedDomain>, loginActivityRepo: Repository<LoginActivity>);
+    private readonly govtJobRepo;
+    constructor(appConfigService: AppConfigService, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, txnRepo: Repository<BillingTransaction>, userRepo: Repository<User>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>, domainRepo: Repository<RestrictedDomain>, loginActivityRepo: Repository<LoginActivity>, govtJobRepo: Repository<GovtJob>);
     getDashboardMetrics(): Promise<{
         totalJobs: number;
         totalCompanies: number;
@@ -306,5 +308,19 @@ export declare class AdminController {
     }>;
     clearLoginActivities(days?: string): Promise<{
         message: string;
+    }>;
+    private getOfficialDefaultGovtJobs;
+    getGovtJobs(category?: string, state?: string, sector?: string, search?: string, status?: string): Promise<GovtJob[]>;
+    getGovtJob(id: string): Promise<GovtJob>;
+    createGovtJob(body: any): Promise<GovtJob>;
+    updateGovtJob(id: string, body: any): Promise<GovtJob>;
+    deleteGovtJob(id: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    seedGovtJobDefaults(): Promise<{
+        success: boolean;
+        message: string;
+        count: number;
     }>;
 }

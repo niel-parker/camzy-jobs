@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '../context/ThemeContext';
-import { Briefcase, Building2, ShieldCheck, User, LogOut, Menu, X, ChevronDown, Sparkles, LayoutDashboard, Bookmark, FileText, Settings, Users, LogIn } from 'lucide-react';
+import { Briefcase, Building2, ShieldCheck, User, LogOut, Menu, X, ChevronDown, Sparkles, LayoutDashboard, Bookmark, FileText, Settings, Users, LogIn, Landmark } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
@@ -59,6 +59,10 @@ export const Navbar: React.FC = () => {
               </Link>
               <Link href="/jobs" className={`text-xs font-bold transition-colors ${pathname.startsWith('/jobs') ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : 'theme-text hover:text-indigo-500'}`}>
                 Jobs
+              </Link>
+              <Link href="/govt-jobs" className={`text-xs font-bold transition-colors flex items-center gap-1 ${pathname.startsWith('/govt-jobs') ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : 'theme-text hover:text-indigo-500'}`}>
+                <Landmark className="w-3.5 h-3.5 text-amber-500" />
+                <span>Govt. Jobs</span>
               </Link>
               <Link href="/companies" className={`text-xs font-bold transition-colors ${pathname.startsWith('/companies') ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : 'theme-text hover:text-indigo-500'}`}>
                 Companies
@@ -274,6 +278,10 @@ export const Navbar: React.FC = () => {
           <div className="lg:hidden border-t theme-border p-4 theme-surface space-y-3 text-xs font-bold">
             <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="block py-1.5 theme-text hover:text-indigo-500">Home</Link>
             <Link href="/jobs" onClick={() => setIsMobileMenuOpen(false)} className="block py-1.5 theme-text hover:text-indigo-500">Jobs</Link>
+            <Link href="/govt-jobs" onClick={() => setIsMobileMenuOpen(false)} className="block py-1.5 text-amber-600 dark:text-amber-400 font-extrabold flex items-center gap-1.5">
+              <Landmark className="w-3.5 h-3.5" />
+              <span>Govt. Jobs (Sarkari)</span>
+            </Link>
             <Link href="/companies" onClick={() => setIsMobileMenuOpen(false)} className="block py-1.5 theme-text hover:text-indigo-500">Companies</Link>
             <Link href="/blogs" onClick={() => setIsMobileMenuOpen(false)} className="block py-1.5 theme-text hover:text-indigo-500">Blogs</Link>
             <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="block py-1.5 theme-text hover:text-indigo-500">About</Link>

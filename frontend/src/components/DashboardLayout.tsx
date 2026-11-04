@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Briefcase, Users, FileText, Bookmark, Settings, 
   ShieldCheck, Palette, Bell, Search, ChevronLeft, ChevronRight, 
   LogOut, User, Building2, Plus, Sparkles, UserCheck, Lock, LogIn, ChevronDown, Eye, Download,
-  Globe, BookOpen, HelpCircle, Send, CreditCard, Receipt, MapPin, Layers, ShieldAlert, Activity
+  Globe, BookOpen, HelpCircle, Send, CreditCard, Receipt, MapPin, Layers, ShieldAlert, Activity, Landmark
 } from 'lucide-react';
 import { SuperAdminThemeCustomizer } from './SuperAdminThemeCustomizer';
 
@@ -142,6 +142,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
       { label: 'Companies Directory', href: '/admin/tenants', icon: Building2, section: 'Operations & Access' },
 
       { label: 'CMS & Translations', href: '/admin/cms', icon: FileText, section: 'Content & Growth' },
+      { label: 'Govt. Jobs Portal', href: '/admin/govt-jobs', icon: Landmark, badge: 'Sarkari', section: 'Content & Growth' },
       { label: 'Manage Blogs', href: '/admin/blogs', icon: BookOpen, section: 'Content & Growth' },
       { label: 'SEO Meta Manager', href: '/admin/seo', icon: Globe, section: 'Content & Growth' },
       { label: 'FAQs Management', href: '/admin/faqs', icon: HelpCircle, section: 'Content & Growth' },

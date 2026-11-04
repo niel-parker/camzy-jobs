@@ -1,4 +1,4 @@
-import { AdminUserProfile, AppConfig, AuthResponse, BlogCategoryItem, BlogPostItem, BroadcastRecipientResponse, CmsPageItem, CompanyDirectoryItem, CrossCompanyJobItem, DashboardMetrics, EmailBroadcastItem, ExperienceRangeItem, FaqItemData, JobListing, LocationItem, SeoConfigItem, SkillKeywordItem, SkillSuggestionResponse, SubscriptionPackageItem, SystemTaxonomyItem, ThemeConfig, UploadResumeResponse, User, RestrictedDomainItem, AtsApplicationItem, LoginActivityStats, PaginatedLoginActivities } from './types';
+import { AdminUserProfile, AppConfig, AuthResponse, BlogCategoryItem, BlogPostItem, BroadcastRecipientResponse, CmsPageItem, CompanyDirectoryItem, CrossCompanyJobItem, DashboardMetrics, EmailBroadcastItem, ExperienceRangeItem, FaqItemData, GovtJobItem, JobListing, LocationItem, SeoConfigItem, SkillKeywordItem, SkillSuggestionResponse, SubscriptionPackageItem, SystemTaxonomyItem, ThemeConfig, UploadResumeResponse, User, RestrictedDomainItem, AtsApplicationItem, LoginActivityStats, PaginatedLoginActivities } from './types';
 export declare class JobPortalSdk {
     private baseUrl;
     private token;
@@ -206,6 +206,24 @@ export declare class JobPortalSdk {
     saveFaq(faq: Partial<FaqItemData>): Promise<FaqItemData>;
     deleteFaq(id: string): Promise<{
         success: boolean;
+    }>;
+    getGovtJobs(params?: {
+        category?: string;
+        state?: string;
+        sector?: string;
+        search?: string;
+        status?: string;
+    }): Promise<GovtJobItem[]>;
+    getGovtJob(id: string): Promise<GovtJobItem>;
+    saveGovtJob(job: Partial<GovtJobItem>): Promise<GovtJobItem>;
+    deleteGovtJob(id: string): Promise<{
+        success: boolean;
+        message?: string;
+    }>;
+    seedGovtJobDefaults(): Promise<{
+        success: boolean;
+        message: string;
+        count: number;
     }>;
     getBroadcasts(): Promise<EmailBroadcastItem[]>;
     getBroadcastStats(): Promise<Record<string, number>>;

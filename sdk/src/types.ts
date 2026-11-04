@@ -362,6 +362,36 @@ export interface FaqItemData {
   isActive: boolean;
 }
 
+export type GovtJobCategoryType = 'CENTRAL' | 'STATE';
+
+export interface GovtJobItem {
+  id: string;
+  category: GovtJobCategoryType;
+  state?: string;
+  sector: string;
+  titleEn: string;
+  titleHi: string;
+  departmentEn: string;
+  departmentHi: string;
+  totalVacancies: string;
+  qualificationEn?: string;
+  qualificationHi?: string;
+  ageLimit?: string;
+  salaryScale?: string;
+  startDate?: string;
+  lastDate: string;
+  applyUrl: string;
+  notificationUrl?: string;
+  officialWebsiteUrl?: string;
+  descriptionEn?: string;
+  descriptionHi?: string;
+  isActive: boolean;
+  isFeatured: boolean;
+  orderIndex: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface BroadcastRecipient {
   id: string; // display ID (e.g. "12037")
   realId: string;

@@ -21,6 +21,7 @@ import { FaqItem } from './entities/faq-item.entity';
 import { EmailBroadcast } from './entities/email-broadcast.entity';
 import { RestrictedDomain } from './entities/restricted-domain.entity';
 import { LoginActivity } from './entities/login-activity.entity';
+import { GovtJob } from './entities/govt-job.entity';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { LoginActivity } from './entities/login-activity.entity';
       EmailBroadcast,
       RestrictedDomain,
       LoginActivity,
+      GovtJob,
     ]),
   ],
   controllers: [AdminController],

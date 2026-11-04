@@ -39,8 +39,9 @@ const faq_item_entity_1 = require("./entities/faq-item.entity");
 const email_broadcast_entity_1 = require("./entities/email-broadcast.entity");
 const restricted_domain_entity_1 = require("./entities/restricted-domain.entity");
 const login_activity_entity_1 = require("./entities/login-activity.entity");
+const govt_job_entity_1 = require("./entities/govt-job.entity");
 let AdminController = class AdminController {
-    constructor(appConfigService, jobRepo, tenantRepo, candidateRepo, appRepo, subRepo, planRepo, txnRepo, userRepo, locationRepo, skillRepo, expRangeRepo, taxonomyRepo, cmsRepo, blogPostRepo, blogCatRepo, seoRepo, faqRepo, broadcastRepo, domainRepo, loginActivityRepo) {
+    constructor(appConfigService, jobRepo, tenantRepo, candidateRepo, appRepo, subRepo, planRepo, txnRepo, userRepo, locationRepo, skillRepo, expRangeRepo, taxonomyRepo, cmsRepo, blogPostRepo, blogCatRepo, seoRepo, faqRepo, broadcastRepo, domainRepo, loginActivityRepo, govtJobRepo) {
         this.appConfigService = appConfigService;
         this.jobRepo = jobRepo;
         this.tenantRepo = tenantRepo;
@@ -62,6 +63,7 @@ let AdminController = class AdminController {
         this.broadcastRepo = broadcastRepo;
         this.domainRepo = domainRepo;
         this.loginActivityRepo = loginActivityRepo;
+        this.govtJobRepo = govtJobRepo;
     }
     async getDashboardMetrics() {
         const totalJobs = await this.jobRepo.count();
@@ -1659,6 +1661,409 @@ let AdminController = class AdminController {
         }
         return { message: 'Pruned historical login activities, retaining recent 50 records.' };
     }
+    getOfficialDefaultGovtJobs() {
+        return [
+            {
+                category: govt_job_entity_1.GovtJobCategory.CENTRAL,
+                sector: 'UPSC / Civil Services',
+                titleEn: 'UPSC Civil Services (Preliminary) Examination 2026 (IAS / IPS / IFS)',
+                titleHi: 'संघ लोक सेवा आयोग सिविल सेवा (प्रारंभिक) परीक्षा 2026 (आईएएस / आईपीएस)',
+                departmentEn: 'Union Public Service Commission (UPSC)',
+                departmentHi: 'संघ लोक सेवा आयोग (यूपीएससी), भारत सरकार',
+                totalVacancies: '1,056 Posts',
+                qualificationEn: "Graduation Degree in any discipline from a recognized University",
+                qualificationHi: 'मान्यता प्राप्त विश्वविद्यालय से किसी भी विषय में स्नातक डिग्री',
+                ageLimit: '21 - 32 Years',
+                salaryScale: 'Pay Level 10 (₹56,100 - ₹1,77,500)',
+                startDate: '2026-10-15',
+                lastDate: '2026-12-05',
+                applyUrl: 'https://upsconline.nic.in',
+                notificationUrl: 'https://upsc.gov.in',
+                officialWebsiteUrl: 'https://upsc.gov.in',
+                descriptionEn: 'Official national competitive exam for appointment to Indian Administrative Service (IAS), Indian Police Service (IPS), and Indian Foreign Service (IFS).',
+                descriptionHi: 'भारतीय प्रशासनिक सेवा (आईएएस), भारतीय पुलिस सेवा (आईपीएस) एवं भारतीय विदेश सेवा (आईएफएस) हेतु अखिल भारतीय चयन परीक्षा।',
+                isActive: true,
+                isFeatured: true,
+                orderIndex: 1,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.CENTRAL,
+                sector: 'SSC / Staff Selection',
+                titleEn: 'SSC Combined Graduate Level (CGL) 2026 Recruitment for Group B & C Officers',
+                titleHi: 'कर्मचारी चयन आयोग संयुक्त स्नातक स्तरीय (CGL) 2026 अधिकारी भर्ती',
+                departmentEn: 'Staff Selection Commission (SSC), Govt of India',
+                departmentHi: 'कर्मचारी चयन आयोग (एसएससी), भारत सरकार',
+                totalVacancies: '17,727 Posts',
+                qualificationEn: "Bachelor's Degree from a recognized University or Institute",
+                qualificationHi: 'किसी भी मान्यता प्राप्त विश्वविद्यालय से स्नातक डिग्री',
+                ageLimit: '18 - 30 Years',
+                salaryScale: 'Pay Level 4 to 8 (₹25,500 - ₹1,51,100)',
+                startDate: '2026-10-01',
+                lastDate: '2026-11-28',
+                applyUrl: 'https://ssc.gov.in',
+                notificationUrl: 'https://ssc.gov.in',
+                officialWebsiteUrl: 'https://ssc.gov.in',
+                descriptionEn: 'Recruitment of Assistant Section Officers, Income Tax Inspectors, Central Excise Inspectors, and Sub-Inspectors across Union Ministries.',
+                descriptionHi: 'केंद्रीय मंत्रालयों एवं विभागों में सहायक अनुभाग अधिकारी, आयकर निरीक्षक, उत्पाद शुल्क निरीक्षक व उपनिरीक्षक पदों पर भर्ती।',
+                isActive: true,
+                isFeatured: true,
+                orderIndex: 2,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.CENTRAL,
+                sector: 'Railways / RRB',
+                titleEn: 'Railway RRB Assistant Loco Pilot (ALP) & Technicians Recruitment 2026',
+                titleHi: 'रेलवे भर्ती बोर्ड सहायक लोको पायलट (ALP) एवं तकनीशियन भर्ती 2026',
+                departmentEn: 'Ministry of Railways (Railway Recruitment Boards)',
+                departmentHi: 'रेल मंत्रालय (रेलवे भर्ती बोर्ड - आरआरबी)',
+                totalVacancies: '18,799 Posts',
+                qualificationEn: 'Matriculation / 10th Pass plus ITI in specified trades OR Diploma in Engineering',
+                qualificationHi: '10वीं उत्तीर्ण साथ में संबंधित ट्रेड में आईटीआई अथवा इंजीनियरिंग डिप्लोमा',
+                ageLimit: '18 - 30 Years',
+                salaryScale: 'Pay Level 2 (₹19,900 - ₹63,200)',
+                startDate: '2026-09-20',
+                lastDate: '2026-11-25',
+                applyUrl: 'https://www.rrbapply.gov.in',
+                notificationUrl: 'https://indianrailways.gov.in',
+                officialWebsiteUrl: 'https://indianrailways.gov.in',
+                descriptionEn: 'Direct recruitment for Assistant Loco Pilots and Technician Grade III across 21 Railway Recruitment Board zones.',
+                descriptionHi: '21 रेलवे भर्ती बोर्ड जोनों में सहायक लोको पायलट एवं तकनीशियन ग्रेड 3 के पदों पर राष्ट्रव्यापी सीधी भर्ती।',
+                isActive: true,
+                isFeatured: true,
+                orderIndex: 3,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.CENTRAL,
+                sector: 'Banking / IBPS',
+                titleEn: 'IBPS Probationary Officers (PO/MT XIV) Recruitment in Public Sector Banks',
+                titleHi: 'आईबीपीएस राष्ट्रीयकृत बैंकों में प्रोबेशनरी ऑफिसर (पीओ) भर्ती 2026',
+                departmentEn: 'Institute of Banking Personnel Selection (IBPS)',
+                departmentHi: 'बैंकिंग कार्मिक चयन संस्थान (आईबीपीएस)',
+                totalVacancies: '4,455 Posts',
+                qualificationEn: 'Graduation in any discipline from a recognized University',
+                qualificationHi: 'किसी भी मान्यता प्राप्त विश्वविद्यालय से किसी भी संकाय में स्नातक',
+                ageLimit: '20 - 30 Years',
+                salaryScale: '₹36,000 - ₹63,840 + DA, HRA, CCA',
+                startDate: '2026-10-10',
+                lastDate: '2026-11-30',
+                applyUrl: 'https://www.ibps.in',
+                notificationUrl: 'https://www.ibps.in',
+                officialWebsiteUrl: 'https://www.ibps.in',
+                descriptionEn: 'Common Recruitment Process for Probationary Officers and Management Trainees in participating 11 public sector banks.',
+                descriptionHi: '11 प्रमुख सार्वजनिक क्षेत्र के राष्ट्रीयकृत बैंकों में प्रोबेशनरी ऑफिसर पदों पर नियुक्ति हेतु सामान्य भर्ती प्रक्रिया।',
+                isActive: true,
+                isFeatured: false,
+                orderIndex: 4,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.CENTRAL,
+                sector: 'Defence / Armed Forces',
+                titleEn: 'Indian Armed Forces Combined Defence Services (CDS) & Agniveer Entry 2026',
+                titleHi: 'भारतीय सेना, नौसेना एवं वायुसेना संयुक्त रक्षा सेवा (CDS / अग्निवीर) 2026',
+                departmentEn: 'Ministry of Defence, Government of India',
+                departmentHi: 'रक्षा मंत्रालय, भारत सरकार',
+                totalVacancies: '3,500 Posts',
+                qualificationEn: '12th Pass / Graduate Degree depending on army or air force branch',
+                qualificationHi: '12वीं अथवा स्नातक डिग्री संबंधित सेना शाखा एवं कैडर अनुसार',
+                ageLimit: '17.5 - 24 Years',
+                salaryScale: '₹30,000 - ₹56,100 + Military Allowances',
+                startDate: '2026-10-05',
+                lastDate: '2026-12-10',
+                applyUrl: 'https://joinindianarmy.nic.in',
+                notificationUrl: 'https://mod.gov.in',
+                officialWebsiteUrl: 'https://mod.gov.in',
+                descriptionEn: 'Commissioned officers and technical specialists entry into Indian Army, Navy, and Air Force academies.',
+                descriptionHi: 'भारतीय थलसेना, नौसेना एवं वायुसेना अकादमियों में अधिकारी एवं तकनीकी पदों पर भर्ती।',
+                isActive: true,
+                isFeatured: false,
+                orderIndex: 5,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.STATE,
+                state: 'Uttar Pradesh',
+                sector: 'Police / Law Enforcement',
+                titleEn: 'UP Police Sub Inspector (SI) & Reserve Civil Constable Recruitment 2026',
+                titleHi: 'उत्तर प्रदेश पुलिस उपनिरीक्षक (एसआई) एवं नागरिक आरक्षी भर्ती 2026',
+                departmentEn: 'Uttar Pradesh Police Recruitment & Promotion Board (UPPRPB)',
+                departmentHi: 'उत्तर प्रदेश पुलिस भर्ती एवं प्रोन्नति बोर्ड (यूपीपीआरपीबी)',
+                totalVacancies: '60,244 Posts',
+                qualificationEn: '12th Pass for Constable / Bachelor Degree for Sub Inspector',
+                qualificationHi: 'कांस्टेबल पद हेतु 12वीं / उपनिरीक्षक पद हेतु किसी भी विषय में स्नातक',
+                ageLimit: '18 - 25 Years',
+                salaryScale: 'Pay Level 3 & Level 6 (₹21,700 - ₹1,12,400)',
+                startDate: '2026-10-01',
+                lastDate: '2026-12-15',
+                applyUrl: 'https://uppbpb.gov.in',
+                notificationUrl: 'https://uppbpb.gov.in',
+                officialWebsiteUrl: 'https://uppbpb.gov.in',
+                descriptionEn: 'Historic mega recruitment drive for Civil Police Constables, Firemen, and Sub-Inspectors across Uttar Pradesh.',
+                descriptionHi: 'उत्तर प्रदेश के विभिन्न जनपदों में नागरिक पुलिस, पीएसी एवं अग्निशमन सेवा में ऐतिहासिक सिपाही एवं दरोगा भर्ती।',
+                isActive: true,
+                isFeatured: true,
+                orderIndex: 6,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.STATE,
+                state: 'Bihar',
+                sector: 'State PSC / Civil Services',
+                titleEn: 'BPSC 70th Integrated Combined Competitive Examination (CCE) 2026',
+                titleHi: 'बिहार लोक सेवा आयोग (बीपीएससी) 70वीं संयुक्त प्रतियोगी परीक्षा 2026',
+                departmentEn: 'Bihar Public Service Commission (BPSC), Patna',
+                departmentHi: 'बिहार लोक सेवा आयोग (बीपीएससी), पटना',
+                totalVacancies: '1,957 Posts',
+                qualificationEn: 'Graduation in any discipline from a recognized University',
+                qualificationHi: 'किसी भी मान्यता प्राप्त विश्वविद्यालय से स्नातक डिग्री',
+                ageLimit: '20 - 37 Years',
+                salaryScale: 'Pay Level 7 to Level 9 (₹44,900 - ₹1,67,800)',
+                startDate: '2026-09-28',
+                lastDate: '2026-11-25',
+                applyUrl: 'https://bpsc.bih.nic.in',
+                notificationUrl: 'https://bpsc.bih.nic.in',
+                officialWebsiteUrl: 'https://bpsc.bih.nic.in',
+                descriptionEn: 'State administrative executive recruitment for SDM, DSP, Revenue Officers, and Block Development Officers in Bihar.',
+                descriptionHi: 'बिहार प्रशासनिक सेवा, बिहार पुलिस सेवा (डीएसपी), राजस्व अधिकारी एवं प्रखंड विकास पदाधिकारी हेतु संयुक्त परीक्षा।',
+                isActive: true,
+                isFeatured: true,
+                orderIndex: 7,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.STATE,
+                state: 'Maharashtra',
+                sector: 'State PSC / Administration',
+                titleEn: 'Maharashtra State Services Gazetted Combined Preliminary Examination 2026',
+                titleHi: 'महाराष्ट्र राज्य सेवा संयुक्त पूर्व परीक्षा 2026 (एमपीएससी राजपत्रित)',
+                departmentEn: 'Maharashtra Public Service Commission (MPSC)',
+                departmentHi: 'महाराष्ट्र लोक सेवा आयोग (एमपीएससी), मुंबई',
+                totalVacancies: '1,030 Posts',
+                qualificationEn: 'Degree from a statutory University with working knowledge of Marathi',
+                qualificationHi: 'मान्यता प्राप्त विद्यापीठाची पदवी व मराठी भाषेचे परिपूर्ण ज्ञान',
+                ageLimit: '19 - 38 Years',
+                salaryScale: 'Pay Matrix S-14 to S-20 (₹38,600 - ₹1,22,800)',
+                startDate: '2026-10-05',
+                lastDate: '2026-12-01',
+                applyUrl: 'https://mpsconline.gov.in',
+                notificationUrl: 'https://mpsc.gov.in',
+                officialWebsiteUrl: 'https://mpsc.gov.in',
+                descriptionEn: 'Class A and Class B gazetted administrative posts under Govt of Maharashtra.',
+                descriptionHi: 'महाराष्ट्र शासनाच्या विविध विभागांमधील वर्ग १ आणि वर्ग २ च्या राजपत्रित पदांसाठी परीक्षा।',
+                isActive: true,
+                isFeatured: false,
+                orderIndex: 8,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.STATE,
+                state: 'Rajasthan',
+                sector: 'Revenue & Accounts',
+                titleEn: 'RSMSSB Rajasthan Patwari & Junior Accountant Recruitment 2026',
+                titleHi: 'राजस्थान कर्मचारी चयन बोर्ड (RSMSSB) पटवारी एवं कनिष्ठ लेखाकार 2026',
+                departmentEn: 'Rajasthan Staff Selection Board, Jaipur (RSMSSB)',
+                departmentHi: 'राजस्थान कर्मचारी चयन बोर्ड, जयपुर (आरएसएमएसएसबी)',
+                totalVacancies: '2,998 Posts',
+                qualificationEn: 'Graduation + RSCIT or equivalent recognized computer qualification',
+                qualificationHi: 'स्नातक उपाधि एवं आरएससीआईटी अथवा समकक्ष कंप्यूटर दक्षता प्रमाण पत्र',
+                ageLimit: '18 - 40 Years',
+                salaryScale: 'Pay Matrix L-5 & L-10 (₹20,800 - ₹1,05,500)',
+                startDate: '2026-10-12',
+                lastDate: '2026-11-20',
+                applyUrl: 'https://sso.rajasthan.gov.in',
+                notificationUrl: 'https://rsmssb.rajasthan.gov.in',
+                officialWebsiteUrl: 'https://rsmssb.rajasthan.gov.in',
+                descriptionEn: 'Revenue department patwari, land records inspectors, and junior accountants in Rajasthan Govt.',
+                descriptionHi: 'राजस्थान राजस्व विभाग में पटवारी, भू-अभिलेख निरीक्षक एवं अधीनस्थ लेखा सेवा में भर्ती।',
+                isActive: true,
+                isFeatured: false,
+                orderIndex: 9,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.STATE,
+                state: 'Delhi',
+                sector: 'Teaching / Education',
+                titleEn: 'Delhi DSSSB TGT, PGT & Primary Teachers Recruitment 2026',
+                titleHi: 'दिल्ली अधीनस्थ सेवा चयन बोर्ड (DSSSB) शिक्षक भर्ती 2026',
+                departmentEn: 'Delhi Subordinate Services Selection Board (DSSSB), Govt of NCT Delhi',
+                departmentHi: 'दिल्ली अधीनस्थ सेवा चयन बोर्ड (डीएसएसएसबी), दिल्ली सरकार',
+                totalVacancies: '4,214 Posts',
+                qualificationEn: 'B.Ed / CTET Qualified with relevant Bachelor or Master Degree',
+                qualificationHi: 'संबंधित विषय में स्नातक / स्नातकोत्तर साथ में बीएड एवं सीटीईटी उत्तीर्ण',
+                ageLimit: 'Up to 30 / 36 Years',
+                salaryScale: 'Pay Level 7 to Level 8 (₹44,900 - ₹1,51,100)',
+                startDate: '2026-10-18',
+                lastDate: '2026-12-10',
+                applyUrl: 'https://dsssbonline.nic.in',
+                notificationUrl: 'https://dsssb.delhi.gov.in',
+                officialWebsiteUrl: 'https://dsssb.delhi.gov.in',
+                descriptionEn: 'Teaching faculties recruitment for Directorate of Education and Municipal Corporation of Delhi.',
+                descriptionHi: 'दिल्ली सरकार शिक्षा निदेशालय एवं दिल्ली नगर निगम स्कूलों में प्रशिक्षित स्नातक शिक्षक भर्ती।',
+                isActive: true,
+                isFeatured: true,
+                orderIndex: 10,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.STATE,
+                state: 'Madhya Pradesh',
+                sector: 'Police & Security',
+                titleEn: 'MPESB Madhya Pradesh Police Constable & Sub Inspector Recruitment 2026',
+                titleHi: 'मध्य प्रदेश कर्मचारी चयन मंडल (MPESB) पुलिस आरक्षक एवं एसआई भर्ती 2026',
+                departmentEn: 'Madhya Pradesh Employees Selection Board (MPESB), Bhopal',
+                departmentHi: 'मध्य प्रदेश कर्मचारी चयन मंडल (एमपीईएसबी), भोपाल',
+                totalVacancies: '7,500 Posts',
+                qualificationEn: '10th / 12th Pass for Constable, Graduate for Sub Inspector',
+                qualificationHi: 'कांस्टेबल हेतु 10वीं/12वीं, उपनिरीक्षक हेतु किसी भी संकाय में स्नातक',
+                ageLimit: '18 - 36 Years',
+                salaryScale: '₹19,500 - ₹62,000',
+                startDate: '2026-10-08',
+                lastDate: '2026-11-26',
+                applyUrl: 'https://esb.mp.gov.in',
+                notificationUrl: 'https://esb.mp.gov.in',
+                officialWebsiteUrl: 'https://esb.mp.gov.in',
+                descriptionEn: 'Statewide recruitment for Special Armed Force (SAF) and District Police Force in MP.',
+                descriptionHi: 'मध्य प्रदेश विशेष सशस्त्र बल (एसएएफ) एवं जिला पुलिस बल में आरक्षक एवं उपनिरीक्षक भर्ती।',
+                isActive: true,
+                isFeatured: false,
+                orderIndex: 11,
+            },
+        ];
+    }
+    async getGovtJobs(category, state, sector, search, status) {
+        const count = await this.govtJobRepo.count();
+        if (count === 0) {
+            const defaults = this.getOfficialDefaultGovtJobs();
+            for (const item of defaults) {
+                await this.govtJobRepo.save(this.govtJobRepo.create(item));
+            }
+        }
+        const qb = this.govtJobRepo.createQueryBuilder('job');
+        if (category && category !== 'ALL') {
+            qb.andWhere('job.category = :category', { category });
+        }
+        if (state && state !== 'ALL') {
+            qb.andWhere('job.state = :state', { state });
+        }
+        if (sector && sector !== 'ALL') {
+            qb.andWhere('job.sector = :sector', { sector });
+        }
+        if (status === 'active') {
+            qb.andWhere('job.isActive = :isActive', { isActive: true });
+        }
+        else if (status === 'inactive') {
+            qb.andWhere('job.isActive = :isActive', { isActive: false });
+        }
+        if (search && search.trim()) {
+            const term = `%${search.trim().toLowerCase()}%`;
+            qb.andWhere('(LOWER(job.titleEn) LIKE :term OR LOWER(job.titleHi) LIKE :term OR LOWER(job.departmentEn) LIKE :term OR LOWER(job.departmentHi) LIKE :term OR LOWER(job.sector) LIKE :term OR LOWER(job.state) LIKE :term)', { term });
+        }
+        qb.orderBy('job.orderIndex', 'ASC').addOrderBy('job.createdAt', 'DESC');
+        return await qb.getMany();
+    }
+    async getGovtJob(id) {
+        const job = await this.govtJobRepo.findOne({ where: { id } });
+        if (!job) {
+            throw new common_1.NotFoundException(`Govt job notice with ID '${id}' not found`);
+        }
+        return job;
+    }
+    async createGovtJob(body) {
+        if (!body.titleEn || !body.departmentEn || !body.lastDate || !body.applyUrl) {
+            throw new common_1.BadRequestException('English title, department, last date, and official apply URL are required');
+        }
+        const job = this.govtJobRepo.create({
+            category: body.category === 'STATE' ? govt_job_entity_1.GovtJobCategory.STATE : govt_job_entity_1.GovtJobCategory.CENTRAL,
+            state: body.category === 'STATE' ? (body.state || 'General') : null,
+            sector: body.sector || 'General',
+            titleEn: body.titleEn,
+            titleHi: body.titleHi || body.titleEn,
+            departmentEn: body.departmentEn,
+            departmentHi: body.departmentHi || body.departmentEn,
+            totalVacancies: body.totalVacancies || 'Multiple Posts',
+            qualificationEn: body.qualificationEn || '',
+            qualificationHi: body.qualificationHi || body.qualificationEn || '',
+            ageLimit: body.ageLimit || '',
+            salaryScale: body.salaryScale || '',
+            startDate: body.startDate || '',
+            lastDate: body.lastDate,
+            applyUrl: body.applyUrl,
+            notificationUrl: body.notificationUrl || '',
+            officialWebsiteUrl: body.officialWebsiteUrl || '',
+            descriptionEn: body.descriptionEn || '',
+            descriptionHi: body.descriptionHi || '',
+            isActive: body.isActive !== undefined ? Boolean(body.isActive) : true,
+            isFeatured: body.isFeatured !== undefined ? Boolean(body.isFeatured) : false,
+            orderIndex: Number(body.orderIndex) || 0,
+        });
+        return await this.govtJobRepo.save(job);
+    }
+    async updateGovtJob(id, body) {
+        const job = await this.govtJobRepo.findOne({ where: { id } });
+        if (!job) {
+            throw new common_1.NotFoundException(`Govt job with ID '${id}' not found`);
+        }
+        if (body.category !== undefined) {
+            job.category = body.category === 'STATE' ? govt_job_entity_1.GovtJobCategory.STATE : govt_job_entity_1.GovtJobCategory.CENTRAL;
+        }
+        if (body.state !== undefined)
+            job.state = body.state;
+        if (body.sector !== undefined)
+            job.sector = body.sector;
+        if (body.titleEn !== undefined)
+            job.titleEn = body.titleEn;
+        if (body.titleHi !== undefined)
+            job.titleHi = body.titleHi;
+        if (body.departmentEn !== undefined)
+            job.departmentEn = body.departmentEn;
+        if (body.departmentHi !== undefined)
+            job.departmentHi = body.departmentHi;
+        if (body.totalVacancies !== undefined)
+            job.totalVacancies = body.totalVacancies;
+        if (body.qualificationEn !== undefined)
+            job.qualificationEn = body.qualificationEn;
+        if (body.qualificationHi !== undefined)
+            job.qualificationHi = body.qualificationHi;
+        if (body.ageLimit !== undefined)
+            job.ageLimit = body.ageLimit;
+        if (body.salaryScale !== undefined)
+            job.salaryScale = body.salaryScale;
+        if (body.startDate !== undefined)
+            job.startDate = body.startDate;
+        if (body.lastDate !== undefined)
+            job.lastDate = body.lastDate;
+        if (body.applyUrl !== undefined)
+            job.applyUrl = body.applyUrl;
+        if (body.notificationUrl !== undefined)
+            job.notificationUrl = body.notificationUrl;
+        if (body.officialWebsiteUrl !== undefined)
+            job.officialWebsiteUrl = body.officialWebsiteUrl;
+        if (body.descriptionEn !== undefined)
+            job.descriptionEn = body.descriptionEn;
+        if (body.descriptionHi !== undefined)
+            job.descriptionHi = body.descriptionHi;
+        if (body.isActive !== undefined)
+            job.isActive = Boolean(body.isActive);
+        if (body.isFeatured !== undefined)
+            job.isFeatured = Boolean(body.isFeatured);
+        if (body.orderIndex !== undefined)
+            job.orderIndex = Number(body.orderIndex);
+        return await this.govtJobRepo.save(job);
+    }
+    async deleteGovtJob(id) {
+        const job = await this.govtJobRepo.findOne({ where: { id } });
+        if (!job) {
+            throw new common_1.NotFoundException(`Govt job with ID '${id}' not found`);
+        }
+        await this.govtJobRepo.remove(job);
+        return { success: true, message: `Govt job notice '${job.titleEn}' removed successfully.` };
+    }
+    async seedGovtJobDefaults() {
+        const defaults = this.getOfficialDefaultGovtJobs();
+        let created = 0;
+        for (const item of defaults) {
+            const existing = await this.govtJobRepo.findOne({ where: { titleEn: item.titleEn } });
+            if (!existing) {
+                await this.govtJobRepo.save(this.govtJobRepo.create(item));
+                created++;
+            }
+        }
+        return { success: true, message: `Seeded ${created} government job notifications`, count: created };
+    }
 };
 exports.AdminController = AdminController;
 __decorate([
@@ -2266,6 +2671,58 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "clearLoginActivities", null);
+__decorate([
+    (0, common_1.Get)('govt-jobs'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get list of Government job postings (Central & State, Bilingual)' }),
+    __param(0, (0, common_1.Query)('category')),
+    __param(1, (0, common_1.Query)('state')),
+    __param(2, (0, common_1.Query)('sector')),
+    __param(3, (0, common_1.Query)('search')),
+    __param(4, (0, common_1.Query)('status')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getGovtJobs", null);
+__decorate([
+    (0, common_1.Get)('govt-jobs/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get single Government job posting details' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getGovtJob", null);
+__decorate([
+    (0, common_1.Post)('govt-jobs'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Create a new Government job notice' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "createGovtJob", null);
+__decorate([
+    (0, common_1.Put)('govt-jobs/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Update an existing Government job notice' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "updateGovtJob", null);
+__decorate([
+    (0, common_1.Delete)('govt-jobs/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Delete a Government job notice' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "deleteGovtJob", null);
+__decorate([
+    (0, common_1.Post)('govt-jobs/seed-defaults'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Reset and reseed official Government jobs demo notices' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "seedGovtJobDefaults", null);
 exports.AdminController = AdminController = __decorate([
     (0, swagger_1.ApiTags)('Super Admin Governance'),
     (0, common_1.Controller)('api/v1/admin'),
@@ -2289,7 +2746,9 @@ exports.AdminController = AdminController = __decorate([
     __param(18, (0, typeorm_1.InjectRepository)(email_broadcast_entity_1.EmailBroadcast)),
     __param(19, (0, typeorm_1.InjectRepository)(restricted_domain_entity_1.RestrictedDomain)),
     __param(20, (0, typeorm_1.InjectRepository)(login_activity_entity_1.LoginActivity)),
+    __param(21, (0, typeorm_1.InjectRepository)(govt_job_entity_1.GovtJob)),
     __metadata("design:paramtypes", [app_config_service_1.AppConfigService,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
