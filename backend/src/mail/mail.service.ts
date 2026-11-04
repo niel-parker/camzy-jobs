@@ -7,10 +7,15 @@ export class MailService {
   private transporter: nodemailer.Transporter;
 
   constructor() {
+    this.initTransporter();
+  }
+
+  private initTransporter() {
     const host = process.env.MAIL_HOST || 'smtp.mailgun.org';
     const port = Number(process.env.MAIL_PORT) || 587;
     const user = process.env.MAIL_USERNAME;
     const pass = process.env.MAIL_PASSWORD;
+    const isSecure = port === 465;
 
     if (!user || !pass) {
       this.logger.warn('Mail credentials (MAIL_USERNAME / MAIL_PASSWORD) are not set in environment.');
@@ -19,9 +24,104 @@ export class MailService {
     this.transporter = nodemailer.createTransport({
       host,
       port,
-      secure: false, // TLS via port 587
+      secure: isSecure, // true for 465, false for 587
       auth: user && pass ? { user, pass } : undefined,
+      tls: {
+        rejectUnauthorized: false, // Prevents certificate chain verification failures on custom SMTP servers
+      },
+      connectionTimeout: 15000, // 15s timeout
+      greetingTimeout: 15000,
+      socketTimeout: 20000,
     });
+  }
+
+  /**
+   * Diagnostic method to test SMTP server handshake and authentication
+   */
+  async verifyConnection(): Promise<{ success: boolean; message: string; host?: string; port?: number; user?: string; error?: any }> {
+    const host = process.env.MAIL_HOST || 'smtp.mailgun.org';
+    const port = Number(process.env.MAIL_PORT) || 587;
+    const user = process.env.MAIL_USERNAME;
+
+    try {
+      await this.transporter.verify();
+      this.logger.log(`SMTP Connection verified successfully with ${host}:${port}`);
+      return {
+        success: true,
+        message: 'SMTP server connection and authentication verified successfully!',
+        host,
+        port,
+        user: user ? `${user.slice(0, 4)}***` : undefined,
+      };
+    } catch (err: any) {
+      this.logger.error(`SMTP Verification Failed: ${err?.message || err}`);
+      return {
+        success: false,
+        message: `SMTP connection failed: ${err?.message || 'Unknown error'}`,
+        host,
+        port,
+        user: user ? `${user.slice(0, 4)}***` : undefined,
+        error: {
+          code: err?.code,
+          command: err?.command,
+          response: err?.response,
+          responseCode: err?.responseCode,
+          stack: err?.stack,
+        },
+      };
+    }
+  }
+
+  /**
+   * Diagnostic method to send a test email to any recipient
+   */
+  async sendTestEmail(toEmail: string): Promise<{ success: boolean; message: string; info?: any; error?: any }> {
+    const defaultFrom = process.env.MAIL_FROM || (process.env.MAIL_USERNAME ? `"Camzy Jobs" <${process.env.MAIL_USERNAME}>` : '"Camzy Jobs" <no-reply@camzyjobs.com>');
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: defaultFrom,
+        to: toEmail,
+        subject: 'Camzy Jobs - SMTP Test Email',
+        text: 'Hello! This is a test email sent from Camzy Jobs to verify your SMTP configuration.',
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 500px; margin: 20px auto;">
+            <h2 style="color: #4f46e5; margin-top: 0;">Camzy Jobs SMTP Test</h2>
+            <p style="color: #334155; font-size: 14px;">This test confirms that your transactional email server is configured properly and ready to deliver emails.</p>
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #64748b; margin: 16px 0;">
+              <div><strong>From:</strong> ${defaultFrom}</div>
+              <div><strong>To:</strong> ${toEmail}</div>
+              <div><strong>Timestamp:</strong> ${new Date().toISOString()}</div>
+            </div>
+            <p style="color: #16a34a; font-weight: bold; font-size: 13px;">✓ SMTP Connection & Transmission Successful</p>
+          </div>
+        `,
+      });
+
+      this.logger.log(`Test email sent successfully to ${toEmail}. Message ID: ${info.messageId}`);
+      return {
+        success: true,
+        message: `Test email successfully dispatched to ${toEmail}!`,
+        info: {
+          messageId: info.messageId,
+          response: info.response,
+          accepted: info.accepted,
+          rejected: info.rejected,
+        },
+      };
+    } catch (err: any) {
+      this.logger.error(`Failed to send test email to ${toEmail}: ${err?.message || err}`);
+      return {
+        success: false,
+        message: `Failed to deliver test email: ${err?.message || 'Unknown error'}`,
+        error: {
+          code: err?.code,
+          command: err?.command,
+          response: err?.response,
+          responseCode: err?.responseCode,
+        },
+      };
+    }
   }
 
   async sendOtpEmail(toEmail: string, otpCode: string): Promise<boolean> {
