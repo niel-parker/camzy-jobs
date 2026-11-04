@@ -568,7 +568,7 @@ export default function EmployerKanbanPage() {
             <div className="flex-shrink-0 p-4 sm:p-6 border-b theme-border flex items-start justify-between gap-3 bg-inherit">
               <div className="min-w-0 flex-1 truncate">
                 <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                  Naukri ATS Evaluation
+                  CamzyJobs ATS Evaluation
                 </span>
                 <h3 className="text-lg font-black theme-text mt-1 truncate">{selectedCandidate.candidateName}</h3>
                 <p className="text-xs theme-muted truncate">Applied for: <strong className="theme-text">{selectedCandidate.jobTitle}</strong></p>

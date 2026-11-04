@@ -39,6 +39,15 @@ export declare class JobPortalSdk {
         url: string;
         fullUrl: string;
     }>;
+    uploadCompanyLogo(tenantId: string, file: any): Promise<{
+        success: boolean;
+        filename: string;
+        originalName: string;
+        size: number;
+        mimeType: string;
+        url: string;
+        fullUrl: string;
+    }>;
     searchCandidates(params?: {
         skill?: string;
         query?: string;

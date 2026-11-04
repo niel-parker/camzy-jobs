@@ -120,6 +120,24 @@ class JobPortalSdk {
         }
         return res.json();
     }
+    async uploadCompanyLogo(tenantId, file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const headers = {};
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        const res = await fetch(`${this.baseUrl}/tenants/${tenantId}/upload-logo`, {
+            method: 'POST',
+            headers,
+            body: formData,
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Failed to upload company logo.');
+        }
+        return res.json();
+    }
     async searchCandidates(params) {
         const searchParams = new URLSearchParams();
         if (params?.skill)

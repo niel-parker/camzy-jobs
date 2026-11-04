@@ -339,3 +339,4 @@ export const MultiSkillSearchInput: React.FC<MultiSkillSearchInputProps> = ({
     </div>
   );
 };
+

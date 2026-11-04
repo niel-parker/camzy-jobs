@@ -21,6 +21,10 @@ async function bootstrap() {
     if (!fs.existsSync(avatarsDir)) {
         fs.mkdirSync(avatarsDir, { recursive: true });
     }
+    const logosDir = path.join(uploadsDir, 'logos');
+    if (!fs.existsSync(logosDir)) {
+        fs.mkdirSync(logosDir, { recursive: true });
+    }
     app.use('/uploads', express.static(uploadsDir));
     app.use('/uploads/resumes', (req, res, next) => {
         const sample = path.join(uploadsDir, 'resumes', 'sample-resume.pdf');

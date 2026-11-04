@@ -22,6 +22,10 @@ async function bootstrap() {
   if (!fs.existsSync(avatarsDir)) {
     fs.mkdirSync(avatarsDir, { recursive: true });
   }
+  const logosDir = path.join(uploadsDir, 'logos');
+  if (!fs.existsSync(logosDir)) {
+    fs.mkdirSync(logosDir, { recursive: true });
+  }
   app.use('/uploads', express.static(uploadsDir));
   // Fallback for missing uploaded resume files so downloads never 404
   app.use('/uploads/resumes', (req, res, next) => {

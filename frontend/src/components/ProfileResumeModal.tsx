@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { 
   Download, Printer, X, Mail, Phone, MapPin, Globe, 
-  Linkedin, Github, Briefcase, GraduationCap, Award, FolderGit2, Languages, Sparkles 
+  Linkedin, Github, Briefcase, GraduationCap, Award, FolderGit2, Languages, Sparkles, User 
 } from 'lucide-react';
 
 interface ProfileResumeModalProps {
@@ -501,13 +501,17 @@ export const ProfileResumeModal: React.FC<ProfileResumeModalProps> = ({ isOpen, 
                   )}
                 </div>
 
-                {avatar && (
+                {avatar ? (
                   <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm flex-shrink-0 self-start sm:self-center">
                     <img
                       src={getAvatarUrl(avatar) || avatar}
                       alt={fullName}
                       className="w-full h-full object-cover"
                     />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-2xl border-2 border-slate-200 bg-slate-100 flex items-center justify-center flex-shrink-0 self-start sm:self-center shadow-sm">
+                    <User className="w-12 h-12 text-slate-400" />
                   </div>
                 )}
               </div>

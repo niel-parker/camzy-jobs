@@ -14,23 +14,29 @@ export default function CompanyProfilePage() {
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const company = {
-    name: 'TechCorp Global',
+  const [company, setCompany] = useState<any>({
+    name: 'Company Profile',
     slug: String(slug),
-    logoUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=120',
-    website: 'https://techcorp.example.com',
+    logoUrl: '',
+    website: '',
     industry: 'Software & Technology',
-    location: 'San Francisco, CA',
-    description: 'TechCorp Global is a leading enterprise software provider specializing in cloud infrastructure, microservices, and AI-driven workflow automation. We empower organizations worldwide with next-generation developer tooling.',
+    location: 'India',
+    description: '',
     isVerified: true,
-  };
+  });
 
   useEffect(() => {
     async function loadCompanyJobs() {
       setIsLoading(true);
       try {
-        const allJobs = await sdk.getJobs();
+        const [allJobs, tenantData] = await Promise.all([
+          sdk.getJobs().catch(() => []),
+          sdk.request<any>(`/tenants/${slug}`).catch(() => null),
+        ]);
         setJobs(allJobs);
+        if (tenantData) {
+          setCompany(tenantData);
+        }
       } catch (err) {
         console.warn('Backend API offline, rendering company jobs:', err);
       } finally {
@@ -39,7 +45,7 @@ export default function CompanyProfilePage() {
     }
 
     loadCompanyJobs();
-  }, [sdk]);
+  }, [sdk, slug]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-8">

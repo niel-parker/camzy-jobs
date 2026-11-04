@@ -431,7 +431,7 @@ function JobDirectoryContent() {
         </div>
       </div>
 
-      {/* Main Naukri-Style 2-Column Grid */}
+      {/* Main CamzyJobs 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* LEFT COLUMN: FILTERS SIDEBAR */}
         <div className="theme-surface p-5 rounded-2xl border theme-border space-y-5 h-fit shadow-sm">

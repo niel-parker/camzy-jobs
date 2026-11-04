@@ -90,8 +90,10 @@ export const Navbar: React.FC = () => {
                           alt={user.firstName}
                           className="w-full h-full object-cover"
                         />
+                      ) : user.role === 'COMPANY_ADMIN' || user.role === 'RECRUITER' || user.tenantId ? (
+                        <Building2 className="w-4 h-4 text-indigo-500" />
                       ) : (
-                        <span>{user.firstName ? user.firstName[0].toUpperCase() : 'U'}</span>
+                        <User className="w-4 h-4 text-indigo-500" />
                       )}
                       <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />
                     </div>
@@ -119,8 +121,10 @@ export const Navbar: React.FC = () => {
                               alt={user.firstName}
                               className="w-full h-full object-cover"
                             />
+                          ) : user.role === 'COMPANY_ADMIN' || user.role === 'RECRUITER' || user.tenantId ? (
+                            <Building2 className="w-5 h-5 text-indigo-500" />
                           ) : (
-                            <span>{user.firstName ? user.firstName[0].toUpperCase() : 'U'}</span>
+                            <User className="w-5 h-5 text-indigo-500" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -188,6 +192,14 @@ export const Navbar: React.FC = () => {
                             >
                               <LayoutDashboard className="w-4 h-4 text-indigo-500" />
                               <span>Employer Dashboard</span>
+                            </Link>
+                            <Link
+                              href="/employer/profile"
+                              onClick={() => setActiveDropdown(null)}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-xl theme-text hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition-colors"
+                            >
+                              <Building2 className="w-4 h-4 text-purple-500" />
+                              <span>Company Profile</span>
                             </Link>
                             <Link
                               href="/employer/candidates/search"
@@ -278,8 +290,10 @@ export const Navbar: React.FC = () => {
                           alt={user.firstName}
                           className="w-full h-full object-cover"
                         />
+                      ) : user.role === 'COMPANY_ADMIN' || user.role === 'RECRUITER' || user.tenantId ? (
+                        <Building2 className="w-4 h-4 text-indigo-500" />
                       ) : (
-                        <span>{user.firstName ? user.firstName[0].toUpperCase() : 'U'}</span>
+                        <User className="w-4 h-4 text-indigo-500" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">

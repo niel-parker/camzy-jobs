@@ -5,4 +5,5 @@ export declare class TenantsService {
     constructor(tenantRepo: Repository<Tenant>);
     findAll(): Promise<Tenant[]>;
     findOne(id: string): Promise<Tenant>;
+    update(id: string, updateData: Partial<Tenant>): Promise<Tenant>;
 }

@@ -168,6 +168,25 @@ export class JobPortalSdk {
     return res.json();
   }
 
+  async uploadCompanyLogo(tenantId: string, file: any): Promise<{ success: boolean; filename: string; originalName: string; size: number; mimeType: string; url: string; fullUrl: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers: Record<string, string> = {};
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    const res = await fetch(`${this.baseUrl}/tenants/${tenantId}/upload-logo`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to upload company logo.');
+    }
+    return res.json();
+  }
+
   async searchCandidates(params?: {
     skill?: string;
     query?: string;

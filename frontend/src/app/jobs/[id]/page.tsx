@@ -26,7 +26,7 @@ export default function JobDetailPage() {
   const [isSaved, setIsSaved] = useState(false);
   const [isSavingBookmark, setIsSavingBookmark] = useState(false);
 
-  // Naukri-style Apply Modal State
+  // CamzyJobs Apply Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
 
@@ -54,7 +54,7 @@ export default function JobDetailPage() {
   const [inlineSkills, setInlineSkills] = useState<string>('');
   const [isSavingInlineProfile, setIsSavingInlineProfile] = useState(false);
 
-  // Naukri Questionnaire State
+  // Application Questionnaire State
   const [noticePeriod, setNoticePeriod] = useState('Immediate / 15 Days');
   const [currentCtc, setCurrentCtc] = useState('120000');
   const [expectedCtc, setExpectedCtc] = useState('150000');
@@ -225,7 +225,7 @@ export default function JobDetailPage() {
       return;
     }
 
-    // Open Naukri-style internal apply modal
+    // Open CamzyJobs internal apply modal
     setIsModalOpen(true);
   };
 
@@ -618,7 +618,7 @@ export default function JobDetailPage() {
         </div>
       )}
 
-      {/* NAUKRI.COM STYLE APPLY MODAL */}
+      {/* CAMZYJOBS QUICK APPLY MODAL */}
       {isModalOpen && user && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
           <div className="relative w-full max-w-2xl max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">

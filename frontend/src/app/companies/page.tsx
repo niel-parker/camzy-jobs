@@ -35,7 +35,7 @@ export default function CompaniesDirectoryPage() {
           id: t.id,
           name: t.name,
           slug: t.slug,
-          logoUrl: t.logoUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=120',
+          logoUrl: t.logoUrl || '',
           industry: t.industry || 'Software & Technology',
           location: 'San Francisco, CA',
           employees: '100 - 1,000',
@@ -137,11 +137,17 @@ export default function CompaniesDirectoryPage() {
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center space-x-3.5">
-                    <img
-                      src={comp.logoUrl}
-                      alt={comp.name}
-                      className="w-12 h-12 rounded-xl object-cover border theme-border shadow-sm"
-                    />
+                    {comp.logoUrl ? (
+                      <img
+                        src={comp.logoUrl}
+                        alt={comp.name}
+                        className="w-12 h-12 rounded-xl object-cover border theme-border shadow-sm flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl border theme-border bg-indigo-50 dark:bg-slate-800 flex items-center justify-center text-indigo-500 shadow-sm flex-shrink-0">
+                        <Building2 className="w-6 h-6" />
+                      </div>
+                    )}
                     <div>
                       <h3 className="text-base font-extrabold theme-text flex items-center gap-1.5">
                         {comp.name}

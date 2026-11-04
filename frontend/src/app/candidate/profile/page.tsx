@@ -84,7 +84,7 @@ export default function CandidateProfilePage() {
     lastName: 'Candidate',
     phoneNumber: '+91 98765 43210',
     email: 'candidate@camzyjobs.com',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+    avatarUrl: '',
   });
 
   // Main Candidate Profile State
@@ -168,16 +168,16 @@ export default function CandidateProfilePage() {
       projectTitle: 'Enterprise Recruitment & ATS Engine',
       client: 'Camzy Jobs Enterprise',
       role: 'Lead Full Stack Architect',
-      projectDescription: 'Architected subscription plans, Kanban candidate ATS pipeline, and Naukri-grade application workflows.',
+      projectDescription: 'Architected subscription plans, Kanban candidate ATS pipeline, and CamzyJobs application workflows.',
       technologies: ['Next.js', 'NestJS', 'TypeORM', 'MySQL'],
       projectUrl: 'https://jobs.camzytech.com',
     },
   ]);
 
   const [socialLinks, setSocialLinks] = useState({
-    github: 'https://github.com/candidate',
-    linkedin: 'https://linkedin.com/in/candidate',
-    website: 'https://candidate-portfolio.com',
+    github: '',
+    linkedin: '',
+    website: '',
   });
 
   const [languagesList, setLanguagesList] = useState<string[]>([
@@ -319,7 +319,7 @@ export default function CandidateProfilePage() {
               lastName: data.user.lastName || user.lastName || '',
               phoneNumber: data.user.phoneNumber || user.phoneNumber || '',
               email: data.user.email || user.email || '',
-              avatarUrl: data.user.avatarUrl || user.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+              avatarUrl: data.user.avatarUrl || user.avatarUrl || '',
             });
           } else {
             setUserForm({
@@ -327,7 +327,7 @@ export default function CandidateProfilePage() {
               lastName: user.lastName || '',
               phoneNumber: user.phoneNumber || '',
               email: user.email || '',
-              avatarUrl: user.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+              avatarUrl: user.avatarUrl || '',
             });
           }
 
@@ -383,8 +383,12 @@ export default function CandidateProfilePage() {
           if (data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
             setProjectList(data.projects);
           }
-          if (data.socialLinks && typeof data.socialLinks === 'object' && Object.keys(data.socialLinks).length > 0) {
-            setSocialLinks(data.socialLinks);
+          if (data.socialLinks && typeof data.socialLinks === 'object') {
+            setSocialLinks({
+              github: data.socialLinks.github || '',
+              linkedin: data.socialLinks.linkedin || '',
+              website: data.socialLinks.website || '',
+            });
           }
           if (data.languages && Array.isArray(data.languages) && data.languages.length > 0) {
             setLanguagesList(data.languages);
@@ -695,7 +699,7 @@ export default function CandidateProfilePage() {
             <h1 className="text-2xl font-black tracking-tight theme-text flex items-center gap-2">
               <User className="w-6 h-6 text-indigo-500" /> Candidate Talent Profile & Resumes
             </h1>
-            <p className="text-xs theme-muted">Naukri-standard candidate portal with multiple resume management & recruiter search badges</p>
+            <p className="text-xs theme-muted">CamzyJobs candidate portal with multiple resume management & recruiter search badges</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -732,11 +736,17 @@ export default function CandidateProfilePage() {
         <div className="theme-surface border theme-border rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden bg-gradient-to-r from-indigo-500/5 via-transparent to-transparent">
           <div className="flex flex-col sm:flex-row sm:items-center gap-5">
             <div className="relative group">
-              <img
-                src={userForm.avatarUrl || user?.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200'}
-                alt="Profile Avatar"
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-indigo-500/50 shadow-md"
-              />
+              {userForm.avatarUrl || user?.avatarUrl ? (
+                <img
+                  src={userForm.avatarUrl || user?.avatarUrl}
+                  alt="Profile Avatar"
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-indigo-500/50 shadow-md"
+                />
+              ) : (
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-indigo-50 dark:bg-slate-800 border-2 border-indigo-500/40 shadow-md flex items-center justify-center">
+                  <User className="w-10 h-10 sm:w-12 sm:h-12 text-indigo-500" />
+                </div>
+              )}
               {isUploadingAvatar && (
                 <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center">
                   <Loader2 className="w-5 h-5 text-white animate-spin" />
@@ -1295,6 +1305,100 @@ export default function CandidateProfilePage() {
           </div>
         </div>
 
+        {/* SECTION 5: SOCIAL & PROFESSIONAL PROFILES */}
+        <div className="theme-surface border theme-border rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-black theme-text uppercase tracking-wider flex items-center gap-2">
+              <Globe className="w-4 h-4 text-indigo-500" /> Social & Professional Profiles
+            </h2>
+            <button
+              type="button"
+              onClick={() => setIsEditProfileOpen(true)}
+              className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              <span>Edit Links</span>
+            </button>
+          </div>
+
+          {socialLinks.linkedin || socialLinks.github || socialLinks.website ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {socialLinks.linkedin ? (
+                <a
+                  href={socialLinks.linkedin.startsWith('http') ? socialLinks.linkedin : `https://${socialLinks.linkedin}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3.5 rounded-xl border theme-border hover:border-indigo-500 bg-slate-50/50 dark:bg-slate-900/50 text-xs transition-colors group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-blue-600/10 text-blue-600 flex items-center justify-center flex-shrink-0 font-black text-xs">
+                    in
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-bold theme-text block text-[11px]">LinkedIn</span>
+                    <span className="text-[10px] theme-muted truncate block group-hover:text-indigo-500">
+                      {socialLinks.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\//i, '@')}
+                    </span>
+                  </div>
+                  <ExternalLink className="w-3.5 h-3.5 theme-muted group-hover:text-indigo-500 flex-shrink-0" />
+                </a>
+              ) : null}
+
+              {socialLinks.github ? (
+                <a
+                  href={socialLinks.github.startsWith('http') ? socialLinks.github : `https://${socialLinks.github}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3.5 rounded-xl border theme-border hover:border-indigo-500 bg-slate-50/50 dark:bg-slate-900/50 text-xs transition-colors group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-slate-900/10 dark:bg-white/10 text-slate-800 dark:text-slate-200 flex items-center justify-center flex-shrink-0 font-black text-xs">
+                    gh
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-bold theme-text block text-[11px]">GitHub</span>
+                    <span className="text-[10px] theme-muted truncate block group-hover:text-indigo-500">
+                      {socialLinks.github.replace(/^https?:\/\/(www\.)?github\.com\//i, '@')}
+                    </span>
+                  </div>
+                  <ExternalLink className="w-3.5 h-3.5 theme-muted group-hover:text-indigo-500 flex-shrink-0" />
+                </a>
+              ) : null}
+
+              {socialLinks.website ? (
+                <a
+                  href={socialLinks.website.startsWith('http') ? socialLinks.website : `https://${socialLinks.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-3.5 rounded-xl border theme-border hover:border-indigo-500 bg-slate-50/50 dark:bg-slate-900/50 text-xs transition-colors group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-bold theme-text block text-[11px]">Portfolio / Website</span>
+                    <span className="text-[10px] theme-muted truncate block group-hover:text-indigo-500">
+                      {socialLinks.website.replace(/^https?:\/\//i, '')}
+                    </span>
+                  </div>
+                  <ExternalLink className="w-3.5 h-3.5 theme-muted group-hover:text-indigo-500 flex-shrink-0" />
+                </a>
+              ) : null}
+            </div>
+          ) : (
+            <div className="p-6 text-center border border-dashed theme-border rounded-xl space-y-2 bg-slate-50/50 dark:bg-slate-900/50">
+              <Globe className="w-7 h-7 text-indigo-400 mx-auto opacity-70" />
+              <p className="text-xs theme-muted">No social profiles added yet. Add your LinkedIn, GitHub, or personal portfolio to stand out to employers.</p>
+              <button
+                type="button"
+                onClick={() => setIsEditProfileOpen(true)}
+                className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Social Profiles</span>
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* ========================================================================= */}
         {/* DEDICATED EDIT PROFILE MODAL */}
         {/* ========================================================================= */}
@@ -1339,11 +1443,17 @@ export default function CandidateProfilePage() {
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-1">
                   <div className="relative">
-                    <img
-                      src={userForm.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200'}
-                      alt="Preview"
-                      className="w-16 h-16 rounded-2xl object-cover border-2 border-indigo-500 shadow-sm"
-                    />
+                    {userForm.avatarUrl ? (
+                      <img
+                        src={userForm.avatarUrl}
+                        alt="Preview"
+                        className="w-16 h-16 rounded-2xl object-cover border-2 border-indigo-500 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-slate-800 border-2 border-indigo-500/40 shadow-sm flex items-center justify-center">
+                        <User className="w-8 h-8 text-indigo-500" />
+                      </div>
+                    )}
                     {isUploadingAvatar && (
                       <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center">
                         <Loader2 className="w-5 h-5 text-white animate-spin" />
@@ -1506,6 +1616,45 @@ export default function CandidateProfilePage() {
                     className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none leading-relaxed"
                   />
                 </div>
+
+                {/* Social & Professional Links */}
+                <div className="sm:col-span-2 pt-3 border-t theme-border space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider theme-text flex items-center gap-1.5">
+                    <Globe className="w-4 h-4 text-indigo-500" /> Social & Professional Profiles
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block font-bold theme-text mb-1 text-[11px]">LinkedIn URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://linkedin.com/in/username"
+                        value={socialLinks.linkedin || ''}
+                        onChange={(e) => setSocialLinks({ ...socialLinks, linkedin: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold theme-text mb-1 text-[11px]">GitHub URL</label>
+                      <input
+                        type="url"
+                        placeholder="https://github.com/username"
+                        value={socialLinks.github || ''}
+                        onChange={(e) => setSocialLinks({ ...socialLinks, github: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold theme-text mb-1 text-[11px]">Portfolio / Personal Website</label>
+                      <input
+                        type="url"
+                        placeholder="https://myportfolio.dev"
+                        value={socialLinks.website || ''}
+                        onChange={(e) => setSocialLinks({ ...socialLinks, website: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
               </div>
 
@@ -1652,16 +1801,22 @@ export default function CandidateProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block font-bold theme-text mb-1">Select File (PDF, DOC, DOCX up to 15MB)</label>
+                    <label className="block font-bold theme-text mb-1">Select File (PDF, DOC, DOCX, or Image up to 5MB)</label>
                     <div className="p-4 border-2 border-dashed theme-border rounded-2xl text-center space-y-2 hover:border-indigo-500 transition-all bg-slate-50/50 dark:bg-slate-900/50">
                       <Upload className="w-6 h-6 text-indigo-500 mx-auto" />
                       <input
                         type="file"
                         id="resume-file-picker"
-                        accept=".pdf,.doc,.docx"
+                        accept=".pdf,.doc,.docx,.rtf,.odt,.png,.jpg,.jpeg,image/*"
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
                             const file = e.target.files[0];
+                            if (file.size > 5 * 1024 * 1024) {
+                              setUploadError('Resume file size exceeds the 5MB maximum limit. Please upload a smaller file.');
+                              setResumeUploadFile(null);
+                              return;
+                            }
+                            setUploadError(null);
                             setResumeUploadFile(file);
                             if (!newResumeTitle) {
                               setNewResumeTitle(file.name);
@@ -1681,7 +1836,7 @@ export default function CandidateProfilePage() {
                           Selected: {resumeUploadFile.name} ({(resumeUploadFile.size / 1024).toFixed(1)} KB)
                         </p>
                       ) : (
-                        <p className="text-[11px] theme-muted">Supported formats: PDF, DOC, DOCX</p>
+                        <p className="text-[11px] theme-muted">Supported formats: PDF, DOC, DOCX, Images (Max 5MB)</p>
                       )}
                     </div>
                   </div>

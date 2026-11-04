@@ -137,7 +137,28 @@ __decorate([
                 cb(null, `${cleanName}-${uniqueSuffix}${ext}`);
             },
         }),
-        limits: { fileSize: 15 * 1024 * 1024 },
+        fileFilter: (req, file, cb) => {
+            const allowedMimes = [
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/rtf',
+                'application/vnd.oasis.opendocument.text',
+                'image/jpeg',
+                'image/png',
+                'image/jpg',
+                'image/webp',
+            ];
+            const ext = path.extname(file.originalname).toLowerCase();
+            const allowedExts = ['.pdf', '.doc', '.docx', '.rtf', '.odt', '.jpg', '.jpeg', '.png', '.webp'];
+            if (allowedMimes.includes(file.mimetype) || allowedExts.includes(ext) || file.mimetype.startsWith('image/')) {
+                cb(null, true);
+            }
+            else {
+                cb(new common_1.BadRequestException('Unsupported file format. Please upload a PDF, Document (.doc, .docx), or Image (.jpg, .png).'), false);
+            }
+        },
+        limits: { fileSize: 5 * 1024 * 1024 },
     })),
     __param(0, (0, common_1.UploadedFile)()),
     __param(1, (0, common_1.Req)()),

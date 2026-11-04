@@ -9,7 +9,7 @@ import {
   ShieldCheck, Sparkles, User, ExternalLink, Loader2, Award, ChevronRight, Check, Eye,
   Phone, Mail, MessageSquare, Bookmark, BookmarkCheck, Calendar, Building2, 
   GraduationCap, X, ChevronDown, ChevronUp, RotateCcw, SlidersHorizontal, Layers, 
-  Send, Printer, Copy, CheckSquare, Square, EyeOff, Tag, HelpCircle, ArrowUpRight
+  Send, Printer, Copy, CheckSquare, Square, EyeOff, Tag, HelpCircle, ArrowUpRight, Globe
 } from 'lucide-react';
 import { ProfileResumeModal } from '../../../../components/ProfileResumeModal';
 import { LocationSearchDropdown } from '../../../../components/LocationSearchDropdown';
@@ -308,7 +308,7 @@ export default function CandidateSearchPage() {
           <div>
             <div className="flex items-center space-x-2">
               <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-600 text-white shadow-sm flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-300" /> Enterprise Resdex
+                <Sparkles className="w-3 h-3 text-amber-300" /> CamzyJobs Talent Search
               </span>
               <span className="text-xs font-bold theme-muted">Resume Sourcing & Candidate Database</span>
             </div>
@@ -338,7 +338,7 @@ export default function CandidateSearchPage() {
         </div>
 
         {/* ========================================================= */}
-        {/* NAUKRI RESDEX SEARCH BUILDER FORM */}
+        {/* CAMZYJOBS TALENT SEARCH BUILDER FORM */}
         {/* ========================================================= */}
         <form onSubmit={handleApplySearch} className="theme-surface border theme-border rounded-2xl p-5 shadow-sm space-y-4">
           
@@ -757,7 +757,7 @@ export default function CandidateSearchPage() {
                 className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
                   viewLayout === 'card' ? 'bg-indigo-600 text-white' : 'theme-muted hover:theme-text'
                 }`}
-                title="Resdex Wide Card View"
+                title="Wide Card View"
               >
                 Card View
               </button>
@@ -801,7 +801,7 @@ export default function CandidateSearchPage() {
         )}
 
         {/* ========================================================= */}
-        {/* CANDIDATE CARDS (NAUKRI RESDEX ENTERPRISE LAYOUT) */}
+        {/* CANDIDATE CARDS (CAMZYJOBS TALENT SEARCH LAYOUT) */}
         {/* ========================================================= */}
         {isLoading ? (
           <div className="py-24 text-center space-y-3">
@@ -861,11 +861,11 @@ export default function CandidateSearchPage() {
                         />
 
                         {/* Avatar */}
-                        <div className="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center flex-shrink-0 text-indigo-600 font-bold text-lg shadow-sm">
+                        <div className="w-12 h-12 rounded-lg bg-indigo-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center flex-shrink-0 text-indigo-600 font-bold text-lg shadow-sm overflow-hidden">
                           {cand.user?.avatarUrl ? (
                             <img src={cand.user.avatarUrl} alt="" className="w-full h-full object-cover rounded-lg" />
                           ) : (
-                            <span>{cand.user?.firstName ? cand.user.firstName[0].toUpperCase() : 'C'}</span>
+                            <User className="w-6 h-6 text-indigo-500" />
                           )}
                         </div>
 
@@ -1169,7 +1169,7 @@ export default function CandidateSearchPage() {
                   <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
                     Candidate Profile Preview
                   </span>
-                  <span className="text-xs font-bold theme-muted">Naukri Resdex Format</span>
+                  <span className="text-xs font-bold theme-muted">CamzyJobs Standard Format</span>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -1214,8 +1214,12 @@ export default function CandidateSearchPage() {
                 <div className="p-5 rounded-2xl border theme-border bg-gradient-to-r from-indigo-50/40 to-slate-50 dark:from-indigo-950/20 dark:to-slate-900/40 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 rounded-2xl bg-indigo-600 text-white font-black text-2xl flex items-center justify-center shadow-lg border-2 border-indigo-400">
-                        {selectedCand.user?.firstName ? selectedCand.user.firstName[0].toUpperCase() : 'C'}
+                      <div className="w-16 h-16 rounded-2xl bg-indigo-600 text-white font-black text-2xl flex items-center justify-center shadow-lg border-2 border-indigo-400 overflow-hidden flex-shrink-0">
+                        {selectedCand.user?.avatarUrl ? (
+                          <img src={selectedCand.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-8 h-8 text-white" />
+                        )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -1242,7 +1246,43 @@ export default function CandidateSearchPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center flex-wrap gap-2">
+                      {selectedCand.socialLinks?.linkedin && (
+                        <a
+                          href={selectedCand.socialLinks.linkedin.startsWith('http') ? selectedCand.socialLinks.linkedin : `https://${selectedCand.socialLinks.linkedin}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm"
+                          title="LinkedIn Profile"
+                        >
+                          <span className="font-black text-xs">in</span>
+                          <span>LinkedIn</span>
+                        </a>
+                      )}
+                      {selectedCand.socialLinks?.github && (
+                        <a
+                          href={selectedCand.socialLinks.github.startsWith('http') ? selectedCand.socialLinks.github : `https://${selectedCand.socialLinks.github}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm"
+                          title="GitHub Profile"
+                        >
+                          <span className="font-black text-xs">gh</span>
+                          <span>GitHub</span>
+                        </a>
+                      )}
+                      {selectedCand.socialLinks?.website && (
+                        <a
+                          href={selectedCand.socialLinks.website.startsWith('http') ? selectedCand.socialLinks.website : `https://${selectedCand.socialLinks.website}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-2.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm"
+                          title="Portfolio Website"
+                        >
+                          <Globe className="w-3.5 h-3.5" />
+                          <span>Portfolio</span>
+                        </a>
+                      )}
                       <a
                         href={`https://wa.me/?text=Hello%20${selectedCand.user?.firstName || 'Candidate'}`}
                         target="_blank"
