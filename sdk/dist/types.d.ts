@@ -358,6 +358,34 @@ export interface GovtJobItem {
     createdAt?: string;
     updatedAt?: string;
 }
+export interface GovtExamCalendarItemType {
+    id: string;
+    day: string;
+    month: string;
+    year?: string;
+    titleEn: string;
+    titleHi?: string;
+    board: string;
+    stage: string;
+    link: string;
+    orderIndex: number;
+    isActive: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+}
+export interface GovtCommissionPortalType {
+    id: string;
+    name: string;
+    nameHi?: string;
+    url: string;
+    desc: string;
+    descHi?: string;
+    badgeText: string;
+    orderIndex: number;
+    isActive: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+}
 export interface BroadcastRecipient {
     id: string;
     realId: string;

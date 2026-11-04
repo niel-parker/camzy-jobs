@@ -10,7 +10,7 @@ import {
   Download, ArrowRight
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
-import { GovtJobItem, GovtJobCategoryType } from '@job-portal/sdk';
+import { GovtJobItem, GovtJobCategoryType, GovtExamCalendarItemType, GovtCommissionPortalType } from '@job-portal/sdk';
 
 // Major Indian States for the state govt jobs filter
 const INDIAN_STATES = [
@@ -51,62 +51,97 @@ const SECTOR_CATEGORIES = [
 ];
 
 // Authentic Examination Calendar Timeline Items (SSC / UPSC / Defence style)
-const EXAM_CALENDAR_ITEMS = [
+const EXAM_CALENDAR_ITEMS: GovtExamCalendarItemType[] = [
   {
+    id: 'cal-1',
     day: '14',
     month: 'MAR',
-    title: 'Indian Navy Entrance Test (INET) - [Agniveer (MR as SSR) and SSR (Medical)]',
+    year: '2026',
+    titleEn: 'Indian Navy Entrance Test (INET) - [Agniveer (MR as SSR ) and SSR (Medical)]',
+    titleHi: 'भारतीय नौसेना प्रवेश परीक्षा (INET) - [अग्निवीर (MR as SSR) एवं SSR (मेडिकल)]',
     board: 'Indian Navy',
     stage: 'Computer Based Exam',
     link: 'https://joinindiannavy.gov.in',
+    orderIndex: 1,
+    isActive: true,
   },
   {
+    id: 'cal-2',
     day: '16',
     month: 'MAR',
-    title: 'JSA / LDC Grade Limited Departmental Competitive Examination, 2026 (for DoPT only)',
+    year: '2026',
+    titleEn: 'JSA / LDC Grade Limited Departmental Competitive Examination, 2025 (for DoPT only)',
+    titleHi: 'जेएसए / एलडीसी ग्रेड सीमित विभागीय प्रतियोगी परीक्षा, 2025 (केवल डीओपीटी हेतु)',
     board: 'SSC Portal',
     stage: 'Paper-I Written',
     link: 'https://ssc.gov.in',
+    orderIndex: 2,
+    isActive: true,
   },
   {
+    id: 'cal-3',
     day: '16',
     month: 'MAR',
-    title: 'ASO Grade Limited Departmental Competitive Examination, 2026',
+    year: '2026',
+    titleEn: 'ASO Grade Limited Departmental Competitive Examination, 2025',
+    titleHi: 'एएसओ ग्रेड सीमित विभागीय प्रतियोगी परीक्षा, 2025',
     board: 'SSC Portal',
     stage: 'Paper-I / II Exam',
     link: 'https://ssc.gov.in',
+    orderIndex: 3,
+    isActive: true,
   },
   {
+    id: 'cal-4',
     day: '22',
     month: 'NOV',
-    title: 'UPSC Civil Services (Preliminary) Examination, 2026 Registration Deadline',
+    year: '2026',
+    titleEn: 'UPSC Civil Services (Preliminary) Examination, 2026 Registration Deadline',
+    titleHi: 'यूपीएससी सिविल सेवा (प्रारंभिक) परीक्षा, 2026 ऑनलाइन पंजीकरण अंतिम तिथि',
     board: 'UPSC Online',
     stage: 'Online Registration',
     link: 'https://upsconline.nic.in',
+    orderIndex: 4,
+    isActive: true,
   },
   {
+    id: 'cal-5',
     day: '28',
     month: 'NOV',
-    title: 'SSC Combined Graduate Level (CGL) 2026 Tier-I Notification & Scrutiny',
+    year: '2026',
+    titleEn: 'SSC Combined Graduate Level (CGL) 2026 Tier-I Notification & Scrutiny',
+    titleHi: 'एसएससी संयुक्त स्नातक स्तरीय (CGL) 2026 टियर-I परीक्षा अधिसूचना',
     board: 'Staff Selection',
     stage: 'Tier-I CBT Exam',
     link: 'https://ssc.gov.in',
+    orderIndex: 5,
+    isActive: true,
   },
   {
+    id: 'cal-6',
     day: '05',
     month: 'DEC',
-    title: 'Railway Recruitment Board (RRB) Assistant Loco Pilot (ALP) CBT-1',
+    year: '2026',
+    titleEn: 'Railway Recruitment Board (RRB) Assistant Loco Pilot (ALP) CBT-1',
+    titleHi: 'रेलवे भर्ती बोर्ड (RRB) सहायक लोको पायलट (ALP) कंप्यूटर आधारित परीक्षा CBT-1',
     board: 'Indian Railways',
     stage: 'Phase-1 CBT',
     link: 'https://www.rrbapply.gov.in',
+    orderIndex: 6,
+    isActive: true,
   },
   {
+    id: 'cal-7',
     day: '12',
     month: 'DEC',
-    title: 'IBPS Probationary Officers (PO) / Management Trainee Mains Examination',
+    year: '2026',
+    titleEn: 'IBPS Probationary Officers (PO) / Management Trainee Mains Examination',
+    titleHi: 'आईबीपीएस प्रोबेशनरी ऑफिसर (PO) / प्रबंधन प्रशिक्षु मुख्य परीक्षा',
     board: 'IBPS Institute',
     stage: 'Mains Examination',
     link: 'https://www.ibps.in',
+    orderIndex: 7,
+    isActive: true,
   },
 ];
 
@@ -133,6 +168,8 @@ export default function GovtJobsPublicPage() {
 
   // Data & Loading
   const [jobs, setJobs] = useState<GovtJobItem[]>([]);
+  const [examCalendarItems, setExamCalendarItems] = useState<GovtExamCalendarItemType[]>([]);
+  const [commissionPortals, setCommissionPortals] = useState<GovtCommissionPortalType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -140,21 +177,25 @@ export default function GovtJobsPublicPage() {
   const [previewJob, setPreviewJob] = useState<GovtJobItem | null>(null);
 
   useEffect(() => {
-    async function fetchGovtJobs() {
+    async function fetchGovtData() {
       setIsLoading(true);
       try {
-        const data = await sdk.getGovtJobs({
-          status: 'active',
-        });
-        setJobs(data);
+        const [jobsData, calData, portalsData] = await Promise.all([
+          sdk.getGovtJobs({ status: 'active' }).catch(() => []),
+          sdk.getGovtExamCalendar({ status: 'active' }).catch(() => []),
+          sdk.getGovtCommissionPortals({ status: 'active' }).catch(() => []),
+        ]);
+        setJobs(jobsData);
+        setExamCalendarItems(calData);
+        setCommissionPortals(portalsData);
       } catch (err) {
-        console.error('Failed to load government jobs:', err);
+        console.error('Failed to load government data:', err);
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchGovtJobs();
+    fetchGovtData();
   }, [sdk]);
 
   // Filtered jobs list
@@ -602,107 +643,91 @@ export default function GovtJobsPublicPage() {
                     return (
                       <div
                         key={job.id}
-                        className="py-4 px-4 sm:px-5 hover:bg-slate-50/90 dark:hover:bg-slate-900/40 transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group"
+                        className="py-4 px-4 sm:px-5 hover:bg-slate-50/90 dark:hover:bg-slate-900/40 transition-colors flex items-center justify-between gap-4 group"
                       >
-                        {/* Date Block on Left */}
-                        <div className="flex items-center sm:flex-col sm:items-center justify-center flex-shrink-0 w-full sm:w-16 text-center gap-2 sm:gap-0.5">
+                        {/* Date Block on Left (Matching Screenshot: New badge + Month + Day + Year) */}
+                        <div className="flex flex-col items-center justify-center w-14 sm:w-16 flex-shrink-0 text-center select-none">
                           {isNew && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#8B2626] text-white shadow-xs uppercase tracking-wider">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#80332A] text-white uppercase tracking-wider mb-1 leading-none shadow-xs">
                               New
                             </span>
                           )}
-                          <div className="flex sm:flex-col items-baseline sm:items-center gap-1 sm:gap-0 leading-tight">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                              {month}
-                            </span>
-                            <span className="text-xl sm:text-2xl font-black text-[#8B2626] dark:text-rose-400 font-serif">
-                              {day}
-                            </span>
-                            <span className="text-[10px] font-semibold text-slate-400">
-                              {year}
-                            </span>
-                          </div>
+                          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider leading-none">
+                            {month}
+                          </span>
+                          <span className="text-xl sm:text-2xl font-black text-[#80332A] dark:text-rose-400 font-serif leading-none my-0.5">
+                            {day}
+                          </span>
+                          <span className="text-[10px] font-semibold text-slate-400 leading-none">
+                            {year}
+                          </span>
                         </div>
 
-                        {/* Middle: Notice Headline, Department, and Meta */}
-                        <div className="flex-1 min-w-0 space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap text-[11px]">
-                            <span className={`px-2 py-0.5 rounded-md font-black uppercase text-[10px] ${
-                              job.category === 'CENTRAL'
-                                ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20'
-                                : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20'
-                            }`}>
-                              {job.category === 'CENTRAL' ? 'Central' : (job.state || 'State')}
-                            </span>
-                            <span className="font-extrabold text-indigo-600 dark:text-indigo-400 line-clamp-1">
-                              {department}
-                            </span>
-                            <span className="text-slate-300 dark:text-slate-700">•</span>
-                            <span className="font-black text-slate-700 dark:text-slate-300">
-                              {job.totalVacancies} Posts
-                            </span>
-                          </div>
-
-                          {/* Notice Title Link (opens details modal or apply) */}
+                        {/* Middle: Notice Headline */}
+                        <div className="flex-1 min-w-0 pr-2 space-y-1">
                           <h3
                             onClick={() => setPreviewJob(job)}
-                            className="text-xs sm:text-sm font-bold theme-text hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer leading-snug font-sans"
-                            title="Click to view complete details"
+                            className="text-xs sm:text-[13px] font-semibold text-slate-900 dark:text-slate-100 hover:text-[#80332A] dark:hover:text-rose-400 transition-colors cursor-pointer leading-relaxed"
+                            title="Click to view details"
                           >
                             {title}
                           </h3>
-
-                          {/* Subtitle / Details snippet */}
-                          <div className="flex flex-wrap items-center gap-3 text-[11px] theme-muted pt-0.5">
-                            <span><strong>Sector:</strong> {job.sector}</span>
-                            {job.salaryScale && <span>• <strong>Pay:</strong> {job.salaryScale}</span>}
-                            <span>• <strong className="text-rose-600 dark:text-rose-400">Last Date:</strong> {job.lastDate}</span>
+                          <div className="flex items-center gap-2 flex-wrap text-[11px] theme-muted">
+                            <span className={`px-2 py-0.2 rounded text-[9px] font-black uppercase ${
+                              job.category === 'CENTRAL'
+                                ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                                : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                            }`}>
+                              {job.category === 'CENTRAL' ? 'Central' : (job.state || 'State')}
+                            </span>
+                            <span>•</span>
+                            <span className="font-semibold">{department}</span>
+                            {job.totalVacancies && (
+                              <>
+                                <span>•</span>
+                                <span className="font-bold text-slate-700 dark:text-slate-300">{job.totalVacancies}</span>
+                              </>
+                            )}
                             {closingSoon && (
-                              <span className="px-1.5 py-0.2 rounded text-[10px] font-black bg-rose-500/10 text-rose-600 dark:text-rose-400 animate-pulse">
-                                Urgent
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-rose-500/10 text-rose-600 dark:text-rose-400 animate-pulse">
+                                Closing Soon
                               </span>
                             )}
                           </div>
                         </div>
 
-                        {/* Right: File Size + Red PDF badge + Eye Preview Icon + Apply Online */}
-                        <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
-                          <span className="text-[11px] font-mono theme-muted hidden sm:inline">
+                        {/* Right: File Size + Red PDF Icon + Maroon Circle Eye Icon */}
+                        <div className="flex items-center gap-2.5 flex-shrink-0">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 font-normal hidden sm:inline font-mono">
                             ({fileSize})
                           </span>
 
-                          {/* Red PDF Icon Badge (Direct notification download) */}
+                          {/* Authentic Red PDF Document Icon */}
                           <a
                             href={job.notificationUrl || job.applyUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-[#DC2626] hover:bg-rose-700 text-white text-[10px] font-black tracking-wider shadow-xs transition-colors cursor-pointer"
+                            className="inline-flex items-center justify-center hover:opacity-85 transition-opacity cursor-pointer"
                             title="Download Official Notification PDF"
                           >
-                            PDF
+                            <svg className="w-5 h-6 flex-shrink-0" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M2 3C2 1.89543 2.89543 1 4 1H16L22 7V25C22 26.1046 21.1046 27 20 27H4C2.89543 27 2 26.1046 2 25V3Z" fill="#DC2626"/>
+                              <path d="M16 1L22 7H17C16.4477 7 16 6.55228 16 6V1Z" fill="#B91C1C"/>
+                              <rect x="3.5" y="11" width="17" height="10" rx="1.5" fill="white" />
+                              <text x="5" y="18.5" fill="#DC2626" fontSize="7" fontWeight="900" fontFamily="sans-serif">PDF</text>
+                            </svg>
                           </a>
 
-                          {/* Eye Icon Button (Opens instant Gazette details modal) */}
+                          {/* Eye Icon inside Maroon Circle Outline (Exact match from screenshot) */}
                           <button
                             type="button"
                             onClick={() => setPreviewJob(job)}
-                            className="p-1.5 rounded-lg text-[#8B2626] dark:text-rose-400 hover:bg-[#8B2626]/10 transition-colors cursor-pointer"
+                            className="w-6 h-6 rounded-full border border-[#80332A] text-[#80332A] dark:text-rose-400 hover:bg-[#80332A]/10 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0"
                             title="Quick View Gazette Notice"
                             aria-label="View notice"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-3.5 h-3.5" />
                           </button>
-
-                          {/* Direct Official Apply Button */}
-                          <a
-                            href={job.applyUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs shadow-xs transition-all flex items-center gap-1 cursor-pointer"
-                          >
-                            <span>{lang === 'en' ? 'Apply' : 'आवेदन'}</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
                         </div>
                       </div>
                     );
@@ -711,11 +736,11 @@ export default function GovtJobsPublicPage() {
               </div>
             </div>
 
-            {/* RIGHT SECTION (4 COLS): EXAMINATION CALENDAR TIMELINE (FROM SCREENSHOT) */}
+            {/* RIGHT SECTION (4 COLS): EXAMINATION CALENDAR TIMELINE (EXACT MATCH FROM SCREENSHOT) */}
             <div className="md:col-span-4 space-y-4">
-              <div className="theme-surface border theme-border rounded-2xl shadow-xs overflow-hidden">
+              <div className="theme-surface border theme-border rounded-tl-[28px] rounded-bl-2xl rounded-r-2xl shadow-xs overflow-hidden flex flex-col">
                 {/* Terracotta / Maroon Header */}
-                <div className="bg-[#8B2626] text-white p-3.5 sm:p-4 flex items-center justify-between">
+                <div className="bg-[#80332A] text-white px-5 py-3.5 flex items-center justify-between border-b border-[#6E2B23]">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-amber-300" />
                     <h3 className="font-black text-xs sm:text-sm uppercase tracking-wider font-serif">
@@ -727,48 +752,52 @@ export default function GovtJobsPublicPage() {
                   </span>
                 </div>
 
-                {/* Vertical Timeline Container (Exact SSC/UPSC Style) */}
-                <div className="p-4 sm:p-5 space-y-5">
-                  {EXAM_CALENDAR_ITEMS.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-3.5 relative group">
-                      {/* Vertical Connecting Line between dates */}
-                      {idx !== EXAM_CALENDAR_ITEMS.length - 1 && (
-                        <div className="absolute left-[23px] top-[48px] bottom-[-20px] w-[2px] bg-[#8B2626]/20 dark:bg-rose-900/40" />
-                      )}
+                {/* Calendar Rows: Continuous Maroon Left Pillar + Event Titles on Right + Maroon Accent Track */}
+                <div className="flex-1 divide-y border-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900 border-r-4 border-[#80332A] overflow-y-auto max-h-[580px] scrollbar-thin scrollbar-thumb-[#80332A]">
+                  {(examCalendarItems.length > 0 ? examCalendarItems : EXAM_CALENDAR_ITEMS).map((item, idx, arr) => {
+                    const calTitle = lang === 'hi' && item.titleHi ? item.titleHi : item.titleEn;
+                    return (
+                      <div key={item.id || idx} className="flex items-stretch group hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                        {/* Left: Continuous Terracotta/Maroon Date Pillar Segment */}
+                        <div className="w-16 sm:w-20 bg-[#80332A] text-white flex flex-col items-center justify-center py-3 px-1 flex-shrink-0 relative select-none">
+                          <span className="text-xl sm:text-2xl font-black leading-none font-serif tracking-tight text-white">{item.day}</span>
+                          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider mt-1 text-white/90">{item.month}</span>
 
-                      {/* Terracotta / Maroon Date Block */}
-                      <div className="w-12 h-12 rounded-xl bg-[#8B2626] text-white flex flex-col items-center justify-center flex-shrink-0 shadow-sm z-10 font-serif">
-                        <span className="text-base font-black leading-none">{item.day}</span>
-                        <span className="text-[9px] font-bold uppercase tracking-wider leading-none mt-0.5">{item.month}</span>
-                      </div>
+                          {/* Centered vertical connector line downward */}
+                          {idx !== arr.length - 1 && (
+                            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-[1.5px] h-6 bg-white/40 z-10" />
+                          )}
+                        </div>
 
-                      {/* Event Content */}
-                      <div className="flex-1 min-w-0 pt-0.5">
-                        <a
-                          href={item.link}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs font-bold theme-text leading-snug group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors block"
-                        >
-                          {item.title}
-                        </a>
-                        <div className="flex items-center gap-2 mt-1 text-[10px] theme-muted">
-                          <span className="font-bold text-[#8B2626] dark:text-rose-400">{item.board}</span>
-                          <span>•</span>
-                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{item.stage}</span>
+                        {/* Right: Event title (Matching Screenshot) */}
+                        <div className="flex-1 p-3.5 sm:p-4 flex flex-col justify-center min-h-[68px]">
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs sm:text-[13px] font-medium text-slate-800 dark:text-slate-100 group-hover:text-[#80332A] dark:group-hover:text-rose-400 transition-colors leading-snug block"
+                            title={calTitle}
+                          >
+                            {calTitle}
+                          </a>
+                          <div className="flex items-center gap-2 mt-1 text-[10px] theme-muted">
+                            <span className="font-bold text-[#80332A] dark:text-rose-400">{item.board}</span>
+                            <span>•</span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{item.stage}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Calendar Footer */}
-                <div className="p-3 border-t theme-border bg-slate-50/50 dark:bg-slate-900/50 text-center">
+                <div className="p-3 border-t theme-border bg-slate-50/70 dark:bg-slate-900/60 text-center">
                   <a
                     href="https://ssc.gov.in"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs font-bold text-indigo-600 hover:underline flex items-center justify-center gap-1"
+                    className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center justify-center gap-1"
                   >
                     <span>{lang === 'en' ? 'View Full Commission Schedule' : 'आयोग का संपूर्ण परीक्षा कार्यक्रम'}</span>
                     <ExternalLink className="w-3 h-3" />
@@ -1032,33 +1061,40 @@ export default function GovtJobsPublicPage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
-            {[
-              { name: 'UPSC Online', url: 'https://upsconline.nic.in', desc: 'Civil Services & NDA' },
-              { name: 'SSC Portal', url: 'https://ssc.gov.in', desc: 'CGL, CHSL, MTS & GD' },
-              { name: 'Indian Railways', url: 'https://www.rrbapply.gov.in', desc: 'RRB ALP, NTPC, Group D' },
-              { name: 'IBPS Banking', url: 'https://www.ibps.in', desc: 'Bank PO, Clerk, SO' },
-              { name: 'National Career (NCS)', url: 'https://www.ncs.gov.in', desc: 'Ministry of Labour' },
-              { name: 'Join Indian Army', url: 'https://joinindianarmy.nic.in', desc: 'Officer & Agniveer' },
-            ].map((p, idx) => (
-              <a
-                key={idx}
-                href={p.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-3.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 hover:border-[#8B2626] transition-colors group flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between text-[#8B2626] dark:text-rose-400 font-extrabold text-xs">
-                    <span>{p.name}</span>
-                    <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            {(commissionPortals.length > 0
+              ? commissionPortals
+              : [
+                  { name: 'UPSC Online', nameHi: 'संघ लोक सेवा आयोग', url: 'https://upsconline.nic.in', desc: 'Civil Services & NDA', descHi: 'सिविल सेवा परीक्षा', badgeText: '.gov.in / .nic.in' },
+                  { name: 'SSC Portal', nameHi: 'कर्मचारी चयन आयोग', url: 'https://ssc.gov.in', desc: 'CGL, CHSL, MTS & GD', descHi: 'सीजीएल, सीएचएसएल भर्ती', badgeText: '.gov.in / .nic.in' },
+                  { name: 'Indian Railways', nameHi: 'भारतीय रेलवे भर्ती', url: 'https://www.rrbapply.gov.in', desc: 'RRB ALP, NTPC, Group D', descHi: 'आरआरबी रेलवे भर्ती', badgeText: '.gov.in / .nic.in' },
+                  { name: 'IBPS Banking', nameHi: 'आईबीपीएस बैंक भर्ती', url: 'https://www.ibps.in', desc: 'Bank PO, Clerk, SO', descHi: 'बैंक पीओ, क्लर्क भर्ती', badgeText: '.gov.in / .nic.in' },
+                  { name: 'National Career (NCS)', nameHi: 'राष्ट्रीय करियर सेवा', url: 'https://www.ncs.gov.in', desc: 'Ministry of Labour', descHi: 'श्रम मंत्रालय पोर्टल', badgeText: '.gov.in / .nic.in' },
+                  { name: 'Join Indian Army', nameHi: 'भारतीय सेना भर्ती', url: 'https://joinindianarmy.nic.in', desc: 'Officer & Agniveer', descHi: 'अधिकारी एवं अग्निवीर', badgeText: '.gov.in / .nic.in' },
+                ]
+            ).map((p, idx) => {
+              const pName = lang === 'hi' && p.nameHi ? p.nameHi : p.name;
+              const pDesc = lang === 'hi' && p.descHi ? p.descHi : p.desc;
+              return (
+                <a
+                  key={(p as any).id || idx}
+                  href={p.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 hover:border-[#8B2626] transition-colors group flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between text-[#8B2626] dark:text-rose-400 font-extrabold text-xs">
+                      <span>{pName}</span>
+                      <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </div>
+                    <p className="text-[10px] theme-muted mt-1 leading-tight line-clamp-2">{pDesc}</p>
                   </div>
-                  <p className="text-[10px] theme-muted mt-1 leading-tight">{p.desc}</p>
-                </div>
-                <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 mt-2 font-bold block">
-                  .gov.in / .nic.in
-                </span>
-              </a>
-            ))}
+                  <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 mt-2 font-bold block">
+                    {p.badgeText || '.gov.in / .nic.in'}
+                  </span>
+                </a>
+              );
+            })}
           </div>
         </div>
 

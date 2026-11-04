@@ -30,6 +30,8 @@ import { EmailBroadcast } from './admin/entities/email-broadcast.entity';
 import { RestrictedDomain } from './admin/entities/restricted-domain.entity';
 import { LoginActivity } from './admin/entities/login-activity.entity';
 import { GovtJob } from './admin/entities/govt-job.entity';
+import { GovtExamCalendarItem } from './admin/entities/govt-exam-calendar.entity';
+import { GovtCommissionPortal } from './admin/entities/govt-commission-portal.entity';
 
 import { MailModule } from './mail/mail.module';
 
@@ -64,6 +66,8 @@ import { MailModule } from './mail/mail.module';
         RestrictedDomain,
         LoginActivity,
         GovtJob,
+        GovtExamCalendarItem,
+        GovtCommissionPortal,
       ],
       synchronize: true,
       logging: false,

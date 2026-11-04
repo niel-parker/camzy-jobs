@@ -14,6 +14,8 @@ import {
   ExperienceRangeItem,
   FaqItemData,
   GovtJobItem,
+  GovtExamCalendarItemType,
+  GovtCommissionPortalType,
   JobListing,
   LocationItem,
   SeoConfigItem,
@@ -689,6 +691,72 @@ export class JobPortalSdk {
 
   async seedGovtJobDefaults(): Promise<{ success: boolean; message: string; count: number }> {
     return this.request<{ success: boolean; message: string; count: number }>('/admin/govt-jobs/seed-defaults', {
+      method: 'POST',
+    });
+  }
+
+  // --- Government Examination Calendar (Admin Managed) ---
+  async getGovtExamCalendar(params?: { status?: string }): Promise<GovtExamCalendarItemType[]> {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    const qs = q.toString() ? `?${q.toString()}` : '';
+    return this.request<GovtExamCalendarItemType[]>(`/admin/govt-exam-calendar${qs}`);
+  }
+
+  async saveGovtExamCalendarItem(item: Partial<GovtExamCalendarItemType>): Promise<GovtExamCalendarItemType> {
+    if (item.id) {
+      return this.request<GovtExamCalendarItemType>(`/admin/govt-exam-calendar/${item.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(item),
+      });
+    }
+    return this.request<GovtExamCalendarItemType>('/admin/govt-exam-calendar', {
+      method: 'POST',
+      body: JSON.stringify(item),
+    });
+  }
+
+  async deleteGovtExamCalendarItem(id: string): Promise<{ success: boolean; message?: string }> {
+    return this.request<{ success: boolean; message?: string }>(`/admin/govt-exam-calendar/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async seedGovtExamCalendarDefaults(): Promise<{ success: boolean; message: string; count: number }> {
+    return this.request<{ success: boolean; message: string; count: number }>('/admin/govt-exam-calendar/seed-defaults', {
+      method: 'POST',
+    });
+  }
+
+  // --- Government Commission Portals Directory (Admin Managed) ---
+  async getGovtCommissionPortals(params?: { status?: string }): Promise<GovtCommissionPortalType[]> {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    const qs = q.toString() ? `?${q.toString()}` : '';
+    return this.request<GovtCommissionPortalType[]>(`/admin/govt-commission-portals${qs}`);
+  }
+
+  async saveGovtCommissionPortal(item: Partial<GovtCommissionPortalType>): Promise<GovtCommissionPortalType> {
+    if (item.id) {
+      return this.request<GovtCommissionPortalType>(`/admin/govt-commission-portals/${item.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(item),
+      });
+    }
+    return this.request<GovtCommissionPortalType>('/admin/govt-commission-portals', {
+      method: 'POST',
+      body: JSON.stringify(item),
+    });
+  }
+
+  async deleteGovtCommissionPortal(id: string): Promise<{ success: boolean; message?: string }> {
+    return this.request<{ success: boolean; message?: string }>(`/admin/govt-commission-portals/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async seedGovtCommissionPortalDefaults(): Promise<{ success: boolean; message: string; count: number }> {
+    return this.request<{ success: boolean; message: string; count: number }>('/admin/govt-commission-portals/seed-defaults', {
       method: 'POST',
     });
   }

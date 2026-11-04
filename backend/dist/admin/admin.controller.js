@@ -40,8 +40,10 @@ const email_broadcast_entity_1 = require("./entities/email-broadcast.entity");
 const restricted_domain_entity_1 = require("./entities/restricted-domain.entity");
 const login_activity_entity_1 = require("./entities/login-activity.entity");
 const govt_job_entity_1 = require("./entities/govt-job.entity");
+const govt_exam_calendar_entity_1 = require("./entities/govt-exam-calendar.entity");
+const govt_commission_portal_entity_1 = require("./entities/govt-commission-portal.entity");
 let AdminController = class AdminController {
-    constructor(appConfigService, jobRepo, tenantRepo, candidateRepo, appRepo, subRepo, planRepo, txnRepo, userRepo, locationRepo, skillRepo, expRangeRepo, taxonomyRepo, cmsRepo, blogPostRepo, blogCatRepo, seoRepo, faqRepo, broadcastRepo, domainRepo, loginActivityRepo, govtJobRepo) {
+    constructor(appConfigService, jobRepo, tenantRepo, candidateRepo, appRepo, subRepo, planRepo, txnRepo, userRepo, locationRepo, skillRepo, expRangeRepo, taxonomyRepo, cmsRepo, blogPostRepo, blogCatRepo, seoRepo, faqRepo, broadcastRepo, domainRepo, loginActivityRepo, govtJobRepo, govtExamCalendarRepo, govtCommissionPortalRepo) {
         this.appConfigService = appConfigService;
         this.jobRepo = jobRepo;
         this.tenantRepo = tenantRepo;
@@ -64,6 +66,8 @@ let AdminController = class AdminController {
         this.domainRepo = domainRepo;
         this.loginActivityRepo = loginActivityRepo;
         this.govtJobRepo = govtJobRepo;
+        this.govtExamCalendarRepo = govtExamCalendarRepo;
+        this.govtCommissionPortalRepo = govtCommissionPortalRepo;
     }
     async getDashboardMetrics() {
         const totalJobs = await this.jobRepo.count();
@@ -1696,6 +1700,75 @@ let AdminController = class AdminController {
         return [
             {
                 category: govt_job_entity_1.GovtJobCategory.CENTRAL,
+                sector: 'SSC / Staff Selection',
+                titleEn: 'Declaration of result of PET/PST to shortlist candidates for appearing in Paper-II.',
+                titleHi: 'पेपर-II में उपस्थित होने के लिए उम्मीदवारों को शॉर्टलिस्ट करने हेतु पीईटी/पीएसटी परिणाम की घोषणा।',
+                departmentEn: 'Staff Selection Commission (SSC)',
+                departmentHi: 'कर्मचारी चयन आयोग (एसएससी)',
+                totalVacancies: 'Shortlisting Notice',
+                qualificationEn: 'PET/PST Qualified Candidates',
+                qualificationHi: 'पीईटी/पीएसटी उत्तीर्ण उम्मीदवार',
+                ageLimit: 'As per Notification',
+                salaryScale: 'As per SSC Scale',
+                startDate: '2026-10-29',
+                lastDate: '2026-12-15',
+                applyUrl: 'https://ssc.gov.in',
+                notificationUrl: 'https://ssc.gov.in',
+                officialWebsiteUrl: 'https://ssc.gov.in',
+                descriptionEn: 'Official declaration of Physical Efficiency Test (PET) and Physical Standard Test (PST) result to shortlist candidates for Paper-II examination.',
+                descriptionHi: 'पेपर-II परीक्षा हेतु उम्मीदवारों की सूची जारी करने के संबंध में आधिकारिक परिणाम घोषणा।',
+                isActive: true,
+                isFeatured: false,
+                orderIndex: 1,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.CENTRAL,
+                sector: 'SSC / Staff Selection',
+                titleEn: 'Important Notice - Revised dates for Junior Engineer Examination, 2026 and Sub-Inspector in Delhi Police and Central Armed Police Forces Examination, 2026.',
+                titleHi: 'महत्वपूर्ण सूचना - जूनियर इंजीनियर परीक्षा 2026 एवं दिल्ली पुलिस व सीएपीएफ उप-निरीक्षक परीक्षा 2026 की संशोधित तिथियां।',
+                departmentEn: 'SSC Examination Cell',
+                departmentHi: 'कर्मचारी चयन आयोग (एसएससी)',
+                totalVacancies: '3,840 Posts',
+                qualificationEn: 'Degree / Diploma in Civil, Electrical, Mechanical Engineering',
+                qualificationHi: 'संबंधित इंजीनियरिंग शाखा में डिग्री अथवा डिप्लोमा',
+                ageLimit: '18 - 30 Years',
+                salaryScale: 'Pay Level 6 (₹35,400 - ₹1,12,400)',
+                startDate: '2026-10-26',
+                lastDate: '2026-11-30',
+                applyUrl: 'https://ssc.gov.in',
+                notificationUrl: 'https://ssc.gov.in',
+                officialWebsiteUrl: 'https://ssc.gov.in',
+                descriptionEn: 'Important notice regarding revised schedule and examination window for Junior Engineer (Civil, Mechanical, Electrical) and Sub-Inspector in Delhi Police & CAPFs.',
+                descriptionHi: 'जूनियर इंजीनियर एवं दिल्ली पुलिस व सीएपीएफ में उप-निरीक्षक परीक्षा हेतु संशोधित परीक्षा कार्यक्रम।',
+                isActive: true,
+                isFeatured: true,
+                orderIndex: 2,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.CENTRAL,
+                sector: 'SSC / Staff Selection',
+                titleEn: 'Information regarding the city of examination and Admission Certificate for the candidates of Junior Engineer Examination, 2026 (Computer Based Examination) Paper-I',
+                titleHi: 'जूनियर इंजीनियर परीक्षा 2026 (कंप्यूटर आधारित परीक्षा) पेपर-I के उम्मीदवारों हेतु परीक्षा शहर एवं प्रवेश पत्र संबंधी सूचना।',
+                departmentEn: 'Staff Selection Commission (SSC)',
+                departmentHi: 'कर्मचारी चयन आयोग (एसएससी)',
+                totalVacancies: 'Paper-I City Intimation',
+                qualificationEn: 'Registered Candidates for JE Paper-I',
+                qualificationHi: 'पंजीकृत उम्मीदवार',
+                ageLimit: '18 - 30 Years',
+                salaryScale: 'Pay Level 6',
+                startDate: '2026-10-23',
+                lastDate: '2026-11-20',
+                applyUrl: 'https://ssc.gov.in',
+                notificationUrl: 'https://ssc.gov.in',
+                officialWebsiteUrl: 'https://ssc.gov.in',
+                descriptionEn: 'Exam city intimation slip and admission certificate instructions for candidates appearing in Junior Engineer Paper-I CBT examination.',
+                descriptionHi: 'कंप्यूटर आधारित परीक्षा पेपर-I हेतु परीक्षा केंद्र शहर एवं प्रवेश पत्र डाउनलोड करने के संबंध में महत्वपूर्ण निर्देश।',
+                isActive: true,
+                isFeatured: false,
+                orderIndex: 3,
+            },
+            {
+                category: govt_job_entity_1.GovtJobCategory.CENTRAL,
                 sector: 'UPSC / Civil Services',
                 titleEn: 'UPSC Civil Services (Preliminary) Examination 2026 (IAS / IPS / IFS)',
                 titleHi: 'संघ लोक सेवा आयोग सिविल सेवा (प्रारंभिक) परीक्षा 2026 (आईएएस / आईपीएस)',
@@ -2094,6 +2167,318 @@ let AdminController = class AdminController {
             }
         }
         return { success: true, message: `Seeded ${created} government job notifications`, count: created };
+    }
+    getDefaultExamCalendarItems() {
+        return [
+            {
+                day: '14',
+                month: 'MAR',
+                year: '2026',
+                titleEn: 'Indian Navy Entrance Test (INET) - [Agniveer (MR as SSR ) and SSR (Medical)]',
+                titleHi: 'भारतीय नौसेना प्रवेश परीक्षा (INET) - [अग्निवीर (MR as SSR) एवं SSR (मेडिकल)]',
+                board: 'Indian Navy',
+                stage: 'Computer Based Exam',
+                link: 'https://joinindiannavy.gov.in',
+                orderIndex: 1,
+                isActive: true,
+            },
+            {
+                day: '16',
+                month: 'MAR',
+                year: '2026',
+                titleEn: 'JSA / LDC Grade Limited Departmental Competitive Examination, 2025 (for DoPT only)',
+                titleHi: 'जेएसए / एलडीसी ग्रेड सीमित विभागीय प्रतियोगी परीक्षा, 2025 (केवल डीओपीटी हेतु)',
+                board: 'SSC Portal',
+                stage: 'Paper-I Written',
+                link: 'https://ssc.gov.in',
+                orderIndex: 2,
+                isActive: true,
+            },
+            {
+                day: '16',
+                month: 'MAR',
+                year: '2026',
+                titleEn: 'ASO Grade Limited Departmental Competitive Examination, 2025',
+                titleHi: 'एएसओ ग्रेड सीमित विभागीय प्रतियोगी परीक्षा, 2025',
+                board: 'SSC Portal',
+                stage: 'Paper-I / II Exam',
+                link: 'https://ssc.gov.in',
+                orderIndex: 3,
+                isActive: true,
+            },
+            {
+                day: '22',
+                month: 'NOV',
+                year: '2026',
+                titleEn: 'UPSC Civil Services (Preliminary) Examination, 2026 Registration Deadline',
+                titleHi: 'यूपीएससी सिविल सेवा (प्रारंभिक) परीक्षा, 2026 पंजीकरण अंतिम तिथि',
+                board: 'UPSC Online',
+                stage: 'Online Registration',
+                link: 'https://upsconline.nic.in',
+                orderIndex: 4,
+                isActive: true,
+            },
+            {
+                day: '28',
+                month: 'NOV',
+                year: '2026',
+                titleEn: 'SSC Combined Graduate Level (CGL) 2026 Tier-I Notification & Scrutiny',
+                titleHi: 'एसएससी सीजीएल 2026 टियर-1 परीक्षा अधिसूचना एवं जांच',
+                board: 'Staff Selection',
+                stage: 'Tier-I CBT Exam',
+                link: 'https://ssc.gov.in',
+                orderIndex: 5,
+                isActive: true,
+            },
+            {
+                day: '05',
+                month: 'DEC',
+                year: '2026',
+                titleEn: 'Railway Recruitment Board (RRB) Assistant Loco Pilot (ALP) CBT-1',
+                titleHi: 'आरआरबी रेलवे सहायक लोको पायलट (ALP) सीबीटी-1 परीक्षा',
+                board: 'Indian Railways',
+                stage: 'Phase-1 CBT',
+                link: 'https://www.rrbapply.gov.in',
+                orderIndex: 6,
+                isActive: true,
+            },
+            {
+                day: '12',
+                month: 'DEC',
+                year: '2026',
+                titleEn: 'IBPS Probationary Officers (PO) / Management Trainee Mains Examination',
+                titleHi: 'आईबीपीएस बैंक पीओ / मैनेजमेंट ट्रेनी मुख्य परीक्षा',
+                board: 'IBPS Institute',
+                stage: 'Mains Examination',
+                link: 'https://www.ibps.in',
+                orderIndex: 7,
+                isActive: true,
+            },
+        ];
+    }
+    async getGovtExamCalendar(status) {
+        const count = await this.govtExamCalendarRepo.count();
+        if (count === 0) {
+            const defaults = this.getDefaultExamCalendarItems();
+            for (const item of defaults) {
+                await this.govtExamCalendarRepo.save(this.govtExamCalendarRepo.create(item));
+            }
+        }
+        const qb = this.govtExamCalendarRepo.createQueryBuilder('item');
+        if (status === 'active') {
+            qb.where('item.isActive = :isActive', { isActive: true });
+        }
+        qb.orderBy('item.orderIndex', 'ASC').addOrderBy('item.createdAt', 'ASC');
+        return await qb.getMany();
+    }
+    async createGovtExamCalendarItem(body) {
+        if (!body.day || !body.month || !body.titleEn || !body.board) {
+            throw new common_1.BadRequestException('Day, Month, English title, and Board name are required');
+        }
+        const item = this.govtExamCalendarRepo.create({
+            day: String(body.day).trim(),
+            month: String(body.month).trim().toUpperCase(),
+            year: body.year ? String(body.year).trim() : '2026',
+            titleEn: String(body.titleEn).trim(),
+            titleHi: body.titleHi ? String(body.titleHi).trim() : String(body.titleEn).trim(),
+            board: String(body.board).trim(),
+            stage: body.stage ? String(body.stage).trim() : 'Computer Based Exam',
+            link: body.link ? String(body.link).trim() : 'https://ssc.gov.in',
+            orderIndex: Number(body.orderIndex) || 0,
+            isActive: body.isActive !== undefined ? Boolean(body.isActive) : true,
+        });
+        return await this.govtExamCalendarRepo.save(item);
+    }
+    async updateGovtExamCalendarItem(id, body) {
+        const item = await this.govtExamCalendarRepo.findOne({ where: { id } });
+        if (!item)
+            throw new common_1.NotFoundException(`Calendar item ${id} not found`);
+        if (body.day !== undefined)
+            item.day = String(body.day).trim();
+        if (body.month !== undefined)
+            item.month = String(body.month).trim().toUpperCase();
+        if (body.year !== undefined)
+            item.year = String(body.year).trim();
+        if (body.titleEn !== undefined)
+            item.titleEn = String(body.titleEn).trim();
+        if (body.titleHi !== undefined)
+            item.titleHi = String(body.titleHi).trim();
+        if (body.board !== undefined)
+            item.board = String(body.board).trim();
+        if (body.stage !== undefined)
+            item.stage = String(body.stage).trim();
+        if (body.link !== undefined)
+            item.link = String(body.link).trim();
+        if (body.orderIndex !== undefined)
+            item.orderIndex = Number(body.orderIndex);
+        if (body.isActive !== undefined)
+            item.isActive = Boolean(body.isActive);
+        return await this.govtExamCalendarRepo.save(item);
+    }
+    async deleteGovtExamCalendarItem(id) {
+        const item = await this.govtExamCalendarRepo.findOne({ where: { id } });
+        if (!item)
+            throw new common_1.NotFoundException(`Calendar item ${id} not found`);
+        await this.govtExamCalendarRepo.remove(item);
+        return { success: true, message: `Exam calendar item '${item.titleEn}' removed.` };
+    }
+    async seedGovtExamCalendarDefaults() {
+        const defaults = this.getDefaultExamCalendarItems();
+        let created = 0;
+        for (const item of defaults) {
+            const existing = await this.govtExamCalendarRepo.findOne({ where: { titleEn: item.titleEn } });
+            if (!existing) {
+                await this.govtExamCalendarRepo.save(this.govtExamCalendarRepo.create(item));
+                created++;
+            }
+        }
+        return { success: true, message: `Seeded ${created} exam calendar items`, count: created };
+    }
+    getDefaultCommissionPortals() {
+        return [
+            {
+                name: 'UPSC Online',
+                nameHi: 'संघ लोक सेवा आयोग (UPSC)',
+                url: 'https://upsconline.nic.in',
+                desc: 'Civil Services & NDA',
+                descHi: 'सिविल सेवा, एनडीए एवं सीडीएस',
+                badgeText: '.gov.in / .nic.in',
+                orderIndex: 1,
+                isActive: true,
+            },
+            {
+                name: 'SSC Portal',
+                nameHi: 'कर्मचारी चयन आयोग (SSC)',
+                url: 'https://ssc.gov.in',
+                desc: 'CGL, CHSL, MTS & GD',
+                descHi: 'सीजीएल, सीएचएसएल, एमटीएस एवं जीडी',
+                badgeText: '.gov.in / .nic.in',
+                orderIndex: 2,
+                isActive: true,
+            },
+            {
+                name: 'Indian Railways',
+                nameHi: 'भारतीय रेलवे भर्ती बोर्ड (RRB)',
+                url: 'https://www.rrbapply.gov.in',
+                desc: 'RRB ALP, NTPC, Group D',
+                descHi: 'आरआरबी एएलपी, एनटीपीसी, ग्रुप डी',
+                badgeText: '.gov.in / .nic.in',
+                orderIndex: 3,
+                isActive: true,
+            },
+            {
+                name: 'IBPS Banking',
+                nameHi: 'आईबीपीएस बैंकिंग संस्थान',
+                url: 'https://www.ibps.in',
+                desc: 'Bank PO, Clerk, SO',
+                descHi: 'बैंक पीओ, क्लर्क एवं विशेषज्ञ अधिकारी',
+                badgeText: '.gov.in / .nic.in',
+                orderIndex: 4,
+                isActive: true,
+            },
+            {
+                name: 'National Career (NCS)',
+                nameHi: 'राष्ट्रीय करियर सेवा (NCS)',
+                url: 'https://www.ncs.gov.in',
+                desc: 'Ministry of Labour',
+                descHi: 'श्रम एवं रोजगार मंत्रालय पोर्टल',
+                badgeText: '.gov.in / .nic.in',
+                orderIndex: 5,
+                isActive: true,
+            },
+            {
+                name: 'Join Indian Army',
+                nameHi: 'भारतीय थलसेना भर्ती',
+                url: 'https://joinindianarmy.nic.in',
+                desc: 'Officer & Agniveer',
+                descHi: 'अधिकारी एवं अग्निवीर भर्ती',
+                badgeText: '.gov.in / .nic.in',
+                orderIndex: 6,
+                isActive: true,
+            },
+            {
+                name: 'State PSCs Directory',
+                nameHi: 'राज्य लोक सेवा आयोग निर्देशिका',
+                url: 'https://upsc.gov.in',
+                desc: 'All State Service Commissions',
+                descHi: 'समस्त राज्य लोक सेवा आयोग लिंक',
+                badgeText: '.gov.in / .nic.in',
+                orderIndex: 7,
+                isActive: true,
+            },
+        ];
+    }
+    async getGovtCommissionPortals(status) {
+        const count = await this.govtCommissionPortalRepo.count();
+        if (count === 0) {
+            const defaults = this.getDefaultCommissionPortals();
+            for (const item of defaults) {
+                await this.govtCommissionPortalRepo.save(this.govtCommissionPortalRepo.create(item));
+            }
+        }
+        const qb = this.govtCommissionPortalRepo.createQueryBuilder('p');
+        if (status === 'active') {
+            qb.where('p.isActive = :isActive', { isActive: true });
+        }
+        qb.orderBy('p.orderIndex', 'ASC').addOrderBy('p.createdAt', 'ASC');
+        return await qb.getMany();
+    }
+    async createGovtCommissionPortal(body) {
+        if (!body.name || !body.url || !body.desc) {
+            throw new common_1.BadRequestException('Portal name, URL, and description are required');
+        }
+        const item = this.govtCommissionPortalRepo.create({
+            name: String(body.name).trim(),
+            nameHi: body.nameHi ? String(body.nameHi).trim() : String(body.name).trim(),
+            url: String(body.url).trim(),
+            desc: String(body.desc).trim(),
+            descHi: body.descHi ? String(body.descHi).trim() : String(body.desc).trim(),
+            badgeText: body.badgeText ? String(body.badgeText).trim() : '.gov.in / .nic.in',
+            orderIndex: Number(body.orderIndex) || 0,
+            isActive: body.isActive !== undefined ? Boolean(body.isActive) : true,
+        });
+        return await this.govtCommissionPortalRepo.save(item);
+    }
+    async updateGovtCommissionPortal(id, body) {
+        const item = await this.govtCommissionPortalRepo.findOne({ where: { id } });
+        if (!item)
+            throw new common_1.NotFoundException(`Portal ${id} not found`);
+        if (body.name !== undefined)
+            item.name = String(body.name).trim();
+        if (body.nameHi !== undefined)
+            item.nameHi = String(body.nameHi).trim();
+        if (body.url !== undefined)
+            item.url = String(body.url).trim();
+        if (body.desc !== undefined)
+            item.desc = String(body.desc).trim();
+        if (body.descHi !== undefined)
+            item.descHi = String(body.descHi).trim();
+        if (body.badgeText !== undefined)
+            item.badgeText = String(body.badgeText).trim();
+        if (body.orderIndex !== undefined)
+            item.orderIndex = Number(body.orderIndex);
+        if (body.isActive !== undefined)
+            item.isActive = Boolean(body.isActive);
+        return await this.govtCommissionPortalRepo.save(item);
+    }
+    async deleteGovtCommissionPortal(id) {
+        const item = await this.govtCommissionPortalRepo.findOne({ where: { id } });
+        if (!item)
+            throw new common_1.NotFoundException(`Portal ${id} not found`);
+        await this.govtCommissionPortalRepo.remove(item);
+        return { success: true, message: `Commission portal '${item.name}' removed.` };
+    }
+    async seedGovtCommissionPortalDefaults() {
+        const defaults = this.getDefaultCommissionPortals();
+        let created = 0;
+        for (const item of defaults) {
+            const existing = await this.govtCommissionPortalRepo.findOne({ where: { name: item.name } });
+            if (!existing) {
+                await this.govtCommissionPortalRepo.save(this.govtCommissionPortalRepo.create(item));
+                created++;
+            }
+        }
+        return { success: true, message: `Seeded ${created} commission portals`, count: created };
     }
 };
 exports.AdminController = AdminController;
@@ -2762,6 +3147,86 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "seedGovtJobDefaults", null);
+__decorate([
+    (0, common_1.Get)('govt-exam-calendar'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get Government Examination Calendar events' }),
+    __param(0, (0, common_1.Query)('status')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getGovtExamCalendar", null);
+__decorate([
+    (0, common_1.Post)('govt-exam-calendar'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Add new Government examination calendar notice' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "createGovtExamCalendarItem", null);
+__decorate([
+    (0, common_1.Put)('govt-exam-calendar/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Update Government examination calendar notice' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "updateGovtExamCalendarItem", null);
+__decorate([
+    (0, common_1.Delete)('govt-exam-calendar/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Delete Government examination calendar notice' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "deleteGovtExamCalendarItem", null);
+__decorate([
+    (0, common_1.Post)('govt-exam-calendar/seed-defaults'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Reset and reseed examination calendar demo items' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "seedGovtExamCalendarDefaults", null);
+__decorate([
+    (0, common_1.Get)('govt-commission-portals'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get official Government Commission Portals directory' }),
+    __param(0, (0, common_1.Query)('status')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getGovtCommissionPortals", null);
+__decorate([
+    (0, common_1.Post)('govt-commission-portals'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Add new Government Commission Portal' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "createGovtCommissionPortal", null);
+__decorate([
+    (0, common_1.Put)('govt-commission-portals/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Update Government Commission Portal' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "updateGovtCommissionPortal", null);
+__decorate([
+    (0, common_1.Delete)('govt-commission-portals/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Delete Government Commission Portal' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "deleteGovtCommissionPortal", null);
+__decorate([
+    (0, common_1.Post)('govt-commission-portals/seed-defaults'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Reset and reseed commission portals demo items' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "seedGovtCommissionPortalDefaults", null);
 exports.AdminController = AdminController = __decorate([
     (0, swagger_1.ApiTags)('Super Admin Governance'),
     (0, common_1.Controller)('api/v1/admin'),
@@ -2786,7 +3251,11 @@ exports.AdminController = AdminController = __decorate([
     __param(19, (0, typeorm_1.InjectRepository)(restricted_domain_entity_1.RestrictedDomain)),
     __param(20, (0, typeorm_1.InjectRepository)(login_activity_entity_1.LoginActivity)),
     __param(21, (0, typeorm_1.InjectRepository)(govt_job_entity_1.GovtJob)),
+    __param(22, (0, typeorm_1.InjectRepository)(govt_exam_calendar_entity_1.GovtExamCalendarItem)),
+    __param(23, (0, typeorm_1.InjectRepository)(govt_commission_portal_entity_1.GovtCommissionPortal)),
     __metadata("design:paramtypes", [app_config_service_1.AppConfigService,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

@@ -20,6 +20,8 @@ import { EmailBroadcast } from './entities/email-broadcast.entity';
 import { RestrictedDomain } from './entities/restricted-domain.entity';
 import { LoginActivity } from './entities/login-activity.entity';
 import { GovtJob } from './entities/govt-job.entity';
+import { GovtExamCalendarItem } from './entities/govt-exam-calendar.entity';
+import { GovtCommissionPortal } from './entities/govt-commission-portal.entity';
 export declare class AdminController {
     private readonly appConfigService;
     private readonly jobRepo;
@@ -43,7 +45,9 @@ export declare class AdminController {
     private readonly domainRepo;
     private readonly loginActivityRepo;
     private readonly govtJobRepo;
-    constructor(appConfigService: AppConfigService, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, txnRepo: Repository<BillingTransaction>, userRepo: Repository<User>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>, domainRepo: Repository<RestrictedDomain>, loginActivityRepo: Repository<LoginActivity>, govtJobRepo: Repository<GovtJob>);
+    private readonly govtExamCalendarRepo;
+    private readonly govtCommissionPortalRepo;
+    constructor(appConfigService: AppConfigService, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, txnRepo: Repository<BillingTransaction>, userRepo: Repository<User>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>, domainRepo: Repository<RestrictedDomain>, loginActivityRepo: Repository<LoginActivity>, govtJobRepo: Repository<GovtJob>, govtExamCalendarRepo: Repository<GovtExamCalendarItem>, govtCommissionPortalRepo: Repository<GovtCommissionPortal>);
     getDashboardMetrics(): Promise<{
         totalJobs: number;
         totalCompanies: number;
@@ -329,6 +333,32 @@ export declare class AdminController {
         message: string;
     }>;
     seedGovtJobDefaults(): Promise<{
+        success: boolean;
+        message: string;
+        count: number;
+    }>;
+    private getDefaultExamCalendarItems;
+    getGovtExamCalendar(status?: string): Promise<GovtExamCalendarItem[]>;
+    createGovtExamCalendarItem(body: any): Promise<GovtExamCalendarItem>;
+    updateGovtExamCalendarItem(id: string, body: any): Promise<GovtExamCalendarItem>;
+    deleteGovtExamCalendarItem(id: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    seedGovtExamCalendarDefaults(): Promise<{
+        success: boolean;
+        message: string;
+        count: number;
+    }>;
+    private getDefaultCommissionPortals;
+    getGovtCommissionPortals(status?: string): Promise<GovtCommissionPortal[]>;
+    createGovtCommissionPortal(body: any): Promise<GovtCommissionPortal>;
+    updateGovtCommissionPortal(id: string, body: any): Promise<GovtCommissionPortal>;
+    deleteGovtCommissionPortal(id: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    seedGovtCommissionPortalDefaults(): Promise<{
         success: boolean;
         message: string;
         count: number;

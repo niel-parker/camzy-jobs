@@ -22,6 +22,8 @@ import { EmailBroadcast } from './entities/email-broadcast.entity';
 import { RestrictedDomain } from './entities/restricted-domain.entity';
 import { LoginActivity } from './entities/login-activity.entity';
 import { GovtJob } from './entities/govt-job.entity';
+import { GovtExamCalendarItem } from './entities/govt-exam-calendar.entity';
+import { GovtCommissionPortal } from './entities/govt-commission-portal.entity';
 
 @Module({
   imports: [
@@ -47,6 +49,8 @@ import { GovtJob } from './entities/govt-job.entity';
       RestrictedDomain,
       LoginActivity,
       GovtJob,
+      GovtExamCalendarItem,
+      GovtCommissionPortal,
     ]),
   ],
   controllers: [AdminController],

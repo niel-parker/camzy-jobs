@@ -1,4 +1,4 @@
-import { AdminUserProfile, AppConfig, AuthResponse, BlogCategoryItem, BlogPostItem, BroadcastRecipientResponse, CmsPageItem, CompanyDirectoryItem, CrossCompanyJobItem, DashboardMetrics, EmailBroadcastItem, ExperienceRangeItem, FaqItemData, GovtJobItem, JobListing, LocationItem, SeoConfigItem, SkillKeywordItem, SkillSuggestionResponse, SubscriptionPackageItem, SystemTaxonomyItem, ThemeConfig, UploadResumeResponse, User, RestrictedDomainItem, AtsApplicationItem, LoginActivityStats, PaginatedLoginActivities } from './types';
+import { AdminUserProfile, AppConfig, AuthResponse, BlogCategoryItem, BlogPostItem, BroadcastRecipientResponse, CmsPageItem, CompanyDirectoryItem, CrossCompanyJobItem, DashboardMetrics, EmailBroadcastItem, ExperienceRangeItem, FaqItemData, GovtJobItem, GovtExamCalendarItemType, GovtCommissionPortalType, JobListing, LocationItem, SeoConfigItem, SkillKeywordItem, SkillSuggestionResponse, SubscriptionPackageItem, SystemTaxonomyItem, ThemeConfig, UploadResumeResponse, User, RestrictedDomainItem, AtsApplicationItem, LoginActivityStats, PaginatedLoginActivities } from './types';
 export declare class JobPortalSdk {
     private baseUrl;
     private token;
@@ -227,6 +227,32 @@ export declare class JobPortalSdk {
         message?: string;
     }>;
     seedGovtJobDefaults(): Promise<{
+        success: boolean;
+        message: string;
+        count: number;
+    }>;
+    getGovtExamCalendar(params?: {
+        status?: string;
+    }): Promise<GovtExamCalendarItemType[]>;
+    saveGovtExamCalendarItem(item: Partial<GovtExamCalendarItemType>): Promise<GovtExamCalendarItemType>;
+    deleteGovtExamCalendarItem(id: string): Promise<{
+        success: boolean;
+        message?: string;
+    }>;
+    seedGovtExamCalendarDefaults(): Promise<{
+        success: boolean;
+        message: string;
+        count: number;
+    }>;
+    getGovtCommissionPortals(params?: {
+        status?: string;
+    }): Promise<GovtCommissionPortalType[]>;
+    saveGovtCommissionPortal(item: Partial<GovtCommissionPortalType>): Promise<GovtCommissionPortalType>;
+    deleteGovtCommissionPortal(id: string): Promise<{
+        success: boolean;
+        message?: string;
+    }>;
+    seedGovtCommissionPortalDefaults(): Promise<{
         success: boolean;
         message: string;
         count: number;

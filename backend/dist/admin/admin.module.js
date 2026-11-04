@@ -31,6 +31,8 @@ const email_broadcast_entity_1 = require("./entities/email-broadcast.entity");
 const restricted_domain_entity_1 = require("./entities/restricted-domain.entity");
 const login_activity_entity_1 = require("./entities/login-activity.entity");
 const govt_job_entity_1 = require("./entities/govt-job.entity");
+const govt_exam_calendar_entity_1 = require("./entities/govt-exam-calendar.entity");
+const govt_commission_portal_entity_1 = require("./entities/govt-commission-portal.entity");
 let AdminModule = class AdminModule {
 };
 exports.AdminModule = AdminModule;
@@ -59,6 +61,8 @@ exports.AdminModule = AdminModule = __decorate([
                 restricted_domain_entity_1.RestrictedDomain,
                 login_activity_entity_1.LoginActivity,
                 govt_job_entity_1.GovtJob,
+                govt_exam_calendar_entity_1.GovtExamCalendarItem,
+                govt_commission_portal_entity_1.GovtCommissionPortal,
             ]),
         ],
         controllers: [admin_controller_1.AdminController],

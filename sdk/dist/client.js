@@ -571,6 +571,66 @@ class JobPortalSdk {
             method: 'POST',
         });
     }
+    // --- Government Examination Calendar (Admin Managed) ---
+    async getGovtExamCalendar(params) {
+        const q = new URLSearchParams();
+        if (params?.status)
+            q.set('status', params.status);
+        const qs = q.toString() ? `?${q.toString()}` : '';
+        return this.request(`/admin/govt-exam-calendar${qs}`);
+    }
+    async saveGovtExamCalendarItem(item) {
+        if (item.id) {
+            return this.request(`/admin/govt-exam-calendar/${item.id}`, {
+                method: 'PUT',
+                body: JSON.stringify(item),
+            });
+        }
+        return this.request('/admin/govt-exam-calendar', {
+            method: 'POST',
+            body: JSON.stringify(item),
+        });
+    }
+    async deleteGovtExamCalendarItem(id) {
+        return this.request(`/admin/govt-exam-calendar/${id}`, {
+            method: 'DELETE',
+        });
+    }
+    async seedGovtExamCalendarDefaults() {
+        return this.request('/admin/govt-exam-calendar/seed-defaults', {
+            method: 'POST',
+        });
+    }
+    // --- Government Commission Portals Directory (Admin Managed) ---
+    async getGovtCommissionPortals(params) {
+        const q = new URLSearchParams();
+        if (params?.status)
+            q.set('status', params.status);
+        const qs = q.toString() ? `?${q.toString()}` : '';
+        return this.request(`/admin/govt-commission-portals${qs}`);
+    }
+    async saveGovtCommissionPortal(item) {
+        if (item.id) {
+            return this.request(`/admin/govt-commission-portals/${item.id}`, {
+                method: 'PUT',
+                body: JSON.stringify(item),
+            });
+        }
+        return this.request('/admin/govt-commission-portals', {
+            method: 'POST',
+            body: JSON.stringify(item),
+        });
+    }
+    async deleteGovtCommissionPortal(id) {
+        return this.request(`/admin/govt-commission-portals/${id}`, {
+            method: 'DELETE',
+        });
+    }
+    async seedGovtCommissionPortalDefaults() {
+        return this.request('/admin/govt-commission-portals/seed-defaults', {
+            method: 'POST',
+        });
+    }
     // --- Super Admin Email Broadcasting ---
     async getBroadcasts() {
         return this.request('/admin/broadcasts');
