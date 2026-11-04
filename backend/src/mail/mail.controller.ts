@@ -22,3 +22,4 @@ export class MailController {
     return await this.mailService.sendTestEmail(body.toEmail.trim().toLowerCase());
   }
 }
+
