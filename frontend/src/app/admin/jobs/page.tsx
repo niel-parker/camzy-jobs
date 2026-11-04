@@ -29,6 +29,13 @@ export default function AdminCrossCompanyJobsPage() {
   const [isUpdatingExpiry, setIsUpdatingExpiry] = useState<boolean>(false);
   const [expiryUpdateSuccess, setExpiryUpdateSuccess] = useState<string | null>(null);
 
+  // Bulk Renew State (Super Admin)
+  const [isBulkRenewModalOpen, setIsBulkRenewModalOpen] = useState<boolean>(false);
+  const [bulkRenewDays, setBulkRenewDays] = useState<number>(30);
+  const [isBulkRenewing, setIsBulkRenewing] = useState<boolean>(false);
+  const [bulkRenewSuccess, setBulkRenewSuccess] = useState<string | null>(null);
+  const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
+
   // Post Job on Behalf Modal State
   const [isPostModalOpen, setIsPostModalOpen] = useState<boolean>(false);
   const [posting, setPosting] = useState<boolean>(false);
@@ -86,12 +93,58 @@ export default function AdminCrossCompanyJobsPage() {
     const nextStatus = isCurrentlyActive ? 'CLOSED' : 'ACTIVE';
     try {
       await sdk.updateAdminJobStatus(jobId, nextStatus);
+      const renewedExpiry = nextStatus === 'ACTIVE' ? new Date(Date.now() + 30 * 86400000).toISOString() : undefined;
       setJobs((prev) =>
-        prev.map((j) => (j.id === jobId ? { ...j, status: nextStatus === 'ACTIVE' ? 'PUBLISHED' : 'ARCHIVED' } : j))
+        prev.map((j) =>
+          j.id === jobId
+            ? {
+                ...j,
+                status: nextStatus === 'ACTIVE' ? 'PUBLISHED' : 'ARCHIVED',
+                expiresAt: (nextStatus === 'ACTIVE' && (!j.expiresAt || new Date(j.expiresAt).getTime() <= Date.now()))
+                  ? (renewedExpiry || j.expiresAt)
+                  : j.expiresAt,
+              }
+            : j
+        )
       );
     } catch (err: any) {
       alert(err.message || 'Failed to update job status');
     }
+  };
+
+  const handleBulkRenew = async (days: number, targetJobIds?: string[]) => {
+    setIsBulkRenewing(true);
+    setBulkRenewSuccess(null);
+    try {
+      const res = await sdk.bulkRenewAdminJobs(days, targetJobIds && targetJobIds.length > 0 ? targetJobIds : undefined);
+      setBulkRenewSuccess(res.message || `Successfully renewed ${res.affected} jobs!`);
+      setSelectedJobIds([]);
+      await loadData();
+      setTimeout(() => {
+        setIsBulkRenewModalOpen(false);
+        setBulkRenewSuccess(null);
+      }, 1500);
+    } catch (err: any) {
+      alert(err.message || 'Failed to bulk renew jobs');
+    } finally {
+      setIsBulkRenewing(false);
+    }
+  };
+
+  const handleToggleSelectAllOnPage = (pageJobs: CrossCompanyJobItem[]) => {
+    const pageIds = pageJobs.map((j) => j.id);
+    const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedJobIds.includes(id));
+    if (allSelected) {
+      setSelectedJobIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+    } else {
+      setSelectedJobIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+    }
+  };
+
+  const handleToggleSelectOne = (jobId: string) => {
+    setSelectedJobIds((prev) =>
+      prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]
+    );
   };
 
   // Super Admin: Open modal to change expiry date
@@ -243,14 +296,24 @@ export default function AdminCrossCompanyJobsPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={loadData}
-              className="p-2.5 rounded-xl border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2.5 rounded-xl border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Refresh"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
+            {expiredJobsCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsBulkRenewModalOpen(true)}
+                className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs shadow-md shadow-amber-600/20 flex items-center space-x-2 transition-all cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Bulk Renew Expired ({expiredJobsCount})</span>
+              </button>
+            )}
             <button
               onClick={() => {
                 setIsPostModalOpen(true);
@@ -373,6 +436,49 @@ export default function AdminCrossCompanyJobsPage() {
           </button>
         </div>
 
+        {/* Expired Jobs Alert & Bulk Renewal Banner */}
+        {expiredJobsCount > 0 && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="text-sm font-black text-amber-800 dark:text-amber-200">
+                    {expiredJobsCount} Jobs Are Currently Expired
+                  </h4>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                    Auto-hidden from candidate search
+                  </span>
+                </div>
+                <p className="text-xs text-amber-800/80 dark:text-amber-200/80 max-w-2xl leading-relaxed">
+                  These postings have reached their 30-day active lifespan. Per platform security requirements, expired jobs are excluded from public search on <code className="px-1.5 py-0.5 rounded bg-amber-500/20 font-mono text-[11px]">/jobs</code>. Renew them to extend their validity and immediately restore them to candidates.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => handleBulkRenew(30)}
+                disabled={isBulkRenewing}
+                className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs shadow-md shadow-amber-600/20 flex items-center space-x-1.5 transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isBulkRenewing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                <span>Renew All {expiredJobsCount} Expired (+30 Days)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsBulkRenewModalOpen(true)}
+                className="px-3.5 py-2.5 rounded-xl border border-amber-500/30 text-amber-800 dark:text-amber-200 hover:bg-amber-500/10 font-black text-xs transition-colors cursor-pointer"
+              >
+                Choose Days...
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Filter and Search Bar */}
         <div className="theme-surface border theme-border rounded-2xl p-4 shadow-sm">
           <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row items-center gap-3">
@@ -445,6 +551,24 @@ export default function AdminCrossCompanyJobsPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b theme-border bg-slate-50/50 dark:bg-slate-900/50 text-[10px] uppercase font-black tracking-wider theme-muted">
+                    <th className="py-3 px-3 w-10 text-center">
+                      <input
+                        type="checkbox"
+                        checked={
+                          displayedJobs.slice((tablePage - 1) * TABLE_PAGE_SIZE, tablePage * TABLE_PAGE_SIZE).length > 0 &&
+                          displayedJobs
+                            .slice((tablePage - 1) * TABLE_PAGE_SIZE, tablePage * TABLE_PAGE_SIZE)
+                            .every((j) => selectedJobIds.includes(j.id))
+                        }
+                        onChange={() =>
+                          handleToggleSelectAllOnPage(
+                            displayedJobs.slice((tablePage - 1) * TABLE_PAGE_SIZE, tablePage * TABLE_PAGE_SIZE)
+                          )
+                        }
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        title="Select All On Page"
+                      />
+                    </th>
                     <th className="py-3 px-4">Job Title & Company</th>
                     <th className="py-3 px-4">Location & Remote</th>
                     <th className="py-3 px-4">Exp & Salary Bracket</th>
@@ -460,8 +584,18 @@ export default function AdminCrossCompanyJobsPage() {
                     .map((job) => (
                     <tr
                       key={job.id}
-                      className="hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition-colors"
+                      className={`hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition-colors ${
+                        selectedJobIds.includes(job.id) ? 'bg-indigo-50/50 dark:bg-indigo-950/20' : ''
+                      }`}
                     >
+                      <td className="py-3.5 px-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedJobIds.includes(job.id)}
+                          onChange={() => handleToggleSelectOne(job.id)}
+                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
+                      </td>
                       <td className="py-3.5 px-4">
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-1.5">
@@ -630,6 +764,41 @@ export default function AdminCrossCompanyJobsPage() {
             )}
           </div>
         </div>
+
+        {/* Floating Bulk Action Bar for Selected Jobs */}
+        {selectedJobIds.length > 0 && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-4">
+            <span className="text-xs font-bold flex items-center">
+              <span className="px-2 py-0.5 rounded-full bg-indigo-500 text-white font-black text-[11px] mr-2">
+                {selectedJobIds.length}
+              </span>
+              jobs selected
+            </span>
+            <div className="h-4 w-[1px] bg-slate-700" />
+            <button
+              onClick={() => handleBulkRenew(30, selectedJobIds)}
+              disabled={isBulkRenewing}
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              {isBulkRenewing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+              <span>Renew Selected (+30 Days)</span>
+            </button>
+            <button
+              onClick={() => handleBulkRenew(60, selectedJobIds)}
+              disabled={isBulkRenewing}
+              className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black transition-all cursor-pointer"
+            >
+              +60 Days
+            </button>
+            <button
+              onClick={() => setSelectedJobIds([])}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Clear Selection"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Post Job on Behalf Modal */}
         {isPostModalOpen && (
@@ -985,6 +1154,140 @@ export default function AdminCrossCompanyJobsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+        {/* 4. SUPER ADMIN EXCLUSIVE: BULK RENEW EXPIRED JOBS MODAL */}
+        {isBulkRenewModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-slate-950/75 backdrop-blur-sm animate-fade-in overflow-y-auto">
+            <div className="relative w-full max-w-lg max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-start justify-between gap-3 bg-inherit">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                      Lifecycle Management
+                    </span>
+                    <span className="text-xs font-semibold theme-muted">Cross-Company Bulk Action</span>
+                  </div>
+                  <h3 className="text-base font-black theme-text flex items-center gap-2 mt-1 truncate">
+                    <RefreshCw className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                    <span>Bulk Renew Expired Jobs</span>
+                  </h3>
+                  <p className="text-xs theme-muted mt-0.5">
+                    Extend job expiry dates in bulk and immediately reactivate listings on the public portal.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsBulkRenewModalOpen(false);
+                    setBulkRenewSuccess(null);
+                  }}
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                {bulkRenewSuccess && (
+                  <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                    <span>{bulkRenewSuccess}</span>
+                  </div>
+                )}
+
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border theme-border space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold theme-muted">Target Scope:</span>
+                    <span className="text-xs font-black px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+                      {selectedJobIds.length > 0 ? `${selectedJobIds.length} Selected Jobs` : `All Expired Jobs (${expiredJobsCount})`}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="theme-muted">Target Lifespan Extension:</span>
+                    <span className="font-extrabold theme-text">+{bulkRenewDays} Days</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="theme-muted">Calculated New Expiry:</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                      {new Date(Date.now() + bulkRenewDays * 86400000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-black uppercase tracking-wider theme-text block mb-2">
+                    Select Extension Duration
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { days: 15, label: '+15 Days' },
+                      { days: 30, label: '+30 Days (1 Mo)' },
+                      { days: 60, label: '+60 Days (2 Mo)' },
+                      { days: 90, label: '+90 Days (3 Mo)' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.days}
+                        type="button"
+                        onClick={() => setBulkRenewDays(opt.days)}
+                        className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                          bulkRenewDays === opt.days
+                            ? 'border-indigo-600 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black shadow-sm'
+                            : 'theme-border theme-text hover:bg-slate-50 dark:hover:bg-slate-800/50 font-bold text-xs'
+                        }`}
+                      >
+                        <div className="text-sm font-black">{opt.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-black uppercase tracking-wider theme-text block mb-1.5">
+                    Or Enter Custom Days:
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="365"
+                    value={bulkRenewDays}
+                    onChange={(e) => setBulkRenewDays(Math.max(1, parseInt(e.target.value || '1', 10)))}
+                    className="w-full px-3 py-2 text-xs rounded-xl theme-surface border theme-border theme-text focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
+                  />
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border theme-border text-[11px] theme-muted leading-relaxed space-y-1">
+                  <div className="font-bold theme-text">What happens on bulk renew:</div>
+                  <ul className="list-disc pl-4 space-y-0.5">
+                    <li>Updates expiry date to {bulkRenewDays} days from right now.</li>
+                    <li>Transitions status from <span className="text-rose-500 font-bold">EXPIRED</span> back to <span className="text-emerald-500 font-bold">PUBLISHED</span>.</li>
+                    <li>Restores listings to public candidate search at <code className="text-indigo-500 font-mono">/jobs</code> instantly.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex justify-end gap-2 bg-slate-50/50 dark:bg-slate-900/50">
+                <button
+                  type="button"
+                  onClick={() => setIsBulkRenewModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border theme-border text-xs font-bold theme-text hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkRenew(bulkRenewDays, selectedJobIds.length > 0 ? selectedJobIds : undefined)}
+                  disabled={isBulkRenewing}
+                  className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-black shadow-md shadow-amber-600/20 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                >
+                  {isBulkRenewing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>
+                    Execute Bulk Renew ({selectedJobIds.length > 0 ? `${selectedJobIds.length} Jobs` : `All ${expiredJobsCount} Expired`})
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         )}

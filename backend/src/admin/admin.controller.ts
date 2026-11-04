@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { AppConfigDto, AppConfigService } from './app-config.service';
-import { JobPosting } from '../jobs/entities/job-posting.entity';
+import { JobPosting, JobStatus } from '../jobs/entities/job-posting.entity';
 import { normalizeEmploymentType, normalizeExperienceLevel } from '../jobs/jobs.service';
 import { Tenant, TenantType, TenantStatus } from '../tenants/entities/tenant.entity';
 import { Candidate } from '../candidates/entities/candidate.entity';
@@ -768,7 +768,13 @@ export class AdminController {
 
     if (body.status !== undefined) {
       let st = body.status;
-      if (st === 'ACTIVE') st = 'PUBLISHED';
+      if (st === 'ACTIVE') {
+        st = 'PUBLISHED';
+        // Auto-extend expiry date by 30 days if it was in the past or missing
+        if (!job.expiresAt || new Date(job.expiresAt).getTime() <= Date.now()) {
+          job.expiresAt = new Date(Date.now() + 30 * 86400000);
+        }
+      }
       if (st === 'CLOSED') st = 'ARCHIVED';
       job.status = st as any;
     }
@@ -777,15 +783,48 @@ export class AdminController {
       const exp = new Date(body.expiresAt);
       if (!isNaN(exp.getTime())) {
         job.expiresAt = exp;
-        if (exp > new Date() && job.status === ('EXPIRED' as any)) {
-          job.status = 'PUBLISHED' as any;
-        } else if (exp <= new Date() && job.status === ('PUBLISHED' as any)) {
-          job.status = 'EXPIRED' as any;
+        if (exp.getTime() > Date.now() && (job.status === JobStatus.EXPIRED || (job.status as string) === 'EXPIRED')) {
+          job.status = JobStatus.PUBLISHED;
+        } else if (exp.getTime() <= Date.now() && (job.status === JobStatus.PUBLISHED || (job.status as string) === 'PUBLISHED')) {
+          job.status = JobStatus.EXPIRED;
         }
       }
     }
 
     return await this.jobRepo.save(job);
+  }
+
+  @Post('jobs/bulk-renew')
+  @ApiOperation({ summary: 'Super Admin: Bulk renew/reactivate expired jobs by extending their expiry date' })
+  async bulkRenewJobs(@Body() body: { days?: number; jobIds?: string[] }) {
+    const days = Math.max(1, body.days || 30);
+    const newExpiry = new Date(Date.now() + days * 86400000);
+
+    const qb = this.jobRepo.createQueryBuilder()
+      .update(JobPosting)
+      .set({
+        status: JobStatus.PUBLISHED,
+        expiresAt: newExpiry,
+      });
+
+    if (body.jobIds && body.jobIds.length > 0) {
+      qb.where('id IN (:...ids)', { ids: body.jobIds });
+    } else {
+      // Default: renew all expired jobs
+      qb.where('(status = :expiredStatus OR expiresAt <= :now)', {
+        expiredStatus: JobStatus.EXPIRED,
+        now: new Date(),
+      });
+    }
+
+    const result = await qb.execute();
+    return {
+      success: true,
+      affected: result.affected || 0,
+      newExpiresAt: newExpiry,
+      days,
+      message: `Successfully renewed ${result.affected || 0} jobs for ${days} days until ${newExpiry.toLocaleDateString('en-GB')}`,
+    };
   }
 
   @Put('jobs/:id/expiry')

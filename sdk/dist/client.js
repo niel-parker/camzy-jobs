@@ -434,6 +434,12 @@ class JobPortalSdk {
             body: JSON.stringify({ expiresAt }),
         });
     }
+    async bulkRenewAdminJobs(days = 30, jobIds) {
+        return this.request('/admin/jobs/bulk-renew', {
+            method: 'POST',
+            body: JSON.stringify({ days, jobIds }),
+        });
+    }
     // --- Super Admin Companies Directory ---
     async getAdminCompanies() {
         return this.request('/admin/companies/all');

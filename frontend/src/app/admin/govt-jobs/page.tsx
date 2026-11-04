@@ -8,8 +8,10 @@ import { GovtJobItem, GovtJobCategoryType } from '@job-portal/sdk';
 import { 
   Landmark, Building2, Plus, Search, Edit3, Trash2, CheckCircle2, 
   XCircle, Loader2, RefreshCw, X, AlertCircle, ExternalLink, Calendar, 
-  MapPin, ShieldCheck, Award, Eye, Globe, FileText, ToggleLeft, ToggleRight, Sparkles
+  MapPin, ShieldCheck, Award, Eye, Globe, FileText, ToggleLeft, ToggleRight, Sparkles, Image as ImageIcon
 } from 'lucide-react';
+import { GovtJobsCanvasAnalytics } from './GovtJobsCanvasAnalytics';
+import { GovtJobPosterCanvasModal } from './GovtJobPosterCanvasModal';
 
 const INDIAN_STATES = [
   'All States',
@@ -69,6 +71,10 @@ export default function AdminGovtJobsManagementPage() {
   // Delete modal state
   const [deletingJob, setDeletingJob] = useState<GovtJobItem | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  // Canvas Poster Generator Modal State
+  const [posterJob, setPosterJob] = useState<GovtJobItem | null>(null);
+  const [showAnalytics, setShowAnalytics] = useState<boolean>(true);
 
   // Form State
   const [form, setForm] = useState<{
@@ -413,6 +419,9 @@ export default function AdminGovtJobsManagementPage() {
           </div>
         </div>
 
+        {/* HTML5 CANVAS ANALYTICS VISUALIZER (Realtime Vector Sector & State Charts) */}
+        <GovtJobsCanvasAnalytics jobs={jobs} />
+
         {/* FILTER BAR: CATEGORY TABS, STATE DROPDOWN, SEARCH */}
         <div className="theme-surface border theme-border rounded-2xl p-4 shadow-xs space-y-3">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3">
@@ -594,6 +603,14 @@ export default function AdminGovtJobsManagementPage() {
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setPosterJob(job)}
+                            className="p-1.5 rounded-lg border border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                            title="Generate Official Canvas Poster (PNG)"
+                          >
+                            <ImageIcon className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             type="button"
                             onClick={() => openEditModal(job)}
@@ -988,6 +1005,14 @@ export default function AdminGovtJobsManagementPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* HTML5 CANVAS SOCIAL BANNER / POSTER GENERATOR MODAL */}
+        {posterJob && (
+          <GovtJobPosterCanvasModal
+            job={posterJob}
+            onClose={() => setPosterJob(null)}
+          />
         )}
 
       </div>

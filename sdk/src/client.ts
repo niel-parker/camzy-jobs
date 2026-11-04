@@ -534,6 +534,13 @@ export class JobPortalSdk {
     });
   }
 
+  async bulkRenewAdminJobs(days: number = 30, jobIds?: string[]): Promise<{ success: boolean; affected: number; newExpiresAt: string; message: string }> {
+    return this.request<{ success: boolean; affected: number; newExpiresAt: string; message: string }>('/admin/jobs/bulk-renew', {
+      method: 'POST',
+      body: JSON.stringify({ days, jobIds }),
+    });
+  }
+
   // --- Super Admin Companies Directory ---
   async getAdminCompanies(): Promise<CompanyDirectoryItem[]> {
     return this.request<CompanyDirectoryItem[]>('/admin/companies/all');

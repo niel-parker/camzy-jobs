@@ -641,8 +641,12 @@ let AdminController = class AdminController {
             throw new common_1.NotFoundException(`Job ${id} not found`);
         if (body.status !== undefined) {
             let st = body.status;
-            if (st === 'ACTIVE')
+            if (st === 'ACTIVE') {
                 st = 'PUBLISHED';
+                if (!job.expiresAt || new Date(job.expiresAt).getTime() <= Date.now()) {
+                    job.expiresAt = new Date(Date.now() + 30 * 86400000);
+                }
+            }
             if (st === 'CLOSED')
                 st = 'ARCHIVED';
             job.status = st;
@@ -653,15 +657,42 @@ let AdminController = class AdminController {
             const exp = new Date(body.expiresAt);
             if (!isNaN(exp.getTime())) {
                 job.expiresAt = exp;
-                if (exp > new Date() && job.status === 'EXPIRED') {
-                    job.status = 'PUBLISHED';
+                if (exp.getTime() > Date.now() && (job.status === job_posting_entity_1.JobStatus.EXPIRED || job.status === 'EXPIRED')) {
+                    job.status = job_posting_entity_1.JobStatus.PUBLISHED;
                 }
-                else if (exp <= new Date() && job.status === 'PUBLISHED') {
-                    job.status = 'EXPIRED';
+                else if (exp.getTime() <= Date.now() && (job.status === job_posting_entity_1.JobStatus.PUBLISHED || job.status === 'PUBLISHED')) {
+                    job.status = job_posting_entity_1.JobStatus.EXPIRED;
                 }
             }
         }
         return await this.jobRepo.save(job);
+    }
+    async bulkRenewJobs(body) {
+        const days = Math.max(1, body.days || 30);
+        const newExpiry = new Date(Date.now() + days * 86400000);
+        const qb = this.jobRepo.createQueryBuilder()
+            .update(job_posting_entity_1.JobPosting)
+            .set({
+            status: job_posting_entity_1.JobStatus.PUBLISHED,
+            expiresAt: newExpiry,
+        });
+        if (body.jobIds && body.jobIds.length > 0) {
+            qb.where('id IN (:...ids)', { ids: body.jobIds });
+        }
+        else {
+            qb.where('(status = :expiredStatus OR expiresAt <= :now)', {
+                expiredStatus: job_posting_entity_1.JobStatus.EXPIRED,
+                now: new Date(),
+            });
+        }
+        const result = await qb.execute();
+        return {
+            success: true,
+            affected: result.affected || 0,
+            newExpiresAt: newExpiry,
+            days,
+            message: `Successfully renewed ${result.affected || 0} jobs for ${days} days until ${newExpiry.toLocaleDateString('en-GB')}`,
+        };
     }
     async updateJobExpiry(id, body) {
         if (!body.expiresAt) {
@@ -2306,6 +2337,14 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "updateJobStatus", null);
+__decorate([
+    (0, common_1.Post)('jobs/bulk-renew'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Bulk renew/reactivate expired jobs by extending their expiry date' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "bulkRenewJobs", null);
 __decorate([
     (0, common_1.Put)('jobs/:id/expiry'),
     (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Update job expiry date (Super Admin Exclusive)' }),

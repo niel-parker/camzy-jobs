@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
 import { AppConfigDto, AppConfigService } from './app-config.service';
-import { JobPosting } from '../jobs/entities/job-posting.entity';
+import { JobPosting, JobStatus } from '../jobs/entities/job-posting.entity';
 import { Tenant, TenantType, TenantStatus } from '../tenants/entities/tenant.entity';
 import { Candidate } from '../candidates/entities/candidate.entity';
 import { JobApplication } from '../applications/entities/job-application.entity';
@@ -180,13 +180,23 @@ export declare class AdminController {
         isFeatured?: boolean;
         expiresAt?: string | Date;
     }): Promise<JobPosting>;
+    bulkRenewJobs(body: {
+        days?: number;
+        jobIds?: string[];
+    }): Promise<{
+        success: boolean;
+        affected: number;
+        newExpiresAt: Date;
+        days: number;
+        message: string;
+    }>;
     updateJobExpiry(id: string, body: {
         expiresAt: string | Date;
     }): Promise<{
         success: boolean;
         id: string;
         expiresAt: Date;
-        status: import("../jobs/entities/job-posting.entity").JobStatus;
+        status: JobStatus;
     }>;
     getAllCompanies(): Promise<{
         id: string;

@@ -169,6 +169,12 @@ export declare class JobPortalSdk {
         success: boolean;
     }>;
     updateAdminJobExpiry(id: string, expiresAt: string): Promise<any>;
+    bulkRenewAdminJobs(days?: number, jobIds?: string[]): Promise<{
+        success: boolean;
+        affected: number;
+        newExpiresAt: string;
+        message: string;
+    }>;
     getAdminCompanies(): Promise<CompanyDirectoryItem[]>;
     registerCompanyDirect(data: {
         name: string;
