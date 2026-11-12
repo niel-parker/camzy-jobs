@@ -888,6 +888,13 @@ export class JobPortalSdk {
     );
   }
 
+  async requestDemo(data: { name: string; email: string; phone?: string; companyName: string; hiresCount?: string; city?: string }): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>('/auth/request-demo', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // --- Recruiter ATS Applications & Pipeline ---
   async getAtsApplications(jobId?: string): Promise<AtsApplicationItem[]> {
     const qs = jobId ? `?jobId=${encodeURIComponent(jobId)}` : '';

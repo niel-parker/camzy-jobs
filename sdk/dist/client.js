@@ -731,6 +731,12 @@ class JobPortalSdk {
     async checkEmailDomain(emailOrDomain) {
         return this.request(`/auth/check-domain?email=${encodeURIComponent(emailOrDomain)}`);
     }
+    async requestDemo(data) {
+        return this.request('/auth/request-demo', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
     // --- Recruiter ATS Applications & Pipeline ---
     async getAtsApplications(jobId) {
         const qs = jobId ? `?jobId=${encodeURIComponent(jobId)}` : '';

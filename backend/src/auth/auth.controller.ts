@@ -40,6 +40,12 @@ export class AuthController {
     return await this.authService.registerCompany(body);
   }
 
+  @Post('request-demo')
+  @ApiOperation({ summary: 'Submit recruiter / employer demo request' })
+  async requestDemo(@Body() body: any) {
+    return await this.authService.requestDemo(body);
+  }
+
   @Post('register/candidate')
   @ApiOperation({ summary: 'Register new job candidate account into database' })
   async registerCandidate(@Body() body: any) {

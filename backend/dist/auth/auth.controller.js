@@ -39,6 +39,9 @@ let AuthController = class AuthController {
     async registerCompany(body) {
         return await this.authService.registerCompany(body);
     }
+    async requestDemo(body) {
+        return await this.authService.requestDemo(body);
+    }
     async registerCandidate(body) {
         return await this.authService.registerCandidate(body);
     }
@@ -86,6 +89,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "registerCompany", null);
+__decorate([
+    (0, common_1.Post)('request-demo'),
+    (0, swagger_1.ApiOperation)({ summary: 'Submit recruiter / employer demo request' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "requestDemo", null);
 __decorate([
     (0, common_1.Post)('register/candidate'),
     (0, swagger_1.ApiOperation)({ summary: 'Register new job candidate account into database' }),

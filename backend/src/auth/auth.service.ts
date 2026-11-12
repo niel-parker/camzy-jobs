@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -31,6 +31,7 @@ export interface UserDto {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private otpStore = new Map<string, { code: string; expiresAt: number }>();
 
   constructor(
@@ -307,6 +308,7 @@ export class AuthService {
 
     const newUser = this.userRepo.create({
       email: cleanEmail,
+      phoneNumber: (body as any).phone || (body as any).phoneNumber || (body as any).mobileNumber || null,
       passwordHash: hashedPassword,
       firstName,
       lastName,
@@ -339,6 +341,17 @@ export class AuthService {
       accessToken: `jwt-user-token-${savedUser.id}-${Date.now()}`,
       user: dto,
       tenant: savedTenant,
+    };
+  }
+
+  async requestDemo(body: { name: string; email: string; phone?: string; companyName: string; hiresCount?: string; city?: string }) {
+    if (!body?.email || !body?.name) {
+      throw new BadRequestException('Contact name and corporate work email are required.');
+    }
+    this.logger.log(`[Demo Request] Recruiter ${body.name} (${body.email}) requested demo for company "${body.companyName}" (Hires: ${body.hiresCount || 'N/A'}, City: ${body.city || 'N/A'})`);
+    return {
+      success: true,
+      message: 'Thank you for your interest! A hiring solutions expert will connect with you within 2 business hours.',
     };
   }
 

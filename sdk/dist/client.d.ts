@@ -304,6 +304,17 @@ export declare class JobPortalSdk {
         restricted: boolean;
         message?: string;
     }>;
+    requestDemo(data: {
+        name: string;
+        email: string;
+        phone?: string;
+        companyName: string;
+        hiresCount?: string;
+        city?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+    }>;
     getAtsApplications(jobId?: string): Promise<AtsApplicationItem[]>;
     updateAtsStage(id: string, stage: string, rating?: number): Promise<AtsApplicationItem>;
     getLoginActivities(params?: {

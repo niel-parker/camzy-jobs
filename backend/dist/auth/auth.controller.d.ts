@@ -23,6 +23,10 @@ export declare class AuthController {
         user: import("./auth.service").UserDto;
         tenant: import("../tenants/entities/tenant.entity").Tenant;
     }>;
+    requestDemo(body: any): Promise<{
+        success: boolean;
+        message: string;
+    }>;
     registerCandidate(body: any): Promise<{
         accessToken: string;
         user: import("./auth.service").UserDto;

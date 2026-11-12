@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var AuthService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
@@ -25,7 +26,7 @@ const subscription_plan_entity_1 = require("../subscriptions/entities/subscripti
 const restricted_domain_entity_1 = require("../admin/entities/restricted-domain.entity");
 const login_activity_entity_1 = require("../admin/entities/login-activity.entity");
 const mail_service_1 = require("../mail/mail.service");
-let AuthService = class AuthService {
+let AuthService = AuthService_1 = class AuthService {
     constructor(userRepo, tenantRepo, candidateRepo, subRepo, planRepo, domainRepo, activityRepo, mailService) {
         this.userRepo = userRepo;
         this.tenantRepo = tenantRepo;
@@ -35,6 +36,7 @@ let AuthService = class AuthService {
         this.domainRepo = domainRepo;
         this.activityRepo = activityRepo;
         this.mailService = mailService;
+        this.logger = new common_1.Logger(AuthService_1.name);
         this.otpStore = new Map();
     }
     parseUserAgent(ua) {
@@ -255,6 +257,7 @@ let AuthService = class AuthService {
         const hashedPassword = bcrypt.hashSync(plainPassword, 10);
         const newUser = this.userRepo.create({
             email: cleanEmail,
+            phoneNumber: body.phone || body.phoneNumber || body.mobileNumber || null,
             passwordHash: hashedPassword,
             firstName,
             lastName,
@@ -283,6 +286,16 @@ let AuthService = class AuthService {
             accessToken: `jwt-user-token-${savedUser.id}-${Date.now()}`,
             user: dto,
             tenant: savedTenant,
+        };
+    }
+    async requestDemo(body) {
+        if (!body?.email || !body?.name) {
+            throw new common_1.BadRequestException('Contact name and corporate work email are required.');
+        }
+        this.logger.log(`[Demo Request] Recruiter ${body.name} (${body.email}) requested demo for company "${body.companyName}" (Hires: ${body.hiresCount || 'N/A'}, City: ${body.city || 'N/A'})`);
+        return {
+            success: true,
+            message: 'Thank you for your interest! A hiring solutions expert will connect with you within 2 business hours.',
         };
     }
     async registerCandidate(body) {
@@ -499,7 +512,7 @@ let AuthService = class AuthService {
     }
 };
 exports.AuthService = AuthService;
-exports.AuthService = AuthService = __decorate([
+exports.AuthService = AuthService = AuthService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __param(1, (0, typeorm_1.InjectRepository)(tenant_entity_1.Tenant)),

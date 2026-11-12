@@ -33,6 +33,7 @@ export declare class AuthService {
     private readonly domainRepo;
     private readonly activityRepo;
     private readonly mailService;
+    private readonly logger;
     private otpStore;
     constructor(userRepo: Repository<User>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, domainRepo: Repository<RestrictedDomain>, activityRepo: Repository<LoginActivity>, mailService: MailService);
     private parseUserAgent;
@@ -74,6 +75,17 @@ export declare class AuthService {
         accessToken: string;
         user: UserDto;
         tenant: Tenant;
+    }>;
+    requestDemo(body: {
+        name: string;
+        email: string;
+        phone?: string;
+        companyName: string;
+        hiresCount?: string;
+        city?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
     }>;
     registerCandidate(body: {
         fullName: string;
