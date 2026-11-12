@@ -59,6 +59,42 @@ interface ProjectItem {
   projectUrl?: string;
 }
 
+interface LanguageItem {
+  id?: string;
+  language: string;
+  proficiency: 'BASIC' | 'CONVERSATIONAL' | 'FLUENT' | 'NATIVE';
+  canRead?: boolean;
+  canWrite?: boolean;
+  canSpeak?: boolean;
+}
+
+const POPULAR_LANGUAGES = [
+  'English',
+  'Hindi',
+  'Bengali',
+  'Telugu',
+  'Marathi',
+  'Tamil',
+  'Urdu',
+  'Gujarati',
+  'Kannada',
+  'Malayalam',
+  'Odia',
+  'Punjabi',
+  'Assamese',
+  'Sanskrit',
+  'French',
+  'German',
+  'Spanish',
+  'Mandarin Chinese',
+  'Japanese',
+  'Arabic',
+  'Russian',
+  'Portuguese',
+  'Italian',
+  'Korean',
+];
+
 const PRESET_AVATARS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
@@ -180,10 +216,20 @@ export default function CandidateProfilePage() {
     website: '',
   });
 
-  const [languagesList, setLanguagesList] = useState<string[]>([
-    'English (Professional / Fluent)',
-    'Hindi (Native)',
+  const [languagesList, setLanguagesList] = useState<LanguageItem[]>([
+    { id: 'lang-1', language: 'English', proficiency: 'FLUENT', canRead: true, canWrite: true, canSpeak: true },
+    { id: 'lang-2', language: 'Hindi', proficiency: 'NATIVE', canRead: true, canWrite: true, canSpeak: true },
   ]);
+
+  // Language Form Modal State
+  const [langForm, setLangForm] = useState<LanguageItem>({
+    language: '',
+    proficiency: 'FLUENT',
+    canRead: true,
+    canWrite: true,
+    canSpeak: true,
+  });
+  const [editingLangIndex, setEditingLangIndex] = useState<number | null>(null);
 
   // Verification Modal & Timer (3 Minutes = 180s)
   const [verifyModalTarget, setVerifyModalTarget] = useState<'EMAIL' | 'PHONE' | null>(null);
@@ -198,7 +244,7 @@ export default function CandidateProfilePage() {
   const [newCityInput, setNewCityInput] = useState('');
 
   // Modals for Adding Entries
-  const [activeModal, setActiveModal] = useState<'EXP' | 'EDU' | 'CERT' | 'PROJ' | 'RESUME' | null>(null);
+  const [activeModal, setActiveModal] = useState<'EXP' | 'EDU' | 'CERT' | 'PROJ' | 'RESUME' | 'LANG' | null>(null);
 
   // Form State for Modals
   const [expForm, setExpForm] = useState<ExperienceItem>({
@@ -391,7 +437,35 @@ export default function CandidateProfilePage() {
             });
           }
           if (data.languages && Array.isArray(data.languages) && data.languages.length > 0) {
-            setLanguagesList(data.languages);
+            setLanguagesList(
+              data.languages.map((l: any, idx: number) => {
+                if (typeof l === 'string') {
+                  const match = l.match(/^([^(]+)(?:\(([^)]+)\))?$/);
+                  const name = match ? match[1].trim() : l.trim();
+                  const raw = match && match[2] ? match[2].trim().toUpperCase() : 'FLUENT';
+                  let prof: 'BASIC' | 'CONVERSATIONAL' | 'FLUENT' | 'NATIVE' = 'FLUENT';
+                  if (raw.includes('NATIVE') || raw.includes('MOTHER')) prof = 'NATIVE';
+                  else if (raw.includes('BASIC') || raw.includes('BEGINNER')) prof = 'BASIC';
+                  else if (raw.includes('CONVERSATIONAL') || raw.includes('INTERMEDIATE')) prof = 'CONVERSATIONAL';
+                  return {
+                    id: `lang_${idx}`,
+                    language: name,
+                    proficiency: prof,
+                    canRead: true,
+                    canWrite: true,
+                    canSpeak: true,
+                  };
+                }
+                return {
+                  id: l.id || `lang_${idx}`,
+                  language: l.language || l.name || 'English',
+                  proficiency: (l.proficiency || 'FLUENT').toUpperCase() as any,
+                  canRead: l.canRead !== false,
+                  canWrite: l.canWrite !== false,
+                  canSpeak: l.canSpeak !== false,
+                };
+              })
+            );
           }
         }
       } catch (err) {
@@ -405,13 +479,14 @@ export default function CandidateProfilePage() {
 
   const calculateScore = () => {
     let score = 0;
-    if (resumesList.length > 0) score += 25;
+    if (resumesList.length > 0) score += 20;
     if (profile.headline) score += 15;
     if (profile.skills) score += 15;
     if (profile.noticePeriod) score += 10;
     if (profile.preferredLocations.length > 0) score += 10;
     if (experienceList.length > 0) score += 10;
     if (educationList.length > 0) score += 10;
+    if (languagesList.length > 0) score += 5;
     if (user?.isEmailVerified) score += 5;
     return Math.min(100, score);
   };
@@ -475,6 +550,13 @@ export default function CandidateProfilePage() {
           certifications: certificationList,
           projects: projectList,
           socialLinks: socialLinks,
+          languages: languagesList.map((l) => ({
+            language: l.language,
+            proficiency: l.proficiency,
+            canRead: Boolean(l.canRead),
+            canWrite: Boolean(l.canWrite),
+            canSpeak: Boolean(l.canSpeak),
+          })),
         }),
       });
 
@@ -638,6 +720,96 @@ export default function CandidateProfilePage() {
     setProjectList([...projectList, { ...projForm, id: `proj_${Date.now()}` }]);
     setProjForm({ projectTitle: '', client: '', role: '', projectDescription: '', technologies: [], projectUrl: '' });
     setActiveModal(null);
+  };
+
+  // Language Management Handlers
+  const persistLanguages = async (updatedList: LanguageItem[]) => {
+    if (!user) return;
+    try {
+      const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const candidateId = urlParams?.get('id') || urlParams?.get('candidateId') || user.candidateId || user.id;
+
+      await sdk.request<any>(`/candidates/${candidateId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          languages: updatedList.map((l) => ({
+            language: l.language,
+            proficiency: l.proficiency,
+            canRead: Boolean(l.canRead),
+            canWrite: Boolean(l.canWrite),
+            canSpeak: Boolean(l.canSpeak),
+          })),
+        }),
+      });
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
+    } catch (err) {
+      console.error('Failed to auto-save languages:', err);
+    }
+  };
+
+  const handleOpenAddLanguage = () => {
+    setLangForm({
+      language: '',
+      proficiency: 'FLUENT',
+      canRead: true,
+      canWrite: true,
+      canSpeak: true,
+    });
+    setEditingLangIndex(null);
+    setActiveModal('LANG');
+  };
+
+  const handleOpenEditLanguage = (index: number) => {
+    if (languagesList[index]) {
+      setLangForm({ ...languagesList[index] });
+      setEditingLangIndex(index);
+      setActiveModal('LANG');
+    }
+  };
+
+  const handleSaveLanguage = async () => {
+    if (!langForm.language.trim()) return;
+
+    let updated: LanguageItem[];
+    if (editingLangIndex !== null && editingLangIndex >= 0 && editingLangIndex < languagesList.length) {
+      updated = [...languagesList];
+      updated[editingLangIndex] = {
+        ...langForm,
+        language: langForm.language.trim(),
+      };
+    } else {
+      const existingIdx = languagesList.findIndex(
+        (l) => l.language.toLowerCase() === langForm.language.trim().toLowerCase()
+      );
+      if (existingIdx >= 0) {
+        updated = [...languagesList];
+        updated[existingIdx] = {
+          ...langForm,
+          language: langForm.language.trim(),
+        };
+      } else {
+        updated = [
+          ...languagesList,
+          {
+            ...langForm,
+            id: `lang_${Date.now()}`,
+            language: langForm.language.trim(),
+          },
+        ];
+      }
+    }
+
+    setLanguagesList(updated);
+    setActiveModal(null);
+    setEditingLangIndex(null);
+    await persistLanguages(updated);
+  };
+
+  const handleDeleteLanguage = async (index: number) => {
+    const updated = languagesList.filter((_, idx) => idx !== index);
+    setLanguagesList(updated);
+    await persistLanguages(updated);
   };
 
   // OTP Verification Handlers
@@ -1305,7 +1477,128 @@ export default function CandidateProfilePage() {
           </div>
         </div>
 
-        {/* SECTION 5: SOCIAL & PROFESSIONAL PROFILES */}
+        {/* SECTION 5: LANGUAGES KNOWN */}
+        <div className="theme-surface border theme-border rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-black theme-text uppercase tracking-wider flex items-center gap-2">
+                <Languages className="w-4 h-4 text-indigo-500" /> Languages Known ({languagesList.length})
+              </h2>
+              <p className="text-[11px] theme-muted mt-0.5">
+                Highlight the languages you can speak, read, and write for better recruiter matching
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleOpenAddLanguage}
+              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Language</span>
+            </button>
+          </div>
+
+          {languagesList.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {languagesList.map((lang, idx) => (
+                <div
+                  key={lang.id || idx}
+                  className="p-4 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 flex flex-col justify-between gap-3 transition-all hover:border-indigo-500/50 hover:shadow-sm group"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-black theme-text text-sm">{lang.language}</h4>
+                      <span
+                        className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          lang.proficiency === 'NATIVE'
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                            : lang.proficiency === 'FLUENT'
+                            ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
+                            : lang.proficiency === 'CONVERSATIONAL'
+                            ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20'
+                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                        }`}
+                      >
+                        {lang.proficiency === 'NATIVE'
+                          ? 'Native / Mother Tongue'
+                          : lang.proficiency === 'FLUENT'
+                          ? 'Fluent / Professional'
+                          : lang.proficiency === 'CONVERSATIONAL'
+                          ? 'Conversational'
+                          : 'Basic / Beginner'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditLanguage(idx)}
+                        className="p-1.5 rounded-lg theme-muted hover:theme-text hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        title="Edit language"
+                      >
+                        <Pencil className="w-3.5 h-3.5 text-indigo-500" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteLanguage(idx)}
+                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                        title="Delete language"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 pt-2 border-t theme-border/60 text-[11px] font-semibold">
+                    <span
+                      className={`px-2 py-0.5 rounded flex items-center gap-1 ${
+                        lang.canRead !== false
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold'
+                          : 'bg-slate-100 text-slate-400 line-through dark:bg-slate-800'
+                      }`}
+                    >
+                      {lang.canRead !== false ? '✓' : '✕'} Read
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded flex items-center gap-1 ${
+                        lang.canWrite !== false
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold'
+                          : 'bg-slate-100 text-slate-400 line-through dark:bg-slate-800'
+                      }`}
+                    >
+                      {lang.canWrite !== false ? '✓' : '✕'} Write
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded flex items-center gap-1 ${
+                        lang.canSpeak !== false
+                          ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-bold'
+                          : 'bg-slate-100 text-slate-400 line-through dark:bg-slate-800'
+                      }`}
+                    >
+                      {lang.canSpeak !== false ? '✓' : '✕'} Speak
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-6 text-center border border-dashed theme-border rounded-xl space-y-2 bg-slate-50/50 dark:bg-slate-900/50">
+              <Languages className="w-7 h-7 text-indigo-400 mx-auto opacity-70" />
+              <p className="text-xs theme-muted">
+                No languages added yet. Add languages you can speak, read, or write to stand out to hiring recruiters.
+              </p>
+              <button
+                type="button"
+                onClick={handleOpenAddLanguage}
+                className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Language</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* SECTION 6: SOCIAL & PROFESSIONAL PROFILES */}
         <div className="theme-surface border theme-border rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-black theme-text uppercase tracking-wider flex items-center gap-2">
@@ -1653,6 +1946,47 @@ export default function CandidateProfilePage() {
                         className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* Languages Known Shortcut */}
+                <div className="sm:col-span-2 pt-3 border-t theme-border space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-black uppercase tracking-wider theme-text flex items-center gap-1.5">
+                      <Languages className="w-4 h-4 text-indigo-500" /> Languages Known ({languagesList.length})
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditProfileOpen(false);
+                        handleOpenAddLanguage();
+                      }}
+                      className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Language
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {languagesList.map((lang, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 text-xs font-bold"
+                      >
+                        <span>{lang.language}</span>
+                        <span className="text-[10px] opacity-75 font-normal">({lang.proficiency})</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditProfileOpen(false);
+                            handleOpenEditLanguage(idx);
+                          }}
+                          className="hover:text-indigo-900 dark:hover:text-white p-0.5"
+                          title="Edit"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -2159,6 +2493,188 @@ export default function CandidateProfilePage() {
                 >
                   Save Certification
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL FOR ADDING / EDITING LANGUAGE */}
+        {activeModal === 'LANG' && (
+          <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
+            <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95">
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-inherit">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 flex-shrink-0">
+                    <Languages className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-extrabold theme-text truncate">
+                      {editingLangIndex !== null ? 'Edit Language' : 'Add Language Known'}
+                    </h3>
+                    <p className="text-xs theme-muted truncate">Specify your proficiency and communication skills</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveModal(null);
+                    setEditingLangIndex(null);
+                  }}
+                  className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
+                {/* Language Selection */}
+                <div>
+                  <label className="block font-bold theme-text mb-1">
+                    Language Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    list="popular-languages-list"
+                    required
+                    placeholder="e.g. English, Hindi, French, Spanish..."
+                    value={langForm.language}
+                    onChange={(e) => setLangForm({ ...langForm, language: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  />
+                  <datalist id="popular-languages-list">
+                    {POPULAR_LANGUAGES.map((lang) => (
+                      <option key={lang} value={lang} />
+                    ))}
+                  </datalist>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    <span className="text-[10px] theme-muted mr-1 font-semibold self-center">Quick pick:</span>
+                    {['English', 'Hindi', 'Bengali', 'Tamil', 'Telugu', 'Marathi', 'Gujarati', 'French', 'German'].map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => setLangForm({ ...langForm, language: q })}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition-colors cursor-pointer ${
+                          langForm.language.toLowerCase() === q.toLowerCase()
+                            ? 'bg-indigo-600 text-white border-indigo-600'
+                            : 'border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 theme-text'
+                        }`}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Proficiency Level */}
+                <div>
+                  <label className="block font-bold theme-text mb-1.5">
+                    Proficiency Level <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { val: 'NATIVE', label: 'Native / Mother Tongue', desc: 'First language or native level' },
+                      { val: 'FLUENT', label: 'Fluent / Professional', desc: 'Full workplace proficiency' },
+                      { val: 'CONVERSATIONAL', label: 'Conversational', desc: 'Can hold casual discussions' },
+                      { val: 'BASIC', label: 'Basic / Beginner', desc: 'Elementary understanding' },
+                    ].map((p) => (
+                      <label
+                        key={p.val}
+                        className={`p-2.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+                          langForm.proficiency === p.val
+                            ? 'border-indigo-600 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold ring-1 ring-indigo-500'
+                            : 'theme-border hover:bg-slate-50 dark:hover:bg-slate-800/50 theme-text'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs">{p.label}</span>
+                          <input
+                            type="radio"
+                            name="proficiency"
+                            value={p.val}
+                            checked={langForm.proficiency === p.val}
+                            onChange={() => setLangForm({ ...langForm, proficiency: p.val as any })}
+                            className="sr-only"
+                          />
+                          {langForm.proficiency === p.val && <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0" />}
+                        </div>
+                        <span className="text-[10px] theme-muted font-normal mt-0.5">{p.desc}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Communication Capabilities */}
+                <div>
+                  <label className="block font-bold theme-text mb-1.5">Communication Skills</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <label className="flex items-center gap-2 p-2.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 cursor-pointer hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={langForm.canRead !== false}
+                        onChange={(e) => setLangForm({ ...langForm, canRead: e.target.checked })}
+                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                      />
+                      <span className="text-xs font-bold theme-text">Can Read</span>
+                    </label>
+                    <label className="flex items-center gap-2 p-2.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 cursor-pointer hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={langForm.canWrite !== false}
+                        onChange={(e) => setLangForm({ ...langForm, canWrite: e.target.checked })}
+                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                      />
+                      <span className="text-xs font-bold theme-text">Can Write</span>
+                    </label>
+                    <label className="flex items-center gap-2 p-2.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 cursor-pointer hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={langForm.canSpeak !== false}
+                        onChange={(e) => setLangForm({ ...langForm, canSpeak: e.target.checked })}
+                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                      />
+                      <span className="text-xs font-bold theme-text">Can Speak</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                {editingLangIndex !== null ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleDeleteLanguage(editingLangIndex);
+                      setActiveModal(null);
+                      setEditingLangIndex(null);
+                    }}
+                    className="text-xs font-bold text-rose-500 hover:text-rose-600 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Language</span>
+                  </button>
+                ) : <div />}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveModal(null);
+                      setEditingLangIndex(null);
+                    }}
+                    className="px-4 py-2.5 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveLanguage}
+                    disabled={!langForm.language.trim()}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                  >
+                    {editingLangIndex !== null ? 'Update Language' : 'Save Language'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
