@@ -213,6 +213,14 @@ let JobsService = class JobsService {
             if (anyUser)
                 postedByUserId = anyUser.id;
         }
+        if (!isSuperAdmin && postedByUserId) {
+            const poster = await this.userRepo.findOne({ where: { id: postedByUserId } });
+            if (poster && (poster.role === 'COMPANY_ADMIN' || poster.role === 'RECRUITER')) {
+                if (!poster.isEmailVerified || !poster.isPhoneVerified) {
+                    throw new common_1.ForbiddenException('Account verification is mandatory. Please verify both your company email and mobile number before posting jobs.');
+                }
+            }
+        }
         const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
         let expiresAt;
         if (isSuperAdmin && jobData.expiresAt) {

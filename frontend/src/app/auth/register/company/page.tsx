@@ -102,6 +102,31 @@ function RecruiterContent() {
   const [isValidatingEmail, setIsValidatingEmail] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
 
+  // Mandatory Dual Verification State for Registration
+  const [signupStep, setSignupStep] = useState<'FORM' | 'VERIFY'>('FORM');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [mobileOtp, setMobileOtp] = useState('');
+  const [demoEmailOtp, setDemoEmailOtp] = useState<string | null>(null);
+  const [demoMobileOtp, setDemoMobileOtp] = useState<string | null>(null);
+  const [emailTimer, setEmailTimer] = useState(0);
+  const [mobileTimer, setMobileTimer] = useState(0);
+  const [isSendingOtps, setIsSendingOtps] = useState(false);
+  const [otpVerifyError, setOtpVerifyError] = useState<string | null>(null);
+
+  // Resend Countdown Timer
+  useEffect(() => {
+    let t: any = null;
+    if (emailTimer > 0 || mobileTimer > 0) {
+      t = setInterval(() => {
+        setEmailTimer((prev) => (prev > 0 ? prev - 1 : 0));
+        setMobileTimer((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (t) clearInterval(t);
+    };
+  }, [emailTimer, mobileTimer]);
+
   // Request Demo Form State
   const [demoName, setDemoName] = useState('');
   const [demoEmail, setDemoEmail] = useState('');
@@ -174,22 +199,38 @@ function RecruiterContent() {
     }
   };
 
-  // Handle Employer Registration Submit
-  const handleSignupSubmit = async (e: React.FormEvent) => {
+  // Step 1: Validate details & dispatch Email + Mobile OTPs
+  const handleProceedToVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupError(null);
+    setOtpVerifyError(null);
 
-    if (!fullName || !workEmail || !mobileNumber || !companyName || !signupPassword) {
-      setSignupError('Please fill out all required fields.');
+    if (!companyName.trim()) {
+      setSignupError('Company / Organization Name is required.');
       return;
     }
-
+    if (!fullName.trim()) {
+      setSignupError('Owner / Contact Person Full Name is required.');
+      return;
+    }
+    if (!workEmail.trim()) {
+      setSignupError('Official Work Email is required.');
+      return;
+    }
+    if (!mobileNumber.trim()) {
+      setSignupError('Mobile Number is required.');
+      return;
+    }
+    if (!signupPassword || signupPassword.length < 6) {
+      setSignupError('Password must be at least 6 characters.');
+      return;
+    }
     if (!agreedTerms) {
-      setSignupError('Please accept the Terms of Service and Privacy Policy to continue.');
+      setSignupError('Please accept the Terms of Service to continue.');
       return;
     }
 
-    // Verify corporate domain
+    // Verify corporate domain restriction (blocks free webmail)
     const domainCheck = await sdk.checkEmailDomain(workEmail);
     if (domainCheck?.restricted) {
       const msg =
@@ -200,17 +241,75 @@ function RecruiterContent() {
       return;
     }
 
+    setIsSendingOtps(true);
+    try {
+      const emailPromise = sdk.requestOtp(workEmail.toLowerCase().trim());
+      const phonePromise = sdk.requestOtp(mobileNumber.trim());
+      const [emailRes, phoneRes] = await Promise.all([emailPromise, phonePromise]);
+
+      if (emailRes.otpCode) setDemoEmailOtp(emailRes.otpCode);
+      if (phoneRes.otpCode) setDemoMobileOtp(phoneRes.otpCode);
+
+      setEmailTimer(180);
+      setMobileTimer(180);
+      setSignupStep('VERIFY');
+    } catch (err: any) {
+      setSignupError(err.message || 'Failed to dispatch verification OTP codes. Please check email and mobile.');
+    } finally {
+      setIsSendingOtps(false);
+    }
+  };
+
+  const handleResendEmailOtp = async () => {
+    if (emailTimer > 0) return;
+    try {
+      const res = await sdk.requestOtp(workEmail.toLowerCase().trim());
+      setEmailTimer(180);
+      if (res.otpCode) setDemoEmailOtp(res.otpCode);
+    } catch (err: any) {
+      setOtpVerifyError(err.message || 'Failed to resend Email OTP.');
+    }
+  };
+
+  const handleResendMobileOtp = async () => {
+    if (mobileTimer > 0) return;
+    try {
+      const res = await sdk.requestOtp(mobileNumber.trim());
+      setMobileTimer(180);
+      if (res.otpCode) setDemoMobileOtp(res.otpCode);
+    } catch (err: any) {
+      setOtpVerifyError(err.message || 'Failed to resend Mobile OTP.');
+    }
+  };
+
+  // Step 2: Final Registration - Profile is ONLY created if both email & mobile OTPs are verified
+  const handleFinalRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpVerifyError(null);
+
+    if (!emailOtp.trim()) {
+      setOtpVerifyError('Please enter the 6-digit verification code sent to your company email.');
+      return;
+    }
+    if (!mobileOtp.trim()) {
+      setOtpVerifyError('Please enter the 6-digit verification code sent to your mobile number.');
+      return;
+    }
+
     setIsSigningUp(true);
     try {
       const res = await sdk.request<{ accessToken?: string; user?: any; tenant?: any }>('/auth/register/company', {
         method: 'POST',
         body: JSON.stringify({
+          companyName: companyName.trim(),
           adminName: fullName.trim(),
           adminEmail: workEmail.toLowerCase().trim(),
-          adminPassword: signupPassword,
           phoneNumber: mobileNumber.trim(),
           phone: mobileNumber.trim(),
-          companyName: companyName.trim(),
+          adminPassword: signupPassword,
+          emailOtp: emailOtp.trim(),
+          phoneOtp: mobileOtp.trim(),
+          mobileOtp: mobileOtp.trim(),
           industry,
           companySize,
           selectedPlan: 'PROFESSIONAL',
@@ -225,9 +324,9 @@ function RecruiterContent() {
       setSignupSuccess(true);
       setTimeout(() => {
         router.push('/employer/dashboard');
-      }, 2500);
+      }, 2000);
     } catch (err: any) {
-      setSignupError(err.message || 'Failed to complete recruiter registration. Please try again.');
+      setOtpVerifyError(err.message || 'Verification failed. Please verify that both OTP codes are correct.');
     } finally {
       setIsSigningUp(false);
     }
@@ -588,7 +687,7 @@ function RecruiterContent() {
                         </form>
                       )}
 
-                      {/* Sub-mode: SIGN UP (Employer Registration) */}
+                      {/* Sub-mode: SIGN UP (Employer Registration with Mandatory Dual Verification) */}
                       {subMode === 'signup' && (
                         <div>
                           {signupSuccess ? (
@@ -600,17 +699,17 @@ function RecruiterContent() {
                                 Welcome to CamzyJobs Recruiter!
                               </h3>
                               <p className="text-xs sm:text-sm text-slate-600 max-w-sm mx-auto">
-                                Your employer profile has been created successfully. Redirecting you to your recruiter workspace...
+                                Company email and mobile verified. Your employer profile has been activated successfully. Redirecting you to your recruiter workspace...
                               </p>
                               <div className="w-6 h-6 border-2 border-[#5e17eb]/30 border-t-[#5e17eb] rounded-full animate-spin mx-auto" />
                             </div>
-                          ) : (
-                            <form onSubmit={handleSignupSubmit} className="space-y-3.5 max-h-[520px] overflow-y-auto pr-1">
+                          ) : signupStep === 'FORM' ? (
+                            <form onSubmit={handleProceedToVerification} className="space-y-3.5 max-h-[520px] overflow-y-auto pr-1">
                               <div className="pb-1 border-b border-slate-100 flex items-center justify-between">
                                 <span className="text-xs font-black uppercase text-[#5e17eb] tracking-wide">
                                   Employer Registration
                                 </span>
-                                <span className="text-[11px] text-slate-400">Step 1 of 1</span>
+                                <span className="text-[11px] font-bold text-slate-500">Step 1 of 2: Details</span>
                               </div>
 
                               {signupError && (
@@ -620,10 +719,25 @@ function RecruiterContent() {
                                 </div>
                               )}
 
-                              {/* Recruiter Full Name */}
+                              {/* Company Name */}
                               <div className="space-y-1">
                                 <label className="block text-xs font-bold text-slate-700">
-                                  Full Name <span className="text-red-500">*</span>
+                                  Company Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  value={companyName}
+                                  onChange={(e) => setCompanyName(e.target.value)}
+                                  placeholder="e.g. Acme Technologies Pvt Ltd"
+                                  required
+                                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5e17eb]/20 focus:border-[#5e17eb] transition-all"
+                                />
+                              </div>
+
+                              {/* Owner / Authorized Person Name */}
+                              <div className="space-y-1">
+                                <label className="block text-xs font-bold text-slate-700">
+                                  Owner / Contact Person Name <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
                                   <input
@@ -637,11 +751,11 @@ function RecruiterContent() {
                                 </div>
                               </div>
 
-                              {/* Official Work Email */}
+                              {/* Official Company Email */}
                               <div className="space-y-1">
                                 <div className="flex items-center justify-between">
                                   <label className="block text-xs font-bold text-slate-700">
-                                    Official Work Email <span className="text-red-500">*</span>
+                                    Company Work Email <span className="text-red-500">*</span>
                                   </label>
                                   <span className="text-[10px] text-slate-500">Corporate domain only</span>
                                 </div>
@@ -696,21 +810,6 @@ function RecruiterContent() {
                                 </div>
                               </div>
 
-                              {/* Company Name */}
-                              <div className="space-y-1">
-                                <label className="block text-xs font-bold text-slate-700">
-                                  Company / Organization Name <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                  type="text"
-                                  value={companyName}
-                                  onChange={(e) => setCompanyName(e.target.value)}
-                                  placeholder="e.g. Acme Technologies Pvt Ltd"
-                                  required
-                                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5e17eb]/20 focus:border-[#5e17eb] transition-all"
-                                />
-                              </div>
-
                               {/* Password */}
                               <div className="space-y-1">
                                 <label className="block text-xs font-bold text-slate-700">
@@ -721,7 +820,7 @@ function RecruiterContent() {
                                     type={showSignupPassword ? 'text' : 'password'}
                                     value={signupPassword}
                                     onChange={(e) => setSignupPassword(e.target.value)}
-                                    placeholder="Min 8 chars with numbers"
+                                    placeholder="Min 6 characters"
                                     required
                                     className="w-full px-3.5 py-2.5 pr-10 rounded-lg border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5e17eb]/20 focus:border-[#5e17eb] transition-all"
                                   />
@@ -786,20 +885,23 @@ function RecruiterContent() {
                                   <Link href="/about" className="text-[#5e17eb] font-semibold hover:underline">
                                     Terms of Use
                                   </Link>{' '}
-                                  and confirm I am hiring on behalf of this company.
+                                  and confirm I am authorized to register this organization.
                                 </label>
                               </div>
 
-                              {/* Submit Button */}
+                              {/* Submit Button -> Proceeds to Dual Verification */}
                               <button
                                 type="submit"
-                                disabled={isSigningUp}
-                                className="w-full py-3 rounded-lg bg-[#5e17eb] hover:bg-[#4d0ec5] text-white font-extrabold text-sm shadow-md hover:shadow-lg shadow-purple-600/25 transition-all flex items-center justify-center space-x-2 disabled:opacity-70 cursor-pointer"
+                                disabled={isSendingOtps}
+                                className="w-full py-3.5 rounded-lg bg-[#5e17eb] hover:bg-[#4d0ec5] text-white font-extrabold text-sm shadow-md hover:shadow-lg shadow-purple-600/25 transition-all flex items-center justify-center space-x-2 disabled:opacity-70 cursor-pointer"
                               >
-                                {isSigningUp ? (
-                                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                {isSendingOtps ? (
+                                  <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <span>Sending Verification OTPs...</span>
+                                  </>
                                 ) : (
-                                  <span>Create Employer Account</span>
+                                  <span>Verify Email & Mobile to Register →</span>
                                 )}
                               </button>
 
@@ -812,6 +914,151 @@ function RecruiterContent() {
                                   className="font-extrabold text-[#5e17eb] hover:underline cursor-pointer"
                                 >
                                   Login
+                                </button>
+                              </div>
+                            </form>
+                          ) : (
+                            /* ================= STEP 2: MANDATORY DUAL VERIFICATION SCREEN ================= */
+                            <form onSubmit={handleFinalRegister} className="space-y-4 max-h-[520px] overflow-y-auto pr-1 animate-in fade-in">
+                              <div className="pb-1 border-b border-slate-100 flex items-center justify-between">
+                                <span className="text-xs font-black uppercase text-[#5e17eb] tracking-wide flex items-center gap-1.5">
+                                  <ShieldCheck className="w-4 h-4" />
+                                  <span>Mandatory Account Verification</span>
+                                </span>
+                                <span className="text-[11px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+                                  Step 2 of 2
+                                </span>
+                              </div>
+
+                              {/* Mandatory Notice Callout */}
+                              <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl space-y-1 text-xs text-purple-900">
+                                <div className="font-extrabold flex items-center gap-1 text-[#5e17eb]">
+                                  <ShieldCheck className="w-4 h-4" /> Verification Required
+                                </div>
+                                <p className="text-[11px] text-slate-600 leading-relaxed">
+                                  Your company profile will <strong>only be created</strong> once both your official work email and mobile number are verified with 6-digit OTP codes.
+                                </p>
+                              </div>
+
+                              {otpVerifyError && (
+                                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-start space-x-2">
+                                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                                  <span>{otpVerifyError}</span>
+                                </div>
+                              )}
+
+                              {/* SECTION 1: WORK EMAIL OTP */}
+                              <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <Mail className="w-3.5 h-3.5 text-[#5e17eb]" />
+                                    <span>Company Email OTP</span>
+                                  </span>
+                                  <span className="text-[11px] text-slate-500 font-medium truncate max-w-[150px]">
+                                    {workEmail}
+                                  </span>
+                                </div>
+                                <div className="relative">
+                                  <input
+                                    type="text"
+                                    maxLength={6}
+                                    placeholder="Enter 6-digit email OTP"
+                                    value={emailOtp}
+                                    onChange={(e) => setEmailOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                                    required
+                                    className="w-full text-center tracking-[0.3em] font-mono font-bold px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-[#5e17eb] focus:outline-none bg-white"
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between text-[11px]">
+                                  {demoEmailOtp ? (
+                                    <span className="text-[10px] font-mono text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                                      Demo OTP: <strong>{demoEmailOtp}</strong>
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400">Check inbox/spam</span>
+                                  )}
+                                  {emailTimer > 0 ? (
+                                    <span className="text-slate-400 font-mono">Resend in {emailTimer}s</span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={handleResendEmailOtp}
+                                      className="font-bold text-[#5e17eb] hover:underline"
+                                    >
+                                      Resend Email OTP
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* SECTION 2: MOBILE NUMBER OTP */}
+                              <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <Phone className="w-3.5 h-3.5 text-[#5e17eb]" />
+                                    <span>Mobile Number OTP</span>
+                                  </span>
+                                  <span className="text-[11px] text-slate-500 font-medium">
+                                    +91 {mobileNumber}
+                                  </span>
+                                </div>
+                                <div className="relative">
+                                  <input
+                                    type="text"
+                                    maxLength={6}
+                                    placeholder="Enter 6-digit mobile OTP"
+                                    value={mobileOtp}
+                                    onChange={(e) => setMobileOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                                    required
+                                    className="w-full text-center tracking-[0.3em] font-mono font-bold px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-[#5e17eb] focus:outline-none bg-white"
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between text-[11px]">
+                                  {demoMobileOtp ? (
+                                    <span className="text-[10px] font-mono text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                                      Demo OTP: <strong>{demoMobileOtp}</strong>
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400">Sent via SMS</span>
+                                  )}
+                                  {mobileTimer > 0 ? (
+                                    <span className="text-slate-400 font-mono">Resend in {mobileTimer}s</span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={handleResendMobileOtp}
+                                      className="font-bold text-[#5e17eb] hover:underline"
+                                    >
+                                      Resend Mobile OTP
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Final Action Button */}
+                              <button
+                                type="submit"
+                                disabled={isSigningUp || emailOtp.length < 6 || mobileOtp.length < 6}
+                                className="w-full py-3.5 rounded-lg bg-[#5e17eb] hover:bg-[#4d0ec5] text-white font-extrabold text-sm shadow-md hover:shadow-lg shadow-purple-600/25 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
+                              >
+                                {isSigningUp ? (
+                                  <>
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    <span>Verifying & Creating Profile...</span>
+                                  </>
+                                ) : (
+                                  <span>Verify Both & Create Employer Profile</span>
+                                )}
+                              </button>
+
+                              {/* Back Button */}
+                              <div className="text-center pt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setSignupStep('FORM')}
+                                  className="text-xs text-slate-500 hover:text-slate-800 font-medium hover:underline"
+                                >
+                                  ← Edit company name or contact details
                                 </button>
                               </div>
                             </form>

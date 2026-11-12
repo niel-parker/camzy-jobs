@@ -63,6 +63,7 @@ export declare class AuthService {
     registerCompany(body: {
         companyName: string;
         industry?: string;
+        companySize?: string;
         website?: string;
         taxId?: string;
         adminName?: string;
@@ -71,6 +72,13 @@ export declare class AuthService {
         logoUrl?: string;
         description?: string;
         selectedPlan?: string;
+        phone?: string;
+        phoneNumber?: string;
+        mobileNumber?: string;
+        emailOtp?: string;
+        phoneOtp?: string;
+        mobileOtp?: string;
+        skipOtp?: boolean;
     }): Promise<{
         accessToken: string;
         user: UserDto;
@@ -110,6 +118,7 @@ export declare class AuthService {
     verifyOtp(identifier: string, otpCode: string, meta?: {
         ipAddress?: string;
         userAgent?: string;
+        userId?: string;
     }): Promise<{
         accessToken: string;
         user: UserDto;

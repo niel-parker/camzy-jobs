@@ -101,10 +101,10 @@ export class JobPortalSdk {
     });
   }
 
-  async verifyOtp(identifier: string, otp: string): Promise<AuthResponse> {
+  async verifyOtp(identifier: string, otp: string, userId?: string): Promise<AuthResponse> {
     const data = await this.request<AuthResponse>('/auth/verify-otp', {
       method: 'POST',
-      body: JSON.stringify({ identifier, otp }),
+      body: JSON.stringify({ identifier, otp, userId }),
     });
     this.setToken(data.accessToken);
     return data;

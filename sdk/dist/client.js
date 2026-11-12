@@ -57,10 +57,10 @@ class JobPortalSdk {
             body: JSON.stringify({ identifier }),
         });
     }
-    async verifyOtp(identifier, otp) {
+    async verifyOtp(identifier, otp, userId) {
         const data = await this.request('/auth/verify-otp', {
             method: 'POST',
-            body: JSON.stringify({ identifier, otp }),
+            body: JSON.stringify({ identifier, otp, userId }),
         });
         this.setToken(data.accessToken);
         return data;

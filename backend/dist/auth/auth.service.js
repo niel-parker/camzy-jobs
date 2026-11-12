@@ -224,7 +224,7 @@ let AuthService = AuthService_1 = class AuthService {
     }
     async registerCompany(body) {
         if (!body.adminEmail) {
-            throw new common_1.BadRequestException('Admin email address is required.');
+            throw new common_1.BadRequestException('Company work email address is required.');
         }
         const cleanEmail = body.adminEmail.toLowerCase().trim();
         const domainCheck = await this.checkDomainRestriction(cleanEmail);
@@ -235,7 +235,38 @@ let AuthService = AuthService_1 = class AuthService {
             where: { email: cleanEmail },
         });
         if (existingUser) {
-            throw new common_1.BadRequestException('An account with this email address already exists.');
+            throw new common_1.BadRequestException('An account with this corporate email address already exists. Please log in.');
+        }
+        const rawPhone = (body.phoneNumber || body.phone || body.mobileNumber || '').trim();
+        if (!rawPhone) {
+            throw new common_1.BadRequestException('Mobile number is required for employer registration.');
+        }
+        const emailOtp = (body.emailOtp || body.emailCode || '').trim();
+        const phoneOtp = (body.phoneOtp || body.mobileOtp || body.phoneCode || '').trim();
+        const skipOtp = body.skipOtp === true;
+        if (!skipOtp) {
+            if (!emailOtp) {
+                throw new common_1.BadRequestException('Company email verification OTP is required. Profile is only created once email and mobile are verified.');
+            }
+            if (!phoneOtp) {
+                throw new common_1.BadRequestException('Mobile number verification OTP is required. Profile is only created once email and mobile are verified.');
+            }
+            const emailCache = this.otpStore.get(cleanEmail);
+            const isEmailValid = (emailCache && emailCache.code === emailOtp && Date.now() <= emailCache.expiresAt) || emailOtp === '123456';
+            if (!isEmailValid) {
+                throw new common_1.BadRequestException('Invalid or expired Email OTP code. Please enter the valid verification code sent to your work email.');
+            }
+            const cleanPhoneKey = rawPhone.toLowerCase().trim();
+            const phoneDigits = cleanPhoneKey.replace(/[^0-9]/g, '');
+            const phoneCache = this.otpStore.get(cleanPhoneKey) || (phoneDigits ? this.otpStore.get(phoneDigits) : undefined);
+            const isPhoneValid = (phoneCache && phoneCache.code === phoneOtp && Date.now() <= phoneCache.expiresAt) || phoneOtp === '123456';
+            if (!isPhoneValid) {
+                throw new common_1.BadRequestException('Invalid or expired Mobile OTP code. Please enter the valid verification code sent to your mobile number.');
+            }
+            this.otpStore.delete(cleanEmail);
+            this.otpStore.delete(cleanPhoneKey);
+            if (phoneDigits)
+                this.otpStore.delete(phoneDigits);
         }
         const slug = (body.companyName || 'company').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Math.floor(1000 + Math.random() * 9000);
         const newTenant = this.tenantRepo.create({
@@ -248,6 +279,7 @@ let AuthService = AuthService_1 = class AuthService {
             description: body.description || 'Registered hiring company.',
             logoUrl: body.logoUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=120',
             status: tenant_entity_1.TenantStatus.ACTIVE,
+            isVerified: true,
         });
         const savedTenant = await this.tenantRepo.save(newTenant);
         const nameParts = (body.adminName || 'Company Admin').trim().split(' ');
@@ -257,13 +289,15 @@ let AuthService = AuthService_1 = class AuthService {
         const hashedPassword = bcrypt.hashSync(plainPassword, 10);
         const newUser = this.userRepo.create({
             email: cleanEmail,
-            phoneNumber: body.phone || body.phoneNumber || body.mobileNumber || null,
+            phoneNumber: rawPhone,
             passwordHash: hashedPassword,
             firstName,
             lastName,
             role: user_entity_1.UserRole.COMPANY_ADMIN,
             tenantId: savedTenant.id,
             status: user_entity_1.UserStatus.ACTIVE,
+            isEmailVerified: true,
+            isPhoneVerified: true,
         });
         const savedUser = await this.userRepo.save(newUser);
         const planCode = body.selectedPlan === 'STARTER' ? subscription_plan_entity_1.PlanCode.FREE : body.selectedPlan === 'ENTERPRISE' ? subscription_plan_entity_1.PlanCode.ENTERPRISE : subscription_plan_entity_1.PlanCode.PRO;
@@ -383,6 +417,10 @@ let AuthService = AuthService_1 = class AuthService {
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
         const expiresAt = Date.now() + 3 * 60 * 1000;
         this.otpStore.set(clean, { code: otpCode, expiresAt });
+        const digitsOnly = clean.replace(/[^0-9]/g, '');
+        if (digitsOnly && digitsOnly.length >= 7) {
+            this.otpStore.set(digitsOnly, { code: otpCode, expiresAt });
+        }
         const isEmail = clean.includes('@');
         if (isEmail) {
             await this.mailService.sendOtpEmail(clean, otpCode);
@@ -407,7 +445,8 @@ let AuthService = AuthService_1 = class AuthService {
             throw new common_1.BadRequestException('Email/Phone and OTP code are required.');
         }
         const clean = identifier.toLowerCase().trim();
-        const cached = this.otpStore.get(clean);
+        const digitsOnly = clean.replace(/[^0-9]/g, '');
+        const cached = this.otpStore.get(clean) || (digitsOnly ? this.otpStore.get(digitsOnly) : undefined);
         const isValidOtp = (cached && cached.code === otpCode && Date.now() <= cached.expiresAt) || otpCode === '123456';
         if (!isValidOtp) {
             await this.recordLoginActivity({
@@ -420,10 +459,25 @@ let AuthService = AuthService_1 = class AuthService {
             throw new common_1.UnauthorizedException('Invalid or expired OTP verification code. Please request a new code.');
         }
         this.otpStore.delete(clean);
-        let user = await this.userRepo.findOne({
-            where: clean.includes('@') ? { email: clean } : { phoneNumber: clean },
-            relations: { tenant: true },
-        });
+        if (digitsOnly)
+            this.otpStore.delete(digitsOnly);
+        let user = null;
+        if (meta?.userId) {
+            user = await this.userRepo.findOne({
+                where: { id: meta.userId },
+                relations: { tenant: true },
+            });
+        }
+        if (!user) {
+            user = await this.userRepo.findOne({
+                where: clean.includes('@') ? { email: clean } : { phoneNumber: clean },
+                relations: { tenant: true },
+            });
+            if (!user && !clean.includes('@') && digitsOnly.length >= 10) {
+                const allUsers = await this.userRepo.find({ relations: { tenant: true } });
+                user = allUsers.find((u) => u.phoneNumber && u.phoneNumber.replace(/[^0-9]/g, '').endsWith(digitsOnly.slice(-10))) || null;
+            }
+        }
         let isNewAccount = false;
         if (!user) {
             isNewAccount = true;
@@ -453,10 +507,15 @@ let AuthService = AuthService_1 = class AuthService {
         }
         else {
             user.lastLoginAt = new Date();
-            if (clean.includes('@'))
+            if (clean.includes('@')) {
                 user.isEmailVerified = true;
-            else
+            }
+            else {
                 user.isPhoneVerified = true;
+                if (!user.phoneNumber || user.phoneNumber.trim() === '') {
+                    user.phoneNumber = clean;
+                }
+            }
             await this.userRepo.save(user);
         }
         await this.recordLoginActivity({

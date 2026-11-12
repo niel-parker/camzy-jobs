@@ -8,7 +8,8 @@ import {
   LayoutDashboard, Briefcase, Users, FileText, Bookmark, Settings, 
   ShieldCheck, Palette, Bell, Search, ChevronLeft, ChevronRight, 
   LogOut, User, Building2, Plus, Sparkles, UserCheck, Lock, LogIn, ChevronDown, Eye, Download,
-  Globe, BookOpen, HelpCircle, Send, CreditCard, Receipt, MapPin, Layers, ShieldAlert, Activity, Landmark
+  Globe, BookOpen, HelpCircle, Send, CreditCard, Receipt, MapPin, Layers, ShieldAlert, Activity, Landmark,
+  Mail, Phone, CheckCircle2, AlertCircle, Loader2
 } from 'lucide-react';
 import { SuperAdminThemeCustomizer } from './SuperAdminThemeCustomizer';
 
@@ -32,9 +33,327 @@ interface NavItem {
   subItems?: SubNavItem[];
 }
 
+const EmployerMandatoryVerificationBlock: React.FC<{
+  user: any;
+  setUser: (u: any) => void;
+  sdk: any;
+  logout: () => void;
+}> = ({ user, setUser, sdk, logout }) => {
+  const [emailOtp, setEmailOtp] = useState('');
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [phoneInput, setPhoneInput] = useState(user.phoneNumber || '');
+  const [emailSent, setEmailSent] = useState(false);
+  const [phoneSent, setPhoneSent] = useState(false);
+  const [emailTimer, setEmailTimer] = useState(0);
+  const [phoneTimer, setPhoneTimer] = useState(0);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [demoEmailOtp, setDemoEmailOtp] = useState<string | null>(null);
+  const [demoPhoneOtp, setDemoPhoneOtp] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    let t: any = null;
+    if (emailTimer > 0 || phoneTimer > 0) {
+      t = setInterval(() => {
+        setEmailTimer((prev) => (prev > 0 ? prev - 1 : 0));
+        setPhoneTimer((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (t) clearInterval(t);
+    };
+  }, [emailTimer, phoneTimer]);
+
+  const handleSendEmailOtp = async () => {
+    setEmailLoading(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await sdk.requestOtp(user.email);
+      setEmailSent(true);
+      setEmailTimer(180);
+      if (res.otpCode) setDemoEmailOtp(res.otpCode);
+      setSuccessMsg(`Verification OTP sent to ${user.email}`);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to dispatch email verification OTP.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    if (!emailOtp.trim()) return;
+    setEmailLoading(true);
+    setErrorMsg(null);
+    try {
+      await sdk.verifyOtp(user.email, emailOtp.trim(), user.id);
+      setUser({ ...user, isEmailVerified: true });
+      setSuccessMsg('Company email successfully verified!');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Invalid or expired Email OTP code.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleSendPhoneOtp = async () => {
+    if (!phoneInput.trim()) {
+      setErrorMsg('Please enter a valid mobile number.');
+      return;
+    }
+    setPhoneLoading(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await sdk.requestOtp(phoneInput.trim());
+      setPhoneSent(true);
+      setPhoneTimer(180);
+      if (res.otpCode) setDemoPhoneOtp(res.otpCode);
+      setSuccessMsg(`Verification OTP sent to ${phoneInput.trim()}`);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to dispatch mobile verification OTP.');
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (!phoneOtp.trim()) return;
+    setPhoneLoading(true);
+    setErrorMsg(null);
+    try {
+      await sdk.verifyOtp(phoneInput.trim(), phoneOtp.trim(), user.id);
+      setUser({ ...user, isPhoneVerified: true, phoneNumber: phoneInput.trim() });
+      setSuccessMsg('Mobile number successfully verified!');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Invalid or expired Mobile OTP code.');
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 sm:p-6 text-slate-100">
+      <div className="max-w-lg w-full bg-slate-900 border border-purple-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative overflow-hidden">
+        {/* Decorative Top Accent */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-600 via-pink-500 to-indigo-600" />
+
+        <div className="space-y-2">
+          <div className="inline-flex items-center space-x-2 text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-1 rounded-full text-xs font-bold">
+            <ShieldAlert className="w-4 h-4 shrink-0" />
+            <span>Account Verification Mandatory</span>
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+            Employer Verification Required
+          </h2>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            In accordance with recruiter security standards, <strong>all employer actions are strictly blocked</strong> until both your official company work email and mobile phone number are verified.
+          </p>
+        </div>
+
+        {errorMsg && (
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-start space-x-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-start space-x-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {/* Card 1: Email Verification */}
+          <div className="p-4 rounded-2xl border border-slate-800 bg-slate-950/60 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-xs font-bold text-white">
+                <Mail className="w-4 h-4 text-purple-400" />
+                <span>Company Work Email</span>
+              </div>
+              {user.isEmailVerified ? (
+                <span className="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center space-x-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>Verified</span>
+                </span>
+              ) : (
+                <span className="text-[11px] font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                  Unverified
+                </span>
+              )}
+            </div>
+
+            <p className="text-xs text-slate-300 font-mono">{user.email}</p>
+
+            {!user.isEmailVerified && (
+              <div className="space-y-2 pt-1 border-t border-slate-800">
+                {!emailSent ? (
+                  <button
+                    type="button"
+                    onClick={handleSendEmailOtp}
+                    disabled={emailLoading}
+                    className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {emailLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                    <span>Send Verification Email OTP</span>
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        maxLength={6}
+                        placeholder="6-digit email OTP"
+                        value={emailOtp}
+                        onChange={(e) => setEmailOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                        className="flex-1 text-center font-mono font-bold tracking-widest px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-purple-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyEmailOtp}
+                        disabled={emailLoading || emailOtp.length < 6}
+                        className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold text-xs shadow-sm cursor-pointer"
+                      >
+                        {emailLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span>Verify</span>}
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      {demoEmailOtp ? (
+                        <span className="text-[10px] font-mono text-purple-400 bg-purple-950 px-2 py-0.5 rounded border border-purple-800">
+                          Demo OTP: <strong>{demoEmailOtp}</strong>
+                        </span>
+                      ) : <span />}
+                      {emailTimer > 0 ? (
+                        <span className="text-slate-500 font-mono">Resend in {emailTimer}s</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSendEmailOtp}
+                          className="text-purple-400 hover:underline font-bold"
+                        >
+                          Resend Code
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Card 2: Mobile Verification */}
+          <div className="p-4 rounded-2xl border border-slate-800 bg-slate-950/60 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-xs font-bold text-white">
+                <Phone className="w-4 h-4 text-purple-400" />
+                <span>Mobile Number</span>
+              </div>
+              {user.isPhoneVerified ? (
+                <span className="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center space-x-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>Verified</span>
+                </span>
+              ) : (
+                <span className="text-[11px] font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                  Unverified
+                </span>
+              )}
+            </div>
+
+            {!user.isPhoneVerified ? (
+              <div className="space-y-2">
+                <input
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-purple-500"
+                />
+
+                {!phoneSent ? (
+                  <button
+                    type="button"
+                    onClick={handleSendPhoneOtp}
+                    disabled={phoneLoading || !phoneInput.trim()}
+                    className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {phoneLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Phone className="w-3.5 h-3.5" />}
+                    <span>Send Verification Mobile OTP</span>
+                  </button>
+                ) : (
+                  <div className="space-y-2 pt-1 border-t border-slate-800">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        maxLength={6}
+                        placeholder="6-digit mobile OTP"
+                        value={phoneOtp}
+                        onChange={(e) => setPhoneOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                        className="flex-1 text-center font-mono font-bold tracking-widest px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-purple-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyPhoneOtp}
+                        disabled={phoneLoading || phoneOtp.length < 6}
+                        className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold text-xs shadow-sm cursor-pointer"
+                      >
+                        {phoneLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <span>Verify</span>}
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      {demoPhoneOtp ? (
+                        <span className="text-[10px] font-mono text-purple-400 bg-purple-950 px-2 py-0.5 rounded border border-purple-800">
+                          Demo OTP: <strong>{demoPhoneOtp}</strong>
+                        </span>
+                      ) : <span />}
+                      {phoneTimer > 0 ? (
+                        <span className="text-slate-500 font-mono">Resend in {phoneTimer}s</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSendPhoneOtp}
+                          className="text-purple-400 hover:underline font-bold"
+                        >
+                          Resend Code
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-300 font-mono">{user.phoneNumber || phoneInput}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs">
+          <button
+            type="button"
+            onClick={logout}
+            className="text-rose-400 hover:underline font-bold flex items-center space-x-1 cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign Out</span>
+          </button>
+          <span className="text-slate-500 text-[11px]">
+            Toll Free Support: 1800-419-6666
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role }) => {
   const pathname = usePathname();
-  const { theme, user, logout } = useTheme();
+  const { theme, user, logout, setUser, sdk } = useTheme();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isThemePanelOpen, setIsThemePanelOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -107,6 +426,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
           </div>
         </div>
       </div>
+    );
+  }
+
+  // Mandatory Employer Account Verification Check: Block all actions until verified
+  const isEmployerUnverified = React.useMemo(() => {
+    if (!user) return false;
+    if (role === 'EMPLOYER' && user.role !== 'SUPER_ADMIN') {
+      return !user.isEmailVerified || !user.isPhoneVerified;
+    }
+    return false;
+  }, [user, role]);
+
+  if (isEmployerUnverified) {
+    return (
+      <EmployerMandatoryVerificationBlock user={user} setUser={setUser} sdk={sdk} logout={logout} />
     );
   }
 

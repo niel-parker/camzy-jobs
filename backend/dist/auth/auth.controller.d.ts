@@ -47,6 +47,7 @@ export declare class AuthController {
         email?: string;
         phone?: string;
         otp: string;
+        userId?: string;
     }, req: Request): Promise<{
         accessToken: string;
         user: import("./auth.service").UserDto;

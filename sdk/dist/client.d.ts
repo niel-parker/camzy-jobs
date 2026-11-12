@@ -14,7 +14,7 @@ export declare class JobPortalSdk {
         isEmail: boolean;
         otpCode?: string;
     }>;
-    verifyOtp(identifier: string, otp: string): Promise<AuthResponse>;
+    verifyOtp(identifier: string, otp: string, userId?: string): Promise<AuthResponse>;
     shareJob(shareData: {
         toEmail: string;
         senderName?: string;

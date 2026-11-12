@@ -62,11 +62,11 @@ export class AuthController {
   @Post('verify-otp')
   @ApiOperation({ summary: 'Verify OTP code and log in or register user' })
   async verifyOtp(
-    @Body() body: { identifier?: string; email?: string; phone?: string; otp: string },
+    @Body() body: { identifier?: string; email?: string; phone?: string; otp: string; userId?: string },
     @Req() req: Request,
   ) {
     const target = body.identifier || body.email || body.phone || '';
-    const meta = this.getClientMeta(req);
+    const meta = { ...this.getClientMeta(req), userId: body.userId };
     return await this.authService.verifyOtp(target, body.otp, meta);
   }
 

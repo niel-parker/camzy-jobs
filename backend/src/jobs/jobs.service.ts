@@ -289,6 +289,18 @@ export class JobsService implements OnModuleInit {
       if (anyUser) postedByUserId = anyUser.id;
     }
 
+    // MANDATORY ACCOUNT VERIFICATION: Block job creation if employer email or phone is not verified
+    if (!isSuperAdmin && postedByUserId) {
+      const poster = await this.userRepo.findOne({ where: { id: postedByUserId } });
+      if (poster && (poster.role === 'COMPANY_ADMIN' as any || poster.role === 'RECRUITER' as any)) {
+        if (!poster.isEmailVerified || !poster.isPhoneVerified) {
+          throw new ForbiddenException(
+            'Account verification is mandatory. Please verify both your company email and mobile number before posting jobs.'
+          );
+        }
+      }
+    }
+
     // 1. Auto expire after 30 days.
     // 3. Only superadmin can change expiry date.
     const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
