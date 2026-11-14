@@ -251,11 +251,11 @@ export const Navbar: React.FC = () => {
                   </Link>
 
                   <Link
-                    href="/auth/register/company"
+                    href="/employer/login"
                     className="px-3 py-1.5 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center space-x-1"
                   >
-                    <Building2 className="w-3.5 h-3.5 text-indigo-500" />
-                    <span>For Employers</span>
+                    <Building2 className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Employer Login</span>
                   </Link>
                 </>
               )}
@@ -338,7 +338,7 @@ export const Navbar: React.FC = () => {
               ) : (
                 <>
                   <Link href="/auth/login" onClick={() => setIsMobileMenuOpen(false)} className="block py-2 rounded-lg text-center bg-indigo-600 text-white font-extrabold">Sign In / Register</Link>
-                  <Link href="/auth/register/company" onClick={() => setIsMobileMenuOpen(false)} className="block py-2 rounded-lg text-center border theme-border theme-text font-bold">For Employers</Link>
+                  <Link href="/employer/login" onClick={() => setIsMobileMenuOpen(false)} className="block py-2 rounded-lg text-center border theme-border theme-text font-bold">Employer Login</Link>
                 </>
               )}
             </div>

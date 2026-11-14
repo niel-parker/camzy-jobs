@@ -143,9 +143,13 @@ export class AuthService {
 
     const cleanEmail = email.toLowerCase().trim();
 
-    // Query user strictly by email from database
+    // Query user by email or phone number from database
     const user = await this.userRepo.findOne({
-      where: { email: cleanEmail },
+      where: [
+        { email: cleanEmail },
+        { phoneNumber: cleanEmail },
+        { phoneNumber: cleanEmail.replace(/[^0-9]/g, '') },
+      ],
       relations: { tenant: true },
     });
 

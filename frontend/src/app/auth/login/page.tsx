@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { LogIn, Mail, Phone, ShieldCheck, CheckCircle2, AlertCircle, ArrowRight, RefreshCw, Sparkles, KeyRound } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import { useRouter } from 'next/navigation';
@@ -131,6 +132,21 @@ export default function LoginPage() {
           <p className="text-xs theme-muted">
             Single entry: Existing users sign in instantly, new candidates are auto-registered via OTP
           </p>
+        </div>
+
+        {/* Employer / Recruiter Entry Banner */}
+        <div className="p-3 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/50 flex items-center justify-between text-xs">
+          <div>
+            <div className="text-purple-700 dark:text-purple-300 font-bold">Hiring Top Talent?</div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400">Post jobs &amp; search 10M+ resumes</div>
+          </div>
+          <Link
+            href="/employer/login"
+            className="px-3 py-1.5 rounded-xl bg-[#5e17eb] hover:bg-[#4d0ec5] text-white font-bold text-xs shadow-sm flex items-center gap-1 transition-all"
+          >
+            <span>Employer Login</span>
+            <ArrowRight className="w-3 h-3" />
+          </Link>
         </div>
 
         {/* Toggle Mode Tabs */}

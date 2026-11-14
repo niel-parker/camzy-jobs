@@ -129,7 +129,11 @@ let AuthService = AuthService_1 = class AuthService {
         }
         const cleanEmail = email.toLowerCase().trim();
         const user = await this.userRepo.findOne({
-            where: { email: cleanEmail },
+            where: [
+                { email: cleanEmail },
+                { phoneNumber: cleanEmail },
+                { phoneNumber: cleanEmail.replace(/[^0-9]/g, '') },
+            ],
             relations: { tenant: true },
         });
         if (!user) {

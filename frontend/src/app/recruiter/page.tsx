@@ -1,4 +1,3 @@
-import RecruiterPage from '../auth/register/company/page';
+import EmployerLoginPage from '../employer/login/page';
 
-export default RecruiterPage;
-
+export default EmployerLoginPage;
