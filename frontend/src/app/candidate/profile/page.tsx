@@ -8,6 +8,7 @@ import {
   AlertCircle, Loader2, Check, Plus, Trash2, GraduationCap, Award, FolderGit2, Globe, Github, Linkedin, Languages, Pencil, X, ShieldCheck, Clock, MapPin, RefreshCw, Star, Download, ExternalLink, Camera, Phone, Mail, Eye
 } from 'lucide-react';
 import { ProfileResumeModal } from '../../../components/ProfileResumeModal';
+import { CandidateRecruiterDrawer } from '../../../components/CandidateRecruiterDrawer';
 
 interface ResumeItem {
   id: string;
@@ -112,7 +113,8 @@ export default function CandidateProfilePage() {
 
   // Edit Profile Modal Open State
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
-  const [isResumePreviewOpen, setIsResumePreviewOpen] = useState(false);
+  const [isRecruiterDrawerOpen, setIsRecruiterDrawerOpen] = useState(false);
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
 
   // User Identity & Personal Details State
   const [userForm, setUserForm] = useState({
@@ -310,22 +312,36 @@ export default function CandidateProfilePage() {
   }, [resendTimer]);
 
   useEffect(() => {
-    // Check if opened with ?view=recruiter
+    // Check if opened with ?view=recruiter or ?view=resume
     const checkViewParam = () => {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         if (params.get('view') === 'recruiter') {
-          setIsResumePreviewOpen(true);
+          setIsRecruiterDrawerOpen(true);
+          setIsResumeModalOpen(false);
+        } else if (params.get('view') === 'resume') {
+          setIsResumeModalOpen(true);
+          setIsRecruiterDrawerOpen(false);
         }
       }
     };
     checkViewParam();
 
-    const handleOpenRecruiterView = () => setIsResumePreviewOpen(true);
+    const handleOpenRecruiterView = () => {
+      setIsRecruiterDrawerOpen(true);
+      setIsResumeModalOpen(false);
+    };
+    const handleOpenResumeView = () => {
+      setIsResumeModalOpen(true);
+      setIsRecruiterDrawerOpen(false);
+    };
+
     window.addEventListener('open-recruiter-view', handleOpenRecruiterView);
+    window.addEventListener('open-resume-view', handleOpenResumeView);
     window.addEventListener('popstate', checkViewParam);
     return () => {
       window.removeEventListener('open-recruiter-view', handleOpenRecruiterView);
+      window.removeEventListener('open-resume-view', handleOpenResumeView);
       window.removeEventListener('popstate', checkViewParam);
     };
   }, []);
@@ -874,17 +890,39 @@ export default function CandidateProfilePage() {
             <p className="text-xs theme-muted">CamzyJobs candidate portal with multiple resume management & recruiter search badges</p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <span className={`px-3 py-1.5 rounded-full text-xs font-black border ${
               score >= 80 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
             }`}>
               Profile Completeness: {score}%
             </span>
 
+            {/* Recruiter View (Slide-over drawer) Button */}
+            <button
+              type="button"
+              onClick={() => setIsRecruiterDrawerOpen(true)}
+              className="px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
+              title="See exactly how recruiters view your profile in candidate search (Slide Drawer)"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Recruiter View</span>
+            </button>
+
+            {/* Resume (By Camzy) Button */}
+            <button
+              type="button"
+              onClick={() => setIsResumeModalOpen(true)}
+              className="px-3.5 py-2.5 rounded-xl border theme-border font-extrabold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-all cursor-pointer"
+              title="View and download standardized Camzy Resume PDF format"
+            >
+              <FileText className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Resume (By Camzy)</span>
+            </button>
+
             <button
               onClick={() => handleSaveAll()}
               disabled={isSaving}
-              className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-lg transition-all cursor-pointer disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-2 shadow-lg transition-all cursor-pointer disabled:opacity-50"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save All Changes
@@ -1227,14 +1265,23 @@ export default function CandidateProfilePage() {
               </h2>
               <p className="text-xs theme-muted mt-0.5">Uploaded directly to backend server storage (Ready for S3)</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => setIsResumePreviewOpen(true)}
+                onClick={() => setIsRecruiterDrawerOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                title="See live slide-out profile drawer as seen by recruiters"
+              >
+                <Eye className="w-3.5 h-3.5" /> Recruiter View
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsResumeModalOpen(true)}
                 className="px-3.5 py-2 rounded-xl border theme-border font-extrabold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-all cursor-pointer"
                 title="View formatted profile as a resume"
               >
-                <Eye className="w-3.5 h-3.5 text-indigo-500" /> View Profile Resume
+                <FileText className="w-3.5 h-3.5 text-indigo-500" /> Resume (By Camzy)
               </button>
 
               <button
@@ -1263,18 +1310,27 @@ export default function CandidateProfilePage() {
                   <div>
                     <h4 className="text-sm font-black theme-text">Don't have an uploaded resume file?</h4>
                     <p className="text-xs theme-muted mt-0.5 max-w-xl leading-relaxed">
-                      You can instantly view and download your complete candidate profile formatted as a professional executive resume.
+                      You can instantly view your profile in the recruiter slide-out view or download your standardized executive resume.
                     </p>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsResumePreviewOpen(true)}
-                  className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/25 transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
-                >
-                  <Eye className="w-4 h-4" /> View Profile Resume & Download
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsRecruiterDrawerOpen(true)}
+                    className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
+                  >
+                    <Eye className="w-4 h-4" /> Recruiter View
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsResumeModalOpen(true)}
+                    className="px-4 py-2.5 rounded-xl border theme-border font-black text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4 text-indigo-500" /> Resume (By Camzy)
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -1298,13 +1354,23 @@ export default function CandidateProfilePage() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsResumePreviewOpen(true)}
-                  className="px-3.5 py-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <Eye className="w-3.5 h-3.5 text-indigo-500" /> View & Download
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsRecruiterDrawerOpen(true)}
+                    className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <Eye className="w-3.5 h-3.5" /> Recruiter View
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsResumeModalOpen(true)}
+                    className="px-3 py-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-indigo-500" /> Resume (By Camzy)
+                  </button>
+                </div>
               </div>
             {resumesList.map((res) => {
               const fileUrl = resolveResumeUrl(res.resumeUrl || (res as any).url);
@@ -2680,12 +2746,38 @@ export default function CandidateProfilePage() {
           </div>
         )}
 
-        {/* Profile Formatted Resume Preview & Download Modal */}
-        <ProfileResumeModal
-          isOpen={isResumePreviewOpen}
+        {/* Recruiter Perspective Slide-over Drawer (How Recruiters See Profile) */}
+        <CandidateRecruiterDrawer
+          isOpen={isRecruiterDrawerOpen}
           onClose={() => {
-            setIsResumePreviewOpen(false);
+            setIsRecruiterDrawerOpen(false);
             if (typeof window !== 'undefined' && window.location.search.includes('view=recruiter')) {
+              window.history.replaceState(null, '', window.location.pathname);
+            }
+          }}
+          onOpenResumePreview={() => {
+            setIsRecruiterDrawerOpen(false);
+            setIsResumeModalOpen(true);
+          }}
+          candidate={{
+            ...profile,
+            user: userForm,
+            experience: experienceList,
+            education: educationList,
+            certifications: certificationList,
+            projects: projectList,
+            socialLinks,
+            languages: languagesList,
+            resumes: resumesList,
+          } as any}
+        />
+
+        {/* Profile Formatted Resume (By Camzy) Print & Download Modal */}
+        <ProfileResumeModal
+          isOpen={isResumeModalOpen}
+          onClose={() => {
+            setIsResumeModalOpen(false);
+            if (typeof window !== 'undefined' && window.location.search.includes('view=resume')) {
               window.history.replaceState(null, '', window.location.pathname);
             }
           }}
@@ -2698,6 +2790,7 @@ export default function CandidateProfilePage() {
             projects: projectList,
             socialLinks,
             languages: languagesList,
+            resumes: resumesList,
           } as any}
         />
       </div>

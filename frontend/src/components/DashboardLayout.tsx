@@ -461,8 +461,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
   } else if (role === 'CANDIDATE') {
     navItems = [
       { label: 'Resume & Profile', href: '/candidate/profile', icon: User },
-      { label: 'Recruiter View', href: '/candidate/profile?view=recruiter', icon: Eye, badge: 'Download' },
-      { label: 'My Applications', href: '/candidate/applications', icon: FileText, badge: 'Live' },
+      { label: 'Recruiter View', href: '/candidate/profile?view=recruiter', icon: Eye, badge: 'Drawer' },
+      { label: 'Resume (By Camzy)', href: '/candidate/profile?view=resume', icon: FileText, badge: 'PDF' },
+      { label: 'My Applications', href: '/candidate/applications', icon: Briefcase, badge: 'Live' },
       { label: 'Saved Jobs', href: '/candidate/saved', icon: Bookmark },
       { label: 'Explore All Jobs', href: '/jobs', icon: Search },
     ];
@@ -547,9 +548,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
             const prevItem = index > 0 ? navItems[index - 1] : null;
             const showSection = item.section && (!prevItem || prevItem.section !== item.section);
             const isRecruiterViewItem = item.href.includes('view=recruiter');
+            const isResumeItem = item.href.includes('view=resume');
             const isActive = isRecruiterViewItem
               ? (typeof window !== 'undefined' && pathname === '/candidate/profile' && window.location.search.includes('view=recruiter'))
-              : (pathname === item.href && (item.href !== '/candidate/profile' || typeof window === 'undefined' || !window.location.search.includes('view=recruiter')));
+              : isResumeItem
+              ? (typeof window !== 'undefined' && pathname === '/candidate/profile' && window.location.search.includes('view=resume'))
+              : (pathname === item.href && (item.href !== '/candidate/profile' || typeof window === 'undefined' || (!window.location.search.includes('view=recruiter') && !window.location.search.includes('view=resume'))));
 
             const isMenuExpanded = expandedMenus[item.href] ?? (pathname.startsWith(item.href));
 
@@ -624,6 +628,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
                       if (item.href.includes('view=recruiter') && typeof window !== 'undefined') {
                         window.dispatchEvent(new CustomEvent('open-recruiter-view'));
                       }
+                      if (item.href.includes('view=resume') && typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('open-resume-view'));
+                      }
                     }}
                     className={`flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition-all relative ${
                       isActive
@@ -647,7 +654,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
             );
           })}
 
-          {/* Candidate Dedicated Recruiter View Card in Sidebar */}
+          {/* Candidate Dedicated Recruiter View & Resume Card in Sidebar */}
           {role === 'CANDIDATE' && !isSidebarCollapsed && (
             <div className="mt-4 p-3.5 rounded-2xl border theme-border bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent space-y-2.5">
               <div className="flex items-center gap-2">
@@ -655,24 +662,42 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
                   <Eye className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black theme-text">Recruiter View</h4>
-                  <p className="text-[10px] theme-muted font-medium">Downloadable Format</p>
+                  <h4 className="text-xs font-black theme-text">Profile Perspectives</h4>
+                  <p className="text-[10px] theme-muted font-medium">Recruiter View &amp; Resume</p>
                 </div>
               </div>
               <p className="text-[11px] theme-muted leading-relaxed">
-                Preview how recruiters view your profile, then download or print your PDF resume.
+                Check how recruiters see you in candidate search or download your Camzy formatted resume.
               </p>
-              <Link
-                href="/candidate/profile?view=recruiter"
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('open-recruiter-view'));
-                  }
-                }}
-                className="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" /> View & Download
-              </Link>
+              <div className="grid grid-cols-2 gap-1.5 pt-1">
+                <Link
+                  href="/candidate/profile?view=recruiter"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('open-recruiter-view'));
+                    }
+                  }}
+                  className="py-2 px-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-[10px] text-center shadow-md transition-all flex items-center justify-center gap-1 cursor-pointer"
+                  title="See live slide-over profile drawer as seen by recruiters"
+                >
+                  <Eye className="w-3 h-3" />
+                  <span>Recruiter View</span>
+                </Link>
+
+                <Link
+                  href="/candidate/profile?view=resume"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('open-resume-view'));
+                    }
+                  }}
+                  className="py-2 px-2 rounded-xl border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 font-extrabold text-[10px] text-center transition-all flex items-center justify-center gap-1 cursor-pointer"
+                  title="View and download standardized Camzy CV"
+                >
+                  <FileText className="w-3 h-3 text-indigo-500" />
+                  <span>Resume (Camzy)</span>
+                </Link>
+              </div>
             </div>
           )}
         </div>
