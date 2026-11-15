@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Search, Building2, MapPin, Users, Briefcase, ExternalLink, ShieldCheck, Sparkles, Filter, Loader2 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { resolveMediaUrl } from '../../utils/media';
 
 interface CompanyItem {
   id: string;
@@ -139,7 +140,7 @@ export default function CompaniesDirectoryPage() {
                   <div className="flex items-center space-x-3.5">
                     {comp.logoUrl ? (
                       <img
-                        src={comp.logoUrl}
+                        src={resolveMediaUrl(comp.logoUrl)}
                         alt={comp.name}
                         className="w-12 h-12 rounded-xl object-cover border theme-border shadow-sm flex-shrink-0"
                       />

@@ -5,8 +5,9 @@ import { DashboardLayout } from '../../../components/DashboardLayout';
 import { useTheme } from '../../../context/ThemeContext';
 import { 
   Building2, Lock, Save, Globe, FileText, Upload, CheckCircle2, 
-  AlertCircle, Loader2, Sparkles, ShieldCheck, Briefcase, Info, ExternalLink 
+  AlertCircle, Loader2, Sparkles, ShieldCheck, Briefcase, Info, ExternalLink, Trash2 
 } from 'lucide-react';
+import { resolveMediaUrl } from '../../../utils/media';
 
 interface CompanyProfileData {
   id: string;
@@ -40,20 +41,49 @@ export default function EmployerCompanyProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const effectiveTenantId = user?.tenantId || '5c88e4d2-4e38-4e15-817b-a19fe3090e8c';
+  // Helper to determine the valid tenant ID
+  const resolveTenantId = async (): Promise<string | null> => {
+    if (company.id) return company.id;
+    if (user?.tenantId) return user.tenantId;
+    try {
+      const allTenants = await sdk.request<CompanyProfileData[]>('/tenants');
+      if (allTenants && allTenants.length > 0 && allTenants[0].id) {
+        return allTenants[0].id;
+      }
+    } catch {
+      // fallback
+    }
+    return null;
+  };
 
   useEffect(() => {
+    let isMounted = true;
     async function loadTenantProfile() {
       setIsLoading(true);
       setErrorMessage(null);
       try {
-        const tenant = await sdk.request<CompanyProfileData>(`/tenants/${effectiveTenantId}`);
-        if (tenant) {
+        let targetId = user?.tenantId;
+        if (!targetId) {
+          const allTenants = await sdk.request<CompanyProfileData[]>('/tenants').catch(() => []);
+          if (allTenants && allTenants.length > 0 && allTenants[0].id) {
+            targetId = allTenants[0].id;
+          }
+        }
+
+        if (!targetId) {
+          if (isMounted) setIsLoading(false);
+          return;
+        }
+
+        const tenant = await sdk.request<CompanyProfileData>(`/tenants/${targetId}`);
+        if (tenant && isMounted) {
+          setImgError(false);
           setCompany({
-            id: tenant.id || effectiveTenantId,
+            id: tenant.id || targetId,
             name: tenant.name || 'Company Name',
             slug: tenant.slug || '',
             type: tenant.type || 'COMPANY',
@@ -68,14 +98,15 @@ export default function EmployerCompanyProfilePage() {
       } catch (err: any) {
         console.warn('Could not fetch tenant profile from backend, using current state:', err);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     }
 
-    if (effectiveTenantId) {
-      loadTenantProfile();
-    }
-  }, [sdk, effectiveTenantId]);
+    loadTenantProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, [sdk, user?.tenantId]);
 
   const handleLogoUpload = async (file: File) => {
     if (!file) return;
@@ -85,15 +116,25 @@ export default function EmployerCompanyProfilePage() {
       return;
     }
 
+    // 1. Instant local optimistic preview so the user IMMEDIATELY sees their chosen image!
+    const objectUrl = URL.createObjectURL(file);
+    setImgError(false);
+    setCompany((prev) => ({ ...prev, logoUrl: objectUrl }));
+
     setIsUploadingLogo(true);
     setErrorMessage(null);
 
     try {
-      const res = await sdk.uploadCompanyLogo(effectiveTenantId, file);
+      const targetId = await resolveTenantId();
+      if (!targetId) {
+        throw new Error('Unable to find an active company profile to attach this logo. Please reload.');
+      }
+
+      const res = await sdk.uploadCompanyLogo(targetId, file);
       const newLogoUrl = res.url || res.fullUrl;
-      setCompany((prev) => ({ ...prev, logoUrl: newLogoUrl }));
-      setSuccessMessage('Company logo uploaded successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
+      setCompany((prev) => ({ ...prev, id: targetId, logoUrl: newLogoUrl }));
+      setSuccessMessage('Company logo uploaded and updated successfully!');
+      setTimeout(() => setSuccessMessage(null), 3500);
     } catch (err: any) {
       console.error('Logo upload failed:', err);
       setErrorMessage(err.message || 'Failed to upload company logo image.');
@@ -109,6 +150,11 @@ export default function EmployerCompanyProfilePage() {
     setSuccessMessage(null);
 
     try {
+      const targetId = await resolveTenantId();
+      if (!targetId) {
+        throw new Error('No company tenant ID found to update.');
+      }
+
       // STRICT CONSTRAINT: Company Name is NEVER sent or editable
       const payload = {
         type: company.type,
@@ -116,10 +162,11 @@ export default function EmployerCompanyProfilePage() {
         taxId: company.taxId,
         industry: company.industry,
         description: company.description,
-        logoUrl: company.logoUrl,
+        // Do not save temporary blob URLs to database
+        logoUrl: company.logoUrl?.startsWith('blob:') ? undefined : company.logoUrl,
       };
 
-      await sdk.request(`/tenants/${effectiveTenantId}`, {
+      await sdk.request(`/tenants/${targetId}`, {
         method: 'PUT',
         body: JSON.stringify(payload),
       });
@@ -200,20 +247,34 @@ export default function EmployerCompanyProfilePage() {
                 
                 {/* Logo with Building2 Fallback */}
                 <div className="relative group flex-shrink-0">
-                  <div className="w-24 h-24 rounded-2xl border-2 border-indigo-500/30 bg-slate-100 dark:bg-slate-800/90 flex items-center justify-center overflow-hidden shadow-md">
-                    {company.logoUrl ? (
+                  <label
+                    htmlFor="company-logo-upload"
+                    className="w-24 h-24 rounded-2xl border-2 border-indigo-500/30 hover:border-indigo-500 bg-slate-100 dark:bg-slate-800/90 flex items-center justify-center overflow-hidden shadow-md cursor-pointer transition-all relative block"
+                    title="Click to change logo"
+                  >
+                    {company.logoUrl && !imgError ? (
                       <img
-                        src={company.logoUrl.startsWith('http') ? company.logoUrl : `http://localhost:4000${company.logoUrl}`}
+                        key={company.logoUrl}
+                        src={resolveMediaUrl(company.logoUrl)}
                         alt={company.name}
                         className="w-full h-full object-cover"
+                        onError={() => {
+                          console.warn('Failed to load logo from URL, fallback to Building2:', company.logoUrl);
+                          setImgError(true);
+                        }}
                       />
                     ) : (
                       <Building2 className="w-12 h-12 text-indigo-500" />
                     )}
-                  </div>
+
+                    {/* Subtle hover overlay */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
+                      <Upload className="w-4 h-4" />
+                    </div>
+                  </label>
 
                   {isUploadingLogo && (
-                    <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center pointer-events-none">
                       <Loader2 className="w-6 h-6 text-white animate-spin" />
                     </div>
                   )}
@@ -248,6 +309,30 @@ export default function EmployerCompanyProfilePage() {
                       <Upload className="w-3.5 h-3.5" />
                       <span>{company.logoUrl ? 'Change Company Logo' : 'Upload Company Logo'}</span>
                     </label>
+
+                    {company.logoUrl && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const targetId = await resolveTenantId();
+                          setImgError(false);
+                          setCompany((prev) => ({ ...prev, logoUrl: '' }));
+                          if (targetId) {
+                            await sdk.request(`/tenants/${targetId}`, {
+                              method: 'PUT',
+                              body: JSON.stringify({ logoUrl: '' }),
+                            }).catch(() => {});
+                          }
+                          setSuccessMessage('Company logo removed.');
+                          setTimeout(() => setSuccessMessage(null), 3000);
+                        }}
+                        className="px-3 py-2 rounded-xl border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Remove
+                      </button>
+                    )}
+
                     <span className="text-[11px] theme-muted font-medium">PNG, JPG, WEBP or SVG (Max 5MB)</span>
                   </div>
                 </div>

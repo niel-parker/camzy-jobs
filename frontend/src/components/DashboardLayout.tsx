@@ -12,6 +12,7 @@ import {
   Mail, Phone, CheckCircle2, AlertCircle, Loader2, Headphones
 } from 'lucide-react';
 import { SuperAdminThemeCustomizer } from './SuperAdminThemeCustomizer';
+import { resolveMediaUrl } from '../utils/media';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -709,7 +710,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
             <div className="w-9 h-9 rounded-full overflow-hidden bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 font-extrabold flex items-center justify-center text-xs flex-shrink-0 border border-indigo-200 dark:border-indigo-800">
               {user?.avatarUrl ? (
                 <img
-                  src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:4000${user.avatarUrl}`}
+                  src={resolveMediaUrl(user.avatarUrl)}
                   alt={user?.firstName || 'User'}
                   className="w-full h-full object-cover"
                 />
@@ -788,7 +789,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
                   <div className="relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 font-extrabold text-xs border border-indigo-200 dark:border-indigo-800">
                     {user.avatarUrl ? (
                       <img
-                        src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:4000${user.avatarUrl}`}
+                        src={resolveMediaUrl(user.avatarUrl)}
                         alt={user.firstName}
                         className="w-full h-full object-cover"
                       />
@@ -819,7 +820,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
                       <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 font-bold text-sm border theme-border">
                         {user.avatarUrl ? (
                           <img
-                            src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:4000${user.avatarUrl}`}
+                            src={resolveMediaUrl(user.avatarUrl)}
                             alt={user.firstName}
                             className="w-full h-full object-cover"
                           />

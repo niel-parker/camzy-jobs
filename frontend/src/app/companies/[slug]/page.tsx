@@ -7,6 +7,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { JobCard } from '../../../components/JobCard';
 import { JobListing } from '@job-portal/sdk';
 import { Building2, Globe, ShieldCheck, MapPin, ArrowLeft, Briefcase } from 'lucide-react';
+import { resolveMediaUrl } from '../../../utils/media';
 
 export default function CompanyProfilePage() {
   const { slug } = useParams();
@@ -59,7 +60,7 @@ export default function CompanyProfilePage() {
           <div className="flex items-center gap-5">
             <div className="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-md">
               {company.logoUrl ? (
-                <img src={company.logoUrl} alt={company.name} className="w-full h-full object-cover" />
+                <img src={resolveMediaUrl(company.logoUrl)} alt={company.name} className="w-full h-full object-cover" />
               ) : (
                 <Building2 className="w-10 h-10 text-indigo-500" />
               )}

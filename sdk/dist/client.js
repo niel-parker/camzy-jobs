@@ -5,10 +5,28 @@ class JobPortalSdk {
     baseUrl;
     token = null;
     constructor(baseUrl) {
-        this.baseUrl = baseUrl || (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000/api/v1';
+        let resolved = baseUrl;
+        if (!resolved && typeof window !== 'undefined') {
+            if (window.location.hostname === 'jobs.camzytech.com' || window.location.hostname.endsWith('.camzytech.com')) {
+                resolved = 'https://api.jobs.camzytech.com/api/v1';
+            }
+        }
+        if (!resolved && typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
+            resolved = process.env.NEXT_PUBLIC_API_URL;
+        }
+        // Safety check in browser: If resolved contains localhost:4000 but we are on a remote domain
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            if (!resolved || resolved.includes('localhost:4000')) {
+                resolved = 'https://api.jobs.camzytech.com/api/v1';
+            }
+        }
+        this.baseUrl = resolved || 'http://localhost:4000/api/v1';
         if (typeof window !== 'undefined') {
             this.token = localStorage.getItem('jp_access_token');
         }
+    }
+    getBaseUrl() {
+        return this.baseUrl;
     }
     setToken(token) {
         this.token = token;

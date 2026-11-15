@@ -3,6 +3,7 @@ export declare class JobPortalSdk {
     private baseUrl;
     private token;
     constructor(baseUrl?: string);
+    getBaseUrl(): string;
     setToken(token: string | null): void;
     getToken(): string | null;
     request<T>(endpoint: string, options?: RequestInit): Promise<T>;

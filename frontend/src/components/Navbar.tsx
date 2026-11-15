@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '../context/ThemeContext';
 import { Briefcase, Building2, ShieldCheck, User, LogOut, Menu, X, ChevronDown, Sparkles, LayoutDashboard, Bookmark, FileText, Settings, Users, LogIn, Landmark } from 'lucide-react';
+import { resolveMediaUrl } from '../utils/media';
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
@@ -94,7 +95,7 @@ export const Navbar: React.FC = () => {
                     <div className="relative w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 font-extrabold text-xs border border-indigo-200 dark:border-indigo-800">
                       {user.avatarUrl ? (
                         <img
-                          src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:4000${user.avatarUrl}`}
+                          src={resolveMediaUrl(user.avatarUrl)}
                           alt={user.firstName}
                           className="w-full h-full object-cover"
                         />
@@ -298,7 +299,7 @@ export const Navbar: React.FC = () => {
                     <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 font-bold text-xs">
                       {user.avatarUrl ? (
                         <img
-                          src={user.avatarUrl.startsWith('http') ? user.avatarUrl : `http://localhost:4000${user.avatarUrl}`}
+                          src={resolveMediaUrl(user.avatarUrl)}
                           alt={user.firstName}
                           className="w-full h-full object-cover"
                         />

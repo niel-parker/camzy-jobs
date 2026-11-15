@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { ProfileResumeModal } from '../../../components/ProfileResumeModal';
 import { CandidateRecruiterDrawer } from '../../../components/CandidateRecruiterDrawer';
+import { resolveMediaUrl } from '../../../utils/media';
 
 interface ResumeItem {
   id: string;
@@ -609,7 +610,7 @@ export default function CandidateProfilePage() {
 
     try {
       const uploadRes = await sdk.uploadResume(resumeUploadFile);
-      const fullUrl = uploadRes.fullUrl || `http://localhost:4000${uploadRes.url}`;
+      const fullUrl = resolveMediaUrl(uploadRes.url || uploadRes.fullUrl);
 
       const newRes: ResumeItem = {
         id: `res_${Date.now()}`,
@@ -665,7 +666,7 @@ export default function CandidateProfilePage() {
     setAvatarUploadError(null);
     try {
       const res = await sdk.uploadAvatar(file);
-      const fullUrl = res.fullUrl || `http://localhost:4000${res.url}`;
+      const fullUrl = resolveMediaUrl(res.url || res.fullUrl);
       setUserForm((prev) => ({ ...prev, avatarUrl: fullUrl }));
       if (setUser && user) {
         setUser({ ...user, avatarUrl: fullUrl });
