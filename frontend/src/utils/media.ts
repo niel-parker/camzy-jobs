@@ -48,3 +48,4 @@ export function resolveMediaUrl(url?: string | null): string {
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `${apiHost}${cleanPath}`;
 }
+
