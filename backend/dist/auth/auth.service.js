@@ -25,9 +25,10 @@ const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-s
 const subscription_plan_entity_1 = require("../subscriptions/entities/subscription-plan.entity");
 const restricted_domain_entity_1 = require("../admin/entities/restricted-domain.entity");
 const login_activity_entity_1 = require("../admin/entities/login-activity.entity");
+const demo_request_entity_1 = require("../admin/entities/demo-request.entity");
 const mail_service_1 = require("../mail/mail.service");
 let AuthService = AuthService_1 = class AuthService {
-    constructor(userRepo, tenantRepo, candidateRepo, subRepo, planRepo, domainRepo, activityRepo, mailService) {
+    constructor(userRepo, tenantRepo, candidateRepo, subRepo, planRepo, domainRepo, activityRepo, demoRepo, mailService) {
         this.userRepo = userRepo;
         this.tenantRepo = tenantRepo;
         this.candidateRepo = candidateRepo;
@@ -35,6 +36,7 @@ let AuthService = AuthService_1 = class AuthService {
         this.planRepo = planRepo;
         this.domainRepo = domainRepo;
         this.activityRepo = activityRepo;
+        this.demoRepo = demoRepo;
         this.mailService = mailService;
         this.logger = new common_1.Logger(AuthService_1.name);
         this.otpStore = new Map();
@@ -327,13 +329,29 @@ let AuthService = AuthService_1 = class AuthService {
         };
     }
     async requestDemo(body) {
-        if (!body?.email || !body?.name) {
-            throw new common_1.BadRequestException('Contact name and corporate work email are required.');
+        if (!body?.name?.trim()) {
+            throw new common_1.BadRequestException('Contact person name is required.');
         }
-        this.logger.log(`[Demo Request] Recruiter ${body.name} (${body.email}) requested demo for company "${body.companyName}" (Hires: ${body.hiresCount || 'N/A'}, City: ${body.city || 'N/A'})`);
+        if (!body?.email?.trim() && !body?.phone?.trim()) {
+            throw new common_1.BadRequestException('Please provide an official work email or phone number.');
+        }
+        const email = body.email ? body.email.toLowerCase().trim() : (body.phone ? `callback-${body.phone.replace(/[^0-9]/g, '')}@lead.camzy.internal` : 'unspecified@camzy.internal');
+        const demoReq = this.demoRepo.create({
+            name: body.name.trim(),
+            email,
+            phone: body.phone?.trim() || null,
+            companyName: body.companyName?.trim() || 'Undisclosed Enterprise',
+            hiresCount: body.hiresCount || '6 - 20 hires / month',
+            city: body.city?.trim() || null,
+            source: body.source || 'REQUEST_A_DEMO',
+            status: demo_request_entity_1.DemoRequestStatus.PENDING,
+        });
+        const saved = await this.demoRepo.save(demoReq);
+        this.logger.log(`[Demo Request #${saved.id}] Lead: ${saved.name} (${saved.email}) for company "${saved.companyName}" (Hires: ${saved.hiresCount || 'N/A'}, City: ${saved.city || 'N/A'}, Source: ${saved.source})`);
         return {
             success: true,
             message: 'Thank you for your interest! A hiring solutions expert will connect with you within 2 business hours.',
+            demoRequest: saved,
         };
     }
     async registerCandidate(body) {
@@ -584,7 +602,9 @@ exports.AuthService = AuthService = AuthService_1 = __decorate([
     __param(4, (0, typeorm_1.InjectRepository)(subscription_plan_entity_1.SubscriptionPlan)),
     __param(5, (0, typeorm_1.InjectRepository)(restricted_domain_entity_1.RestrictedDomain)),
     __param(6, (0, typeorm_1.InjectRepository)(login_activity_entity_1.LoginActivity)),
+    __param(7, (0, typeorm_1.InjectRepository)(demo_request_entity_1.DemoRequest)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

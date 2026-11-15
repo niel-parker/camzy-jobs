@@ -6,6 +6,7 @@ import { TenantSubscription } from '../subscriptions/entities/tenant-subscriptio
 import { SubscriptionPlan } from '../subscriptions/entities/subscription-plan.entity';
 import { RestrictedDomain } from '../admin/entities/restricted-domain.entity';
 import { LoginActivity, LoginStatus, LoginMethod } from '../admin/entities/login-activity.entity';
+import { DemoRequest } from '../admin/entities/demo-request.entity';
 import { MailService } from '../mail/mail.service';
 export interface UserDto {
     id: string;
@@ -32,10 +33,11 @@ export declare class AuthService {
     private readonly planRepo;
     private readonly domainRepo;
     private readonly activityRepo;
+    private readonly demoRepo;
     private readonly mailService;
     private readonly logger;
     private otpStore;
-    constructor(userRepo: Repository<User>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, domainRepo: Repository<RestrictedDomain>, activityRepo: Repository<LoginActivity>, mailService: MailService);
+    constructor(userRepo: Repository<User>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, domainRepo: Repository<RestrictedDomain>, activityRepo: Repository<LoginActivity>, demoRepo: Repository<DemoRequest>, mailService: MailService);
     private parseUserAgent;
     recordLoginActivity(data: {
         email: string;
@@ -86,14 +88,16 @@ export declare class AuthService {
     }>;
     requestDemo(body: {
         name: string;
-        email: string;
+        email?: string;
         phone?: string;
-        companyName: string;
+        companyName?: string;
         hiresCount?: string;
         city?: string;
+        source?: string;
     }): Promise<{
         success: boolean;
         message: string;
+        demoRequest: DemoRequest;
     }>;
     registerCandidate(body: {
         fullName: string;

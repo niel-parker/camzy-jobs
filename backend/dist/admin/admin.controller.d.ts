@@ -22,6 +22,7 @@ import { LoginActivity } from './entities/login-activity.entity';
 import { GovtJob } from './entities/govt-job.entity';
 import { GovtExamCalendarItem } from './entities/govt-exam-calendar.entity';
 import { GovtCommissionPortal } from './entities/govt-commission-portal.entity';
+import { DemoRequest, DemoRequestStatus } from './entities/demo-request.entity';
 export declare class AdminController {
     private readonly appConfigService;
     private readonly jobRepo;
@@ -47,7 +48,8 @@ export declare class AdminController {
     private readonly govtJobRepo;
     private readonly govtExamCalendarRepo;
     private readonly govtCommissionPortalRepo;
-    constructor(appConfigService: AppConfigService, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, txnRepo: Repository<BillingTransaction>, userRepo: Repository<User>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>, domainRepo: Repository<RestrictedDomain>, loginActivityRepo: Repository<LoginActivity>, govtJobRepo: Repository<GovtJob>, govtExamCalendarRepo: Repository<GovtExamCalendarItem>, govtCommissionPortalRepo: Repository<GovtCommissionPortal>);
+    private readonly demoRequestRepo;
+    constructor(appConfigService: AppConfigService, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, txnRepo: Repository<BillingTransaction>, userRepo: Repository<User>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>, domainRepo: Repository<RestrictedDomain>, loginActivityRepo: Repository<LoginActivity>, govtJobRepo: Repository<GovtJob>, govtExamCalendarRepo: Repository<GovtExamCalendarItem>, govtCommissionPortalRepo: Repository<GovtCommissionPortal>, demoRequestRepo: Repository<DemoRequest>);
     getDashboardMetrics(): Promise<{
         totalJobs: number;
         totalCompanies: number;
@@ -59,6 +61,8 @@ export declare class AdminController {
         totalTeamSeats: number;
         totalRevenue: number;
         monthlyRevenue: number;
+        totalDemoRequests: number;
+        pendingDemoRequests: number;
     }>;
     getTransactions(): Promise<BillingTransaction[]>;
     getAllTenants(): Promise<{
@@ -322,6 +326,33 @@ export declare class AdminController {
     }>;
     clearLoginActivities(days?: string): Promise<{
         message: string;
+    }>;
+    getDemoRequests(page?: string, limit?: string, status?: string, search?: string): Promise<{
+        data: DemoRequest[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }>;
+    getDemoRequestStats(): Promise<{
+        total: number;
+        pending: number;
+        contacted: number;
+        scheduled: number;
+        completed: number;
+        disqualified: number;
+    }>;
+    updateDemoRequestStatus(id: string, body: {
+        status: DemoRequestStatus;
+        notes?: string;
+    }): Promise<DemoRequest>;
+    deleteDemoRequest(id: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    seedDemoRequests(): Promise<{
+        message: string;
+        count: number;
     }>;
     private getOfficialDefaultGovtJobs;
     getGovtJobs(category?: string, state?: string, sector?: string, search?: string, status?: string): Promise<GovtJob[]>;

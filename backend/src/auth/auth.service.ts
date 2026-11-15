@@ -9,6 +9,7 @@ import { TenantSubscription, SubscriptionStatus } from '../subscriptions/entitie
 import { SubscriptionPlan, PlanCode } from '../subscriptions/entities/subscription-plan.entity';
 import { RestrictedDomain } from '../admin/entities/restricted-domain.entity';
 import { LoginActivity, LoginStatus, LoginMethod } from '../admin/entities/login-activity.entity';
+import { DemoRequest, DemoRequestStatus } from '../admin/entities/demo-request.entity';
 import { MailService } from '../mail/mail.service';
 
 export interface UserDto {
@@ -49,6 +50,8 @@ export class AuthService {
     private readonly domainRepo: Repository<RestrictedDomain>,
     @InjectRepository(LoginActivity)
     private readonly activityRepo: Repository<LoginActivity>,
+    @InjectRepository(DemoRequest)
+    private readonly demoRepo: Repository<DemoRequest>,
     private readonly mailService: MailService,
   ) {}
 
@@ -399,14 +402,34 @@ export class AuthService {
     };
   }
 
-  async requestDemo(body: { name: string; email: string; phone?: string; companyName: string; hiresCount?: string; city?: string }) {
-    if (!body?.email || !body?.name) {
-      throw new BadRequestException('Contact name and corporate work email are required.');
+  async requestDemo(body: { name: string; email?: string; phone?: string; companyName?: string; hiresCount?: string; city?: string; source?: string }) {
+    if (!body?.name?.trim()) {
+      throw new BadRequestException('Contact person name is required.');
     }
-    this.logger.log(`[Demo Request] Recruiter ${body.name} (${body.email}) requested demo for company "${body.companyName}" (Hires: ${body.hiresCount || 'N/A'}, City: ${body.city || 'N/A'})`);
+    if (!body?.email?.trim() && !body?.phone?.trim()) {
+      throw new BadRequestException('Please provide an official work email or phone number.');
+    }
+
+    const email = body.email ? body.email.toLowerCase().trim() : (body.phone ? `callback-${body.phone.replace(/[^0-9]/g, '')}@lead.camzy.internal` : 'unspecified@camzy.internal');
+    
+    const demoReq = this.demoRepo.create({
+      name: body.name.trim(),
+      email,
+      phone: body.phone?.trim() || null,
+      companyName: body.companyName?.trim() || 'Undisclosed Enterprise',
+      hiresCount: body.hiresCount || '6 - 20 hires / month',
+      city: body.city?.trim() || null,
+      source: body.source || 'REQUEST_A_DEMO',
+      status: DemoRequestStatus.PENDING,
+    });
+
+    const saved = await this.demoRepo.save(demoReq);
+    this.logger.log(`[Demo Request #${saved.id}] Lead: ${saved.name} (${saved.email}) for company "${saved.companyName}" (Hires: ${saved.hiresCount || 'N/A'}, City: ${saved.city || 'N/A'}, Source: ${saved.source})`);
+
     return {
       success: true,
       message: 'Thank you for your interest! A hiring solutions expert will connect with you within 2 business hours.',
+      demoRequest: saved,
     };
   }
 

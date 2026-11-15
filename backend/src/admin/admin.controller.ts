@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post, Put, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -27,6 +27,7 @@ import { LoginActivity, LoginStatus, LoginMethod } from './entities/login-activi
 import { GovtJob, GovtJobCategory } from './entities/govt-job.entity';
 import { GovtExamCalendarItem } from './entities/govt-exam-calendar.entity';
 import { GovtCommissionPortal } from './entities/govt-commission-portal.entity';
+import { DemoRequest, DemoRequestStatus } from './entities/demo-request.entity';
 
 @ApiTags('Super Admin Governance')
 @Controller('api/v1/admin')
@@ -56,6 +57,7 @@ export class AdminController {
     @InjectRepository(GovtJob) private readonly govtJobRepo: Repository<GovtJob>,
     @InjectRepository(GovtExamCalendarItem) private readonly govtExamCalendarRepo: Repository<GovtExamCalendarItem>,
     @InjectRepository(GovtCommissionPortal) private readonly govtCommissionPortalRepo: Repository<GovtCommissionPortal>,
+    @InjectRepository(DemoRequest) private readonly demoRequestRepo: Repository<DemoRequest>,
   ) {}
 
   @Get('metrics')
@@ -67,6 +69,8 @@ export class AdminController {
     const totalCandidates = await this.candidateRepo.count();
     const totalApplications = await this.appRepo.count();
     const activeSubscriptions = await this.subRepo.count({ where: { status: SubscriptionStatus.ACTIVE } });
+    const totalDemoRequests = await this.demoRequestRepo.count();
+    const pendingDemoRequests = await this.demoRequestRepo.count({ where: { status: DemoRequestStatus.PENDING } });
 
     // Calculate total resume downloads consumed platform-wide
     const allSubs = await this.subRepo.find();
@@ -97,6 +101,8 @@ export class AdminController {
       totalTeamSeats,
       totalRevenue: totalRevenue || activeSubscriptions * 199,
       monthlyRevenue: activeSubscriptions * 199,
+      totalDemoRequests,
+      pendingDemoRequests,
     };
   }
 
@@ -2036,6 +2042,186 @@ export class AdminController {
         .execute();
     }
     return { message: 'Pruned historical login activities, retaining recent 50 records.' };
+  }
+
+  // ==========================================
+  // DEMO REQUESTS & RECRUITER LEADS
+  // ==========================================
+
+  @Get('demo-requests')
+  @ApiOperation({ summary: 'Super Admin: List employer demo requests and hiring leads' })
+  async getDemoRequests(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+  ) {
+    const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit || '25', 10) || 25));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Check if table has records, if completely empty, auto-seed realistic demo leads
+    const currentCount = await this.demoRequestRepo.count();
+    if (currentCount === 0) {
+      await this.seedDemoRequests();
+    }
+
+    const qb = this.demoRequestRepo.createQueryBuilder('demo');
+
+    if (status && status !== 'ALL') {
+      qb.andWhere('demo.status = :status', { status });
+    }
+
+    if (search && search.trim()) {
+      const q = `%${search.trim().toLowerCase()}%`;
+      qb.andWhere(
+        '(LOWER(demo.name) LIKE :q OR LOWER(demo.email) LIKE :q OR LOWER(demo.companyName) LIKE :q OR LOWER(demo.city) LIKE :q OR demo.phone LIKE :q)',
+        { q },
+      );
+    }
+
+    qb.orderBy('demo.createdAt', 'DESC')
+      .skip(skip)
+      .take(limitNum);
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return {
+      data,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+    };
+  }
+
+  @Get('demo-requests/stats')
+  @ApiOperation({ summary: 'Super Admin: Get overview stats for demo requests' })
+  async getDemoRequestStats() {
+    const total = await this.demoRequestRepo.count();
+    const pending = await this.demoRequestRepo.count({ where: { status: DemoRequestStatus.PENDING } });
+    const contacted = await this.demoRequestRepo.count({ where: { status: DemoRequestStatus.CONTACTED } });
+    const scheduled = await this.demoRequestRepo.count({ where: { status: DemoRequestStatus.SCHEDULED } });
+    const completed = await this.demoRequestRepo.count({ where: { status: DemoRequestStatus.COMPLETED } });
+    const disqualified = await this.demoRequestRepo.count({ where: { status: DemoRequestStatus.DISQUALIFIED } });
+
+    return {
+      total,
+      pending,
+      contacted,
+      scheduled,
+      completed,
+      disqualified,
+    };
+  }
+
+  @Patch('demo-requests/:id/status')
+  @ApiOperation({ summary: 'Super Admin: Update demo request status and follow-up notes' })
+  async updateDemoRequestStatus(
+    @Param('id') id: string,
+    @Body() body: { status: DemoRequestStatus; notes?: string },
+  ) {
+    const demoReq = await this.demoRequestRepo.findOne({ where: { id } });
+    if (!demoReq) {
+      throw new NotFoundException(`Demo request with ID ${id} not found`);
+    }
+
+    if (body.status) {
+      demoReq.status = body.status;
+    }
+    if (typeof body.notes === 'string') {
+      demoReq.notes = body.notes;
+    }
+
+    return await this.demoRequestRepo.save(demoReq);
+  }
+
+  @Delete('demo-requests/:id')
+  @ApiOperation({ summary: 'Super Admin: Delete a demo request' })
+  async deleteDemoRequest(@Param('id') id: string) {
+    const res = await this.demoRequestRepo.delete(id);
+    if (!res.affected) {
+      throw new NotFoundException(`Demo request with ID ${id} not found`);
+    }
+    return { success: true, message: 'Demo request removed successfully' };
+  }
+
+  @Post('demo-requests/seed-demo')
+  @ApiOperation({ summary: 'Super Admin: Seed sample enterprise demo requests' })
+  async seedDemoRequests() {
+    const sampleLeads: Partial<DemoRequest>[] = [
+      {
+        name: 'Rajesh Sharma',
+        email: 'rajesh.sharma@tcs-enterprise.com',
+        phone: '+91 98201 12345',
+        companyName: 'Tata Consultancy Services',
+        hiresCount: '50+ hires / month (Enterprise & Bulk)',
+        city: 'Mumbai, Maharashtra',
+        source: 'REQUEST_A_DEMO',
+        status: DemoRequestStatus.PENDING,
+        notes: 'Interested in AI-powered candidate search & bulk resume exports for BFSI hiring drive.',
+        createdAt: new Date(Date.now() - 35 * 60 * 1000), // 35 mins ago
+      },
+      {
+        name: 'Priya Sundaram',
+        email: 'priya.s@swiggy.in',
+        phone: '+91 98450 67890',
+        companyName: 'Swiggy Limited',
+        hiresCount: '21 - 50 hires / month',
+        city: 'Bengaluru, Karnataka',
+        source: 'REQUEST_A_DEMO',
+        status: DemoRequestStatus.SCHEDULED,
+        notes: 'Demo scheduled with Sales Director for Tuesday 3:00 PM IST via Google Meet.',
+        createdAt: new Date(Date.now() - 3 * 3600 * 1000), // 3 hrs ago
+      },
+      {
+        name: 'Amit Patel',
+        email: 'amit.patel@zepto.co.in',
+        phone: '+91 97123 45678',
+        companyName: 'Zepto Quick Commerce',
+        hiresCount: '50+ hires / month (Enterprise & Bulk)',
+        city: 'Mumbai, Maharashtra',
+        source: 'TALK_TO_US',
+        status: DemoRequestStatus.CONTACTED,
+        notes: 'Spoke over phone. Sent enterprise pricing brochure. Follow-up required tomorrow.',
+        createdAt: new Date(Date.now() - 8 * 3600 * 1000), // 8 hrs ago
+      },
+      {
+        name: 'Ananya Deshmukh',
+        email: 'ananya.d@fintech-pay.io',
+        phone: '+91 99887 76655',
+        companyName: 'Razorpay / Payments FinTech',
+        hiresCount: '6 - 20 hires / month',
+        city: 'Bengaluru, Karnataka',
+        source: 'REQUEST_A_DEMO',
+        status: DemoRequestStatus.COMPLETED,
+        notes: 'Product walkthrough completed. Client initiated Enterprise Plan subscription trial.',
+        createdAt: new Date(Date.now() - 24 * 3600 * 1000), // 1 day ago
+      },
+      {
+        name: 'Vikram Sengupta',
+        email: 'vikram@wipro-digital.com',
+        phone: '+91 94330 99887',
+        companyName: 'Wipro Digital Labs',
+        hiresCount: '21 - 50 hires / month',
+        city: 'Hyderabad, Telangana',
+        source: 'REQUEST_A_DEMO',
+        status: DemoRequestStatus.PENDING,
+        notes: 'Looking for verified mobile & email candidate profiles for cloud migrations.',
+        createdAt: new Date(Date.now() - 48 * 3600 * 1000), // 2 days ago
+      },
+    ];
+
+    let count = 0;
+    for (const lead of sampleLeads) {
+      await this.demoRequestRepo.save(this.demoRequestRepo.create(lead));
+      count++;
+    }
+
+    return {
+      message: `Successfully seeded ${count} enterprise demo requests`,
+      count,
+    };
   }
 
   // =========================================================================

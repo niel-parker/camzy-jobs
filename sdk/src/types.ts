@@ -599,4 +599,38 @@ export interface PaginatedLoginActivities {
   totalPages: number;
 }
 
+export type DemoRequestStatus = 'PENDING' | 'CONTACTED' | 'SCHEDULED' | 'COMPLETED' | 'DISQUALIFIED';
+
+export interface DemoRequestItem {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  companyName: string;
+  hiresCount?: string | null;
+  city?: string | null;
+  source: string;
+  status: DemoRequestStatus;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DemoRequestStats {
+  total: number;
+  pending: number;
+  contacted: number;
+  scheduled: number;
+  completed: number;
+  disqualified: number;
+}
+
+export interface PaginatedDemoRequests {
+  data: DemoRequestItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 

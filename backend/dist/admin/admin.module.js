@@ -33,6 +33,7 @@ const login_activity_entity_1 = require("./entities/login-activity.entity");
 const govt_job_entity_1 = require("./entities/govt-job.entity");
 const govt_exam_calendar_entity_1 = require("./entities/govt-exam-calendar.entity");
 const govt_commission_portal_entity_1 = require("./entities/govt-commission-portal.entity");
+const demo_request_entity_1 = require("./entities/demo-request.entity");
 let AdminModule = class AdminModule {
 };
 exports.AdminModule = AdminModule;
@@ -63,6 +64,7 @@ exports.AdminModule = AdminModule = __decorate([
                 govt_job_entity_1.GovtJob,
                 govt_exam_calendar_entity_1.GovtExamCalendarItem,
                 govt_commission_portal_entity_1.GovtCommissionPortal,
+                demo_request_entity_1.DemoRequest,
             ]),
         ],
         controllers: [admin_controller_1.AdminController],

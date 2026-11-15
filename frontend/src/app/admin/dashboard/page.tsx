@@ -7,7 +7,7 @@ import { DashboardLayout } from '../../../components/DashboardLayout';
 import { 
   Building2, IndianRupee, Briefcase, Users, ShieldCheck, ShieldAlert, 
   CheckCircle2, XCircle, TrendingUp, Search, Sparkles, FileText, ArrowRight, 
-  Eye, Download, RefreshCw, Printer, X, CreditCard, Loader2 
+  Eye, Download, RefreshCw, Printer, X, CreditCard, Loader2, Headphones 
 } from 'lucide-react';
 
 interface PendingOnboardingCompany {
@@ -154,6 +154,18 @@ export default function SuperAdminDashboardPage() {
           </div>
 
           <div className="flex items-center space-x-3">
+            <Link
+              href="/admin/demo-requests"
+              className="px-3.5 py-2 rounded-xl bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-bold hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-all flex items-center gap-1.5"
+            >
+              <Headphones className="w-3.5 h-3.5" />
+              Demo Requests
+              {metrics?.pendingDemoRequests ? (
+                <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-black">
+                  {metrics.pendingDemoRequests}
+                </span>
+              ) : null}
+            </Link>
             <button
               onClick={loadAdminData}
               disabled={loading}
@@ -262,6 +274,32 @@ export default function SuperAdminDashboardPage() {
               Multi-Tenant
             </span>
           </div>
+        </div>
+
+        {/* Inbound Demo Requests & Leads Banner */}
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-transparent border border-purple-200 dark:border-purple-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-[#5e17eb] text-white flex items-center justify-center shadow-md">
+              <Headphones className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                Inbound Employer Demo Requests & Leads
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300">
+                  Live Pipeline
+                </span>
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {metrics?.totalDemoRequests ?? 0} total leads captured • {metrics?.pendingDemoRequests ?? 0} pending follow-up
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/demo-requests"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#5e17eb] hover:bg-[#4d0ec5] text-white shadow-sm transition-all"
+          >
+            Review Leads Pipeline <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
 
         {/* Section with Tabs */}

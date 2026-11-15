@@ -1,4 +1,4 @@
-import { AdminUserProfile, AppConfig, AuthResponse, BlogCategoryItem, BlogPostItem, BroadcastRecipientResponse, CmsPageItem, CompanyDirectoryItem, CrossCompanyJobItem, DashboardMetrics, EmailBroadcastItem, ExperienceRangeItem, FaqItemData, GovtJobItem, GovtExamCalendarItemType, GovtCommissionPortalType, JobListing, LocationItem, SeoConfigItem, SkillKeywordItem, SkillSuggestionResponse, SubscriptionPackageItem, SystemTaxonomyItem, ThemeConfig, UploadResumeResponse, User, RestrictedDomainItem, AtsApplicationItem, LoginActivityStats, PaginatedLoginActivities } from './types';
+import { AdminUserProfile, AppConfig, AuthResponse, BlogCategoryItem, BlogPostItem, BroadcastRecipientResponse, CmsPageItem, CompanyDirectoryItem, CrossCompanyJobItem, DashboardMetrics, EmailBroadcastItem, ExperienceRangeItem, FaqItemData, GovtJobItem, GovtExamCalendarItemType, GovtCommissionPortalType, JobListing, LocationItem, SeoConfigItem, SkillKeywordItem, SkillSuggestionResponse, SubscriptionPackageItem, SystemTaxonomyItem, ThemeConfig, UploadResumeResponse, User, RestrictedDomainItem, AtsApplicationItem, LoginActivityStats, PaginatedLoginActivities, DemoRequestItem, DemoRequestStats, DemoRequestStatus, PaginatedDemoRequests } from './types';
 export declare class JobPortalSdk {
     private baseUrl;
     private token;
@@ -306,14 +306,16 @@ export declare class JobPortalSdk {
     }>;
     requestDemo(data: {
         name: string;
-        email: string;
+        email?: string;
         phone?: string;
-        companyName: string;
+        companyName?: string;
         hiresCount?: string;
         city?: string;
+        source?: string;
     }): Promise<{
         success: boolean;
         message: string;
+        demoRequest?: DemoRequestItem;
     }>;
     getAtsApplications(jobId?: string): Promise<AtsApplicationItem[]>;
     updateAtsStage(id: string, stage: string, rating?: number): Promise<AtsApplicationItem>;
@@ -334,5 +336,24 @@ export declare class JobPortalSdk {
     }>;
     clearLoginActivities(olderThanDays?: number): Promise<{
         message: string;
+    }>;
+    getDemoRequests(params?: {
+        page?: number;
+        limit?: number;
+        status?: string;
+        search?: string;
+    }): Promise<PaginatedDemoRequests>;
+    getDemoRequestStats(): Promise<DemoRequestStats>;
+    updateDemoRequestStatus(id: string, data: {
+        status: DemoRequestStatus;
+        notes?: string;
+    }): Promise<DemoRequestItem>;
+    deleteDemoRequest(id: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    seedDemoRequests(): Promise<{
+        message: string;
+        count: number;
     }>;
 }

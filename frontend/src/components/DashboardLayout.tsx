@@ -9,7 +9,7 @@ import {
   ShieldCheck, Palette, Bell, Search, ChevronLeft, ChevronRight, 
   LogOut, User, Building2, Plus, Sparkles, UserCheck, Lock, LogIn, ChevronDown, Eye, Download,
   Globe, BookOpen, HelpCircle, Send, CreditCard, Receipt, MapPin, Layers, ShieldAlert, Activity, Landmark,
-  Mail, Phone, CheckCircle2, AlertCircle, Loader2
+  Mail, Phone, CheckCircle2, AlertCircle, Loader2, Headphones
 } from 'lucide-react';
 import { SuperAdminThemeCustomizer } from './SuperAdminThemeCustomizer';
 
@@ -472,6 +472,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
       { label: 'Control Center', href: '/admin/dashboard', icon: LayoutDashboard, section: 'Operations & Access' },
       { label: 'Camzy Internal Team', href: '/admin/users', icon: ShieldCheck, badge: 'Staff Only', section: 'Operations & Access' },
       { label: 'Job Seekers & Employers', href: '/admin/profiles', icon: Users, badge: 'Candidates & Cos', section: 'Operations & Access' },
+      { label: 'Demo Requests & Leads', href: '/admin/demo-requests', icon: Headphones, badge: 'Leads', section: 'Operations & Access' },
       { label: 'Login Activity', href: '/admin/login-activity', icon: Activity, badge: 'Audit Logs', section: 'Operations & Access' },
       { label: 'Jobs (All Companies)', href: '/admin/jobs', icon: Briefcase, badge: 'Post/View', section: 'Operations & Access' },
       { label: 'Companies Directory', href: '/admin/tenants', icon: Building2, section: 'Operations & Access' },

@@ -9,10 +9,11 @@ import { TenantSubscription } from '../subscriptions/entities/tenant-subscriptio
 import { SubscriptionPlan } from '../subscriptions/entities/subscription-plan.entity';
 import { RestrictedDomain } from '../admin/entities/restricted-domain.entity';
 import { LoginActivity } from '../admin/entities/login-activity.entity';
+import { DemoRequest } from '../admin/entities/demo-request.entity';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Tenant, Candidate, TenantSubscription, SubscriptionPlan, RestrictedDomain, LoginActivity]), MailModule],
+  imports: [TypeOrmModule.forFeature([User, Tenant, Candidate, TenantSubscription, SubscriptionPlan, RestrictedDomain, LoginActivity, DemoRequest]), MailModule],
   controllers: [AuthController],
   providers: [AuthService],
   exports: [AuthService],

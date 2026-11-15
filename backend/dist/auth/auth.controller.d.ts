@@ -26,6 +26,7 @@ export declare class AuthController {
     requestDemo(body: any): Promise<{
         success: boolean;
         message: string;
+        demoRequest: import("../admin/entities/demo-request.entity").DemoRequest;
     }>;
     registerCandidate(body: any): Promise<{
         accessToken: string;

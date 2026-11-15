@@ -42,8 +42,9 @@ const login_activity_entity_1 = require("./entities/login-activity.entity");
 const govt_job_entity_1 = require("./entities/govt-job.entity");
 const govt_exam_calendar_entity_1 = require("./entities/govt-exam-calendar.entity");
 const govt_commission_portal_entity_1 = require("./entities/govt-commission-portal.entity");
+const demo_request_entity_1 = require("./entities/demo-request.entity");
 let AdminController = class AdminController {
-    constructor(appConfigService, jobRepo, tenantRepo, candidateRepo, appRepo, subRepo, planRepo, txnRepo, userRepo, locationRepo, skillRepo, expRangeRepo, taxonomyRepo, cmsRepo, blogPostRepo, blogCatRepo, seoRepo, faqRepo, broadcastRepo, domainRepo, loginActivityRepo, govtJobRepo, govtExamCalendarRepo, govtCommissionPortalRepo) {
+    constructor(appConfigService, jobRepo, tenantRepo, candidateRepo, appRepo, subRepo, planRepo, txnRepo, userRepo, locationRepo, skillRepo, expRangeRepo, taxonomyRepo, cmsRepo, blogPostRepo, blogCatRepo, seoRepo, faqRepo, broadcastRepo, domainRepo, loginActivityRepo, govtJobRepo, govtExamCalendarRepo, govtCommissionPortalRepo, demoRequestRepo) {
         this.appConfigService = appConfigService;
         this.jobRepo = jobRepo;
         this.tenantRepo = tenantRepo;
@@ -68,6 +69,7 @@ let AdminController = class AdminController {
         this.govtJobRepo = govtJobRepo;
         this.govtExamCalendarRepo = govtExamCalendarRepo;
         this.govtCommissionPortalRepo = govtCommissionPortalRepo;
+        this.demoRequestRepo = demoRequestRepo;
     }
     async getDashboardMetrics() {
         const totalJobs = await this.jobRepo.count();
@@ -76,6 +78,8 @@ let AdminController = class AdminController {
         const totalCandidates = await this.candidateRepo.count();
         const totalApplications = await this.appRepo.count();
         const activeSubscriptions = await this.subRepo.count({ where: { status: tenant_subscription_entity_1.SubscriptionStatus.ACTIVE } });
+        const totalDemoRequests = await this.demoRequestRepo.count();
+        const pendingDemoRequests = await this.demoRequestRepo.count({ where: { status: demo_request_entity_1.DemoRequestStatus.PENDING } });
         const allSubs = await this.subRepo.find();
         const totalResumeDownloads = allSubs.reduce((acc, s) => acc + (s.resumeDownloadsUsed || 0), 0);
         const totalTeamSeats = await this.userRepo.count({
@@ -99,6 +103,8 @@ let AdminController = class AdminController {
             totalTeamSeats,
             totalRevenue: totalRevenue || activeSubscriptions * 199,
             monthlyRevenue: activeSubscriptions * 199,
+            totalDemoRequests,
+            pendingDemoRequests,
         };
     }
     async getTransactions() {
@@ -1696,6 +1702,143 @@ let AdminController = class AdminController {
         }
         return { message: 'Pruned historical login activities, retaining recent 50 records.' };
     }
+    async getDemoRequests(page, limit, status, search) {
+        const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit || '25', 10) || 25));
+        const skip = (pageNum - 1) * limitNum;
+        const currentCount = await this.demoRequestRepo.count();
+        if (currentCount === 0) {
+            await this.seedDemoRequests();
+        }
+        const qb = this.demoRequestRepo.createQueryBuilder('demo');
+        if (status && status !== 'ALL') {
+            qb.andWhere('demo.status = :status', { status });
+        }
+        if (search && search.trim()) {
+            const q = `%${search.trim().toLowerCase()}%`;
+            qb.andWhere('(LOWER(demo.name) LIKE :q OR LOWER(demo.email) LIKE :q OR LOWER(demo.companyName) LIKE :q OR LOWER(demo.city) LIKE :q OR demo.phone LIKE :q)', { q });
+        }
+        qb.orderBy('demo.createdAt', 'DESC')
+            .skip(skip)
+            .take(limitNum);
+        const [data, total] = await qb.getManyAndCount();
+        return {
+            data,
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages: Math.ceil(total / limitNum),
+        };
+    }
+    async getDemoRequestStats() {
+        const total = await this.demoRequestRepo.count();
+        const pending = await this.demoRequestRepo.count({ where: { status: demo_request_entity_1.DemoRequestStatus.PENDING } });
+        const contacted = await this.demoRequestRepo.count({ where: { status: demo_request_entity_1.DemoRequestStatus.CONTACTED } });
+        const scheduled = await this.demoRequestRepo.count({ where: { status: demo_request_entity_1.DemoRequestStatus.SCHEDULED } });
+        const completed = await this.demoRequestRepo.count({ where: { status: demo_request_entity_1.DemoRequestStatus.COMPLETED } });
+        const disqualified = await this.demoRequestRepo.count({ where: { status: demo_request_entity_1.DemoRequestStatus.DISQUALIFIED } });
+        return {
+            total,
+            pending,
+            contacted,
+            scheduled,
+            completed,
+            disqualified,
+        };
+    }
+    async updateDemoRequestStatus(id, body) {
+        const demoReq = await this.demoRequestRepo.findOne({ where: { id } });
+        if (!demoReq) {
+            throw new common_1.NotFoundException(`Demo request with ID ${id} not found`);
+        }
+        if (body.status) {
+            demoReq.status = body.status;
+        }
+        if (typeof body.notes === 'string') {
+            demoReq.notes = body.notes;
+        }
+        return await this.demoRequestRepo.save(demoReq);
+    }
+    async deleteDemoRequest(id) {
+        const res = await this.demoRequestRepo.delete(id);
+        if (!res.affected) {
+            throw new common_1.NotFoundException(`Demo request with ID ${id} not found`);
+        }
+        return { success: true, message: 'Demo request removed successfully' };
+    }
+    async seedDemoRequests() {
+        const sampleLeads = [
+            {
+                name: 'Rajesh Sharma',
+                email: 'rajesh.sharma@tcs-enterprise.com',
+                phone: '+91 98201 12345',
+                companyName: 'Tata Consultancy Services',
+                hiresCount: '50+ hires / month (Enterprise & Bulk)',
+                city: 'Mumbai, Maharashtra',
+                source: 'REQUEST_A_DEMO',
+                status: demo_request_entity_1.DemoRequestStatus.PENDING,
+                notes: 'Interested in AI-powered candidate search & bulk resume exports for BFSI hiring drive.',
+                createdAt: new Date(Date.now() - 35 * 60 * 1000),
+            },
+            {
+                name: 'Priya Sundaram',
+                email: 'priya.s@swiggy.in',
+                phone: '+91 98450 67890',
+                companyName: 'Swiggy Limited',
+                hiresCount: '21 - 50 hires / month',
+                city: 'Bengaluru, Karnataka',
+                source: 'REQUEST_A_DEMO',
+                status: demo_request_entity_1.DemoRequestStatus.SCHEDULED,
+                notes: 'Demo scheduled with Sales Director for Tuesday 3:00 PM IST via Google Meet.',
+                createdAt: new Date(Date.now() - 3 * 3600 * 1000),
+            },
+            {
+                name: 'Amit Patel',
+                email: 'amit.patel@zepto.co.in',
+                phone: '+91 97123 45678',
+                companyName: 'Zepto Quick Commerce',
+                hiresCount: '50+ hires / month (Enterprise & Bulk)',
+                city: 'Mumbai, Maharashtra',
+                source: 'TALK_TO_US',
+                status: demo_request_entity_1.DemoRequestStatus.CONTACTED,
+                notes: 'Spoke over phone. Sent enterprise pricing brochure. Follow-up required tomorrow.',
+                createdAt: new Date(Date.now() - 8 * 3600 * 1000),
+            },
+            {
+                name: 'Ananya Deshmukh',
+                email: 'ananya.d@fintech-pay.io',
+                phone: '+91 99887 76655',
+                companyName: 'Razorpay / Payments FinTech',
+                hiresCount: '6 - 20 hires / month',
+                city: 'Bengaluru, Karnataka',
+                source: 'REQUEST_A_DEMO',
+                status: demo_request_entity_1.DemoRequestStatus.COMPLETED,
+                notes: 'Product walkthrough completed. Client initiated Enterprise Plan subscription trial.',
+                createdAt: new Date(Date.now() - 24 * 3600 * 1000),
+            },
+            {
+                name: 'Vikram Sengupta',
+                email: 'vikram@wipro-digital.com',
+                phone: '+91 94330 99887',
+                companyName: 'Wipro Digital Labs',
+                hiresCount: '21 - 50 hires / month',
+                city: 'Hyderabad, Telangana',
+                source: 'REQUEST_A_DEMO',
+                status: demo_request_entity_1.DemoRequestStatus.PENDING,
+                notes: 'Looking for verified mobile & email candidate profiles for cloud migrations.',
+                createdAt: new Date(Date.now() - 48 * 3600 * 1000),
+            },
+        ];
+        let count = 0;
+        for (const lead of sampleLeads) {
+            await this.demoRequestRepo.save(this.demoRequestRepo.create(lead));
+            count++;
+        }
+        return {
+            message: `Successfully seeded ${count} enterprise demo requests`,
+            count,
+        };
+    }
     getOfficialDefaultGovtJobs() {
         return [
             {
@@ -3096,6 +3239,48 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "clearLoginActivities", null);
 __decorate([
+    (0, common_1.Get)('demo-requests'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: List employer demo requests and hiring leads' }),
+    __param(0, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)('limit')),
+    __param(2, (0, common_1.Query)('status')),
+    __param(3, (0, common_1.Query)('search')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getDemoRequests", null);
+__decorate([
+    (0, common_1.Get)('demo-requests/stats'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Get overview stats for demo requests' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getDemoRequestStats", null);
+__decorate([
+    (0, common_1.Patch)('demo-requests/:id/status'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Update demo request status and follow-up notes' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "updateDemoRequestStatus", null);
+__decorate([
+    (0, common_1.Delete)('demo-requests/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Delete a demo request' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "deleteDemoRequest", null);
+__decorate([
+    (0, common_1.Post)('demo-requests/seed-demo'),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Seed sample enterprise demo requests' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "seedDemoRequests", null);
+__decorate([
     (0, common_1.Get)('govt-jobs'),
     (0, swagger_1.ApiOperation)({ summary: 'Get list of Government job postings (Central & State, Bilingual)' }),
     __param(0, (0, common_1.Query)('category')),
@@ -3253,7 +3438,9 @@ exports.AdminController = AdminController = __decorate([
     __param(21, (0, typeorm_1.InjectRepository)(govt_job_entity_1.GovtJob)),
     __param(22, (0, typeorm_1.InjectRepository)(govt_exam_calendar_entity_1.GovtExamCalendarItem)),
     __param(23, (0, typeorm_1.InjectRepository)(govt_commission_portal_entity_1.GovtCommissionPortal)),
+    __param(24, (0, typeorm_1.InjectRepository)(demo_request_entity_1.DemoRequest)),
     __metadata("design:paramtypes", [app_config_service_1.AppConfigService,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

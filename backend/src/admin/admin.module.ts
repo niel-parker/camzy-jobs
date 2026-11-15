@@ -24,6 +24,7 @@ import { LoginActivity } from './entities/login-activity.entity';
 import { GovtJob } from './entities/govt-job.entity';
 import { GovtExamCalendarItem } from './entities/govt-exam-calendar.entity';
 import { GovtCommissionPortal } from './entities/govt-commission-portal.entity';
+import { DemoRequest } from './entities/demo-request.entity';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { GovtCommissionPortal } from './entities/govt-commission-portal.entity';
       GovtJob,
       GovtExamCalendarItem,
       GovtCommissionPortal,
+      DemoRequest,
     ]),
   ],
   controllers: [AdminController],

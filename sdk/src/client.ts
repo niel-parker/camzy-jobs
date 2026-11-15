@@ -31,6 +31,10 @@ import {
   LoginActivityItem,
   LoginActivityStats,
   PaginatedLoginActivities,
+  DemoRequestItem,
+  DemoRequestStats,
+  DemoRequestStatus,
+  PaginatedDemoRequests,
 } from './types';
 
 declare const process: any;
@@ -888,8 +892,8 @@ export class JobPortalSdk {
     );
   }
 
-  async requestDemo(data: { name: string; email: string; phone?: string; companyName: string; hiresCount?: string; city?: string }): Promise<{ success: boolean; message: string }> {
-    return this.request<{ success: boolean; message: string }>('/auth/request-demo', {
+  async requestDemo(data: { name: string; email?: string; phone?: string; companyName?: string; hiresCount?: string; city?: string; source?: string }): Promise<{ success: boolean; message: string; demoRequest?: DemoRequestItem }> {
+    return this.request<{ success: boolean; message: string; demoRequest?: DemoRequestItem }>('/auth/request-demo', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -946,6 +950,48 @@ export class JobPortalSdk {
     const qs = olderThanDays ? `?olderThanDays=${olderThanDays}` : '';
     return this.request<{ message: string }>(`/admin/login-activities/clear${qs}`, {
       method: 'DELETE',
+    });
+  }
+
+  // --- Super Admin Demo Requests & Hiring Leads ---
+  async getDemoRequests(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+  }): Promise<PaginatedDemoRequests> {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.append('page', String(params.page));
+    if (params?.limit) sp.append('limit', String(params.limit));
+    if (params?.status) sp.append('status', params.status);
+    if (params?.search) sp.append('search', params.search);
+    const qs = sp.toString() ? `?${sp.toString()}` : '';
+    return this.request<PaginatedDemoRequests>(`/admin/demo-requests${qs}`);
+  }
+
+  async getDemoRequestStats(): Promise<DemoRequestStats> {
+    return this.request<DemoRequestStats>('/admin/demo-requests/stats');
+  }
+
+  async updateDemoRequestStatus(
+    id: string,
+    data: { status: DemoRequestStatus; notes?: string },
+  ): Promise<DemoRequestItem> {
+    return this.request<DemoRequestItem>(`/admin/demo-requests/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteDemoRequest(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(`/admin/demo-requests/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async seedDemoRequests(): Promise<{ message: string; count: number }> {
+    return this.request<{ message: string; count: number }>('/admin/demo-requests/seed-demo', {
+      method: 'POST',
     });
   }
 }

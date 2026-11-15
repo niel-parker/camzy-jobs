@@ -1103,8 +1103,19 @@ function EmployerLoginContent() {
               </div>
             ) : (
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
+                  try {
+                    await sdk.requestDemo({
+                      name: talkName.trim(),
+                      phone: talkPhone.trim(),
+                      companyName: talkCompany.trim(),
+                      hiresCount: 'Immediate Callback / Consultation',
+                      source: 'TALK_TO_US',
+                    });
+                  } catch {
+                    // Non-blocking fallback
+                  }
                   setTalkSubmitted(true);
                 }}
                 className="space-y-3"

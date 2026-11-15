@@ -18,13 +18,14 @@ const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-s
 const subscription_plan_entity_1 = require("../subscriptions/entities/subscription-plan.entity");
 const restricted_domain_entity_1 = require("../admin/entities/restricted-domain.entity");
 const login_activity_entity_1 = require("../admin/entities/login-activity.entity");
+const demo_request_entity_1 = require("../admin/entities/demo-request.entity");
 const mail_module_1 = require("../mail/mail.module");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, tenant_entity_1.Tenant, candidate_entity_1.Candidate, tenant_subscription_entity_1.TenantSubscription, subscription_plan_entity_1.SubscriptionPlan, restricted_domain_entity_1.RestrictedDomain, login_activity_entity_1.LoginActivity]), mail_module_1.MailModule],
+        imports: [typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, tenant_entity_1.Tenant, candidate_entity_1.Candidate, tenant_subscription_entity_1.TenantSubscription, subscription_plan_entity_1.SubscriptionPlan, restricted_domain_entity_1.RestrictedDomain, login_activity_entity_1.LoginActivity, demo_request_entity_1.DemoRequest]), mail_module_1.MailModule],
         controllers: [auth_controller_1.AuthController],
         providers: [auth_service_1.AuthService],
         exports: [auth_service_1.AuthService],

@@ -32,6 +32,7 @@ import { LoginActivity } from './admin/entities/login-activity.entity';
 import { GovtJob } from './admin/entities/govt-job.entity';
 import { GovtExamCalendarItem } from './admin/entities/govt-exam-calendar.entity';
 import { GovtCommissionPortal } from './admin/entities/govt-commission-portal.entity';
+import { DemoRequest } from './admin/entities/demo-request.entity';
 
 import { MailModule } from './mail/mail.module';
 
@@ -68,6 +69,7 @@ import { MailModule } from './mail/mail.module';
         GovtJob,
         GovtExamCalendarItem,
         GovtCommissionPortal,
+        DemoRequest,
       ],
       synchronize: true,
       logging: false,

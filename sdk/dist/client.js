@@ -784,5 +784,38 @@ class JobPortalSdk {
             method: 'DELETE',
         });
     }
+    // --- Super Admin Demo Requests & Hiring Leads ---
+    async getDemoRequests(params) {
+        const sp = new URLSearchParams();
+        if (params?.page)
+            sp.append('page', String(params.page));
+        if (params?.limit)
+            sp.append('limit', String(params.limit));
+        if (params?.status)
+            sp.append('status', params.status);
+        if (params?.search)
+            sp.append('search', params.search);
+        const qs = sp.toString() ? `?${sp.toString()}` : '';
+        return this.request(`/admin/demo-requests${qs}`);
+    }
+    async getDemoRequestStats() {
+        return this.request('/admin/demo-requests/stats');
+    }
+    async updateDemoRequestStatus(id, data) {
+        return this.request(`/admin/demo-requests/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    }
+    async deleteDemoRequest(id) {
+        return this.request(`/admin/demo-requests/${id}`, {
+            method: 'DELETE',
+        });
+    }
+    async seedDemoRequests() {
+        return this.request('/admin/demo-requests/seed-demo', {
+            method: 'POST',
+        });
+    }
 }
 exports.JobPortalSdk = JobPortalSdk;
