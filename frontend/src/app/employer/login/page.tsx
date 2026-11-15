@@ -82,7 +82,7 @@ function EmployerLoginContent() {
   const [activeTab, setActiveTab] = useState<'login' | 'demo'>(initialTab);
   const [subMode, setSubMode] = useState<'login' | 'signup'>(initialSubMode);
 
-  // Login Form State (Matches Foundit Recruiter Login)
+  // Login Form State
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -158,11 +158,6 @@ function EmployerLoginContent() {
   const [talkPhone, setTalkPhone] = useState('');
   const [talkCompany, setTalkCompany] = useState('');
   const [talkSubmitted, setTalkSubmitted] = useState(false);
-
-  // Header Dropdown States
-  const [productDropdownOpen, setProductDropdownOpen] = useState(false);
-  const [resourcesDropdownOpen, setResourcesDropdownOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Real-time Work Email Restriction Verification
   const handleWorkEmailBlur = async () => {
@@ -429,209 +424,7 @@ function EmployerLoginContent() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-[#5e17eb] selection:text-white">
-      {/* ----------------- TOP NAVBAR (FOUNDIT RECRUITER STYLE) ----------------- */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
-            {/* Logo and Primary Nav */}
-            <div className="flex items-center space-x-8 lg:space-x-10">
-              {/* Foundit Style Logo */}
-              <Link href="/employer/login" className="flex items-center space-x-2 group">
-                <div className="relative flex flex-col">
-                  {/* Foundit wordmark with curved multi-color arches */}
-                  <div className="flex items-center">
-                    <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#5e17eb]">
-                      found<span className="relative inline-block">
-                        {/* Rainbow curved arch accent above 'u' */}
-                        <svg
-                          className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-8 h-4 overflow-visible"
-                          viewBox="0 0 32 16"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M2 14C5 6 12 2 16 2C20 2 27 6 30 14"
-                            stroke="#FF4B72"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                          />
-                          <path
-                            d="M6 14C8 8 12 5 16 5C20 5 24 8 26 14"
-                            stroke="#FFB800"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                          <path
-                            d="M10 14C11 10 13 8 16 8C19 8 21 10 22 14"
-                            stroke="#00C9A7"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                        i
-                      </span>t
-                    </span>
-                    <span className="text-[10px] text-purple-600 font-bold ml-0.5 align-super">™</span>
-                  </div>
-                  <div className="text-[9px] font-bold text-slate-400 tracking-wider uppercase -mt-1">
-                    Formerly Monster APAC & ME
-                  </div>
-                </div>
-              </Link>
-
-              {/* Desktop Nav Links */}
-              <nav className="hidden lg:flex items-center space-x-6 text-sm font-medium text-slate-700">
-                {/* Product Dropdown */}
-                <div
-                  className="relative"
-                  onMouseEnter={() => setProductDropdownOpen(true)}
-                  onMouseLeave={() => setProductDropdownOpen(false)}
-                >
-                  <button className="flex items-center space-x-1 hover:text-[#5e17eb] py-2 transition-colors cursor-pointer">
-                    <span>Product</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                  </button>
-                  {productDropdownOpen && (
-                    <div className="absolute left-0 top-full w-72 bg-white rounded-xl shadow-xl border border-slate-100 py-3 px-2 z-50 animate-in fade-in slide-in-from-top-1">
-                      <a href="#features" className="flex items-start p-2 rounded-lg hover:bg-purple-50/60 transition-colors">
-                        <Search className="w-5 h-5 text-[#5e17eb] mr-3 mt-0.5" />
-                        <div>
-                          <div className="font-bold text-slate-900 text-sm">AI Smart Talent Search</div>
-                          <div className="text-xs text-slate-500">Semantic resume search across 10M+ candidates</div>
-                        </div>
-                      </a>
-                      <a href="#features" className="flex items-start p-2 rounded-lg hover:bg-purple-50/60 transition-colors">
-                        <Zap className="w-5 h-5 text-[#5e17eb] mr-3 mt-0.5" />
-                        <div>
-                          <div className="font-bold text-slate-900 text-sm">Instant Job Posting</div>
-                          <div className="text-xs text-slate-500">Publish in 60s with pre-qualifying screening</div>
-                        </div>
-                      </a>
-                      <a href="#features" className="flex items-start p-2 rounded-lg hover:bg-purple-50/60 transition-colors">
-                        <Users className="w-5 h-5 text-[#5e17eb] mr-3 mt-0.5" />
-                        <div>
-                          <div className="font-bold text-slate-900 text-sm">Recruiter ATS & Kanban</div>
-                          <div className="text-xs text-slate-500">Collaborate with hiring managers seamlessly</div>
-                        </div>
-                      </a>
-                      <a href="#features" className="flex items-start p-2 rounded-lg hover:bg-purple-50/60 transition-colors">
-                        <Award className="w-5 h-5 text-[#5e17eb] mr-3 mt-0.5" />
-                        <div>
-                          <div className="font-bold text-slate-900 text-sm">Automated Skill Assessment</div>
-                          <div className="text-xs text-slate-500">Standardized tech and aptitude scorecards</div>
-                        </div>
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                {/* Resource Center Dropdown */}
-                <div
-                  className="relative"
-                  onMouseEnter={() => setResourcesDropdownOpen(true)}
-                  onMouseLeave={() => setResourcesDropdownOpen(false)}
-                >
-                  <button className="flex items-center space-x-1 hover:text-[#5e17eb] py-2 transition-colors cursor-pointer">
-                    <span>Resource Center</span>
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                  </button>
-                  {resourcesDropdownOpen && (
-                    <div className="absolute left-0 top-full w-64 bg-white rounded-xl shadow-xl border border-slate-100 py-3 px-2 z-50 animate-in fade-in slide-in-from-top-1">
-                      <Link href="/blogs" className="block p-2 rounded-lg hover:bg-purple-50/60 transition-colors">
-                        <div className="font-bold text-slate-900 text-sm">India Salary Guide 2026</div>
-                        <div className="text-xs text-slate-500">Compensation benchmarks by role & city</div>
-                      </Link>
-                      <Link href="/blogs" className="block p-2 rounded-lg hover:bg-purple-50/60 transition-colors">
-                        <div className="font-bold text-slate-900 text-sm">Hiring Trends Report</div>
-                        <div className="text-xs text-slate-500">Tech and AI hiring outlook for enterprises</div>
-                      </Link>
-                      <a href="#faq" className="block p-2 rounded-lg hover:bg-purple-50/60 transition-colors">
-                        <div className="font-bold text-slate-900 text-sm">Employer Knowledgebase</div>
-                        <div className="text-xs text-slate-500">Guides for job posting & screening</div>
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setIsTalkToUsOpen(true)}
-                  className="hover:text-[#5e17eb] transition-colors cursor-pointer"
-                >
-                  Help
-                </button>
-                <a href="#testimonials" className="hover:text-[#5e17eb] transition-colors">
-                  Testimonials
-                </a>
-                <a href="#features" className="hover:text-[#5e17eb] transition-colors">
-                  Skill Assessment
-                </a>
-              </nav>
-            </div>
-
-            {/* Right Navigation & Toll Free */}
-            <div className="flex items-center space-x-4 sm:space-x-6">
-              {/* Job Seeker Login Link */}
-              <Link
-                href="/auth/login"
-                className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-[#5e17eb] flex items-center space-x-1 transition-colors"
-              >
-                <span>Job Seeker Login</span>
-              </Link>
-
-              {/* Toll Free Badge */}
-              <a
-                href="tel:18004196666"
-                className="hidden sm:flex items-center space-x-2 text-xs sm:text-sm font-bold text-slate-800 hover:text-[#5e17eb] transition-all"
-              >
-                <Phone className="w-4 h-4 text-slate-700" />
-                <span>Toll Free: 1800-419-6666</span>
-              </a>
-
-              {/* Mobile menu button */}
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 text-slate-600 hover:text-slate-900"
-              >
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Dropdown Menu */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-slate-100 bg-white p-4 space-y-3 text-sm">
-            <Link
-              href="/auth/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-slate-700 font-medium"
-            >
-              Job Seeker Login
-            </Link>
-            <a
-              href="tel:18004196666"
-              className="flex items-center space-x-2 py-2 text-slate-700 font-medium"
-            >
-              <Phone className="w-4 h-4 text-[#5e17eb]" />
-              <span>Toll Free: 1800-419-6666</span>
-            </a>
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setIsTalkToUsOpen(true);
-              }}
-              className="block w-full text-left py-2 text-slate-700 font-medium"
-            >
-              Help &amp; Talk to Us
-            </button>
-          </div>
-        )}
-      </header>
-
-      {/* ----------------- HERO SECTION (EXACT FOUNDIT SPLIT HERO) ----------------- */}
+      {/* ----------------- HERO SECTION (EMPLOYER / RECRUITER PORTAL) ----------------- */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[#faf7ff] via-[#fffbfd] to-[#f4f0ff] pt-10 pb-16 lg:pt-16 lg:pb-24 border-b border-purple-100/50">
         {/* Soft decorative background shape on the right */}
         <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-purple-100/40 to-transparent pointer-events-none" />
@@ -639,20 +432,20 @@ function EmployerLoginContent() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* HERO LEFT COLUMN (Clean matching screenshot) */}
+            {/* HERO LEFT COLUMN */}
             <div className="lg:col-span-7 space-y-6 text-left">
-              {/* Exact Foundit Headline */}
+              {/* Recruiter Headline */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#5e17eb] tracking-tight leading-[1.15]">
                 Unlock India&apos;s Largest <br />
                 Talent Network
               </h1>
 
-              {/* Exact Subtitle */}
+              {/* Subtitle */}
               <p className="text-xl sm:text-2xl text-slate-900 font-bold max-w-xl leading-relaxed">
                 Find the right talent with AI powered search.
               </p>
 
-              {/* Exact Foundit 'Talk to Us' Button */}
+              {/* 'Talk to Us' Button */}
               <div className="pt-2">
                 <button
                   type="button"
@@ -664,7 +457,7 @@ function EmployerLoginContent() {
               </div>
             </div>
 
-            {/* HERO RIGHT COLUMN: FOUNDIT FLOATING CARD */}
+            {/* HERO RIGHT COLUMN: EMPLOYER LOGIN CARD */}
             <div className="lg:col-span-5">
               <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden w-full max-w-md mx-auto lg:ml-auto">
                 {/* Card Top Tabs: 'Login/Sign up' and 'Request a Demo' */}
@@ -797,7 +590,7 @@ function EmployerLoginContent() {
                                 <CheckCircle2 className="w-8 h-8" />
                               </div>
                               <h3 className="text-lg font-bold text-slate-900">
-                                Welcome to Foundit Recruiter!
+                                Welcome to Camzy Recruiter!
                               </h3>
                               <p className="text-xs text-slate-600 max-w-sm mx-auto">
                                 Company email and mobile verified. Redirecting you to your recruiter dashboard...
@@ -927,7 +720,7 @@ function EmployerLoginContent() {
                                   className="mt-0.5 rounded text-[#5e17eb] focus:ring-[#5e17eb]"
                                 />
                                 <label htmlFor="termsCheckbox" className="text-[11px] text-slate-600 leading-tight">
-                                  I agree to Foundit Employer Terms of Service and Privacy Policy.
+                                  I agree to CamzyJobs Employer Terms of Service and Privacy Policy.
                                 </label>
                               </div>
 
@@ -1369,7 +1162,7 @@ function EmployerLoginContent() {
               Enterprise Talent Acquisition Built for Speed &amp; Accuracy
             </h2>
             <p className="mt-2 text-sm text-slate-600">
-              Foundit equips Indian recruiters with AI intelligence, semantic candidate recall, and pre-screening workflows.
+              CamzyJobs equips modern recruiters with AI intelligence, semantic candidate recall, and pre-screening workflows.
             </p>
           </div>
 
@@ -1437,7 +1230,7 @@ function EmployerLoginContent() {
                 ))}
               </div>
               <p className="text-xs text-slate-700 italic leading-relaxed">
-                &ldquo;Foundit&apos;s AI candidate matching reduced our time-to-hire for Senior Full-Stack Engineers from 38 days to just 11 days.&rdquo;
+                &ldquo;CamzyJobs&apos;s AI candidate matching reduced our time-to-hire for Senior Full-Stack Engineers from 38 days to just 11 days.&rdquo;
               </p>
               <div>
                 <div className="font-bold text-slate-900 text-xs">Priya Ramanathan</div>
@@ -1503,21 +1296,6 @@ function EmployerLoginContent() {
           </div>
         </div>
       </section>
-
-      {/* ----------------- FOOTER ----------------- */}
-      <footer className="bg-slate-900 text-slate-400 text-xs py-10 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <span className="font-extrabold text-[#9b51e0] text-lg">foundit™</span>
-            <span>&copy; {new Date().getFullYear()} Foundit India. All rights reserved.</span>
-          </div>
-          <div className="flex space-x-6">
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-            <Link href="/contact" className="hover:text-white transition-colors">Contact Support</Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

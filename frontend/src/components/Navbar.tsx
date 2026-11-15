@@ -22,9 +22,13 @@ export const Navbar: React.FC = () => {
     return null;
   }
 
-  const isAuthOrDashboard = pathname.startsWith('/employer') || pathname.startsWith('/candidate') || pathname.startsWith('/admin') || pathname.startsWith('/auth');
+  const isDashboard =
+    pathname.startsWith('/candidate') ||
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/auth') ||
+    (pathname.startsWith('/employer') && !pathname.startsWith('/employer/login'));
 
-  if (isAuthOrDashboard) {
+  if (isDashboard) {
     return null;
   }
 
