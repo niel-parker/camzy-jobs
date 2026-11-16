@@ -31,11 +31,12 @@ import {
 } from 'lucide-react';
 
 export default function EmployerKanbanPage() {
-  const { sdk } = useTheme();
+  const { user, sdk } = useTheme();
   const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
   const [candidateProfileData, setCandidateProfileData] = useState<any | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [candidates, setCandidates] = useState<any[]>([]);
+  const [companyJobs, setCompanyJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // View & Filter States
@@ -46,20 +47,49 @@ export default function EmployerKanbanPage() {
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'rating' | 'name'>('newest');
 
   useEffect(() => {
+    let isMounted = true;
     async function loadApplications() {
       setLoading(true);
       try {
-        const apps = await sdk.request<any[]>('/applications');
-        setCandidates(apps || []);
+        let targetId = user?.tenantId;
+        if (!targetId) {
+          const allTenants = await sdk.request<any[]>('/tenants').catch(() => []);
+          if (allTenants && allTenants.length > 0 && allTenants[0].id) {
+            targetId = allTenants[0].id;
+          }
+        }
+
+        const [jobsData, appsData] = await Promise.all([
+          targetId ? sdk.getJobs({ tenantId: targetId }).catch(() => []) : [],
+          targetId
+            ? sdk.getAtsApplications({ tenantId: targetId }).catch(() => [])
+            : sdk.getAtsApplications().catch(() => []),
+        ]);
+
+        if (isMounted) {
+          setCompanyJobs(jobsData || []);
+          // Client-side safety filter: ensure candidate applications strictly belong to this company's tenant
+          const scopedApps = (appsData || []).filter((a: any) => {
+            if (!targetId) return true;
+            return !a.tenantId || a.tenantId === targetId;
+          });
+          setCandidates(scopedApps);
+        }
       } catch (err) {
         console.error('Error fetching applications for Kanban:', err);
-        setCandidates([]);
+        if (isMounted) {
+          setCandidates([]);
+          setCompanyJobs([]);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
     loadApplications();
-  }, [sdk]);
+    return () => {
+      isMounted = false;
+    };
+  }, [sdk, user?.tenantId]);
 
   const handleOpenInfoModal = async (c: any) => {
     setSelectedCandidate(c);
@@ -100,16 +130,20 @@ export default function EmployerKanbanPage() {
     }
   };
 
-  // Distinct jobs for filter dropdown
+  // Distinct jobs for filter dropdown - strictly based on this company's jobs
   const uniqueJobs = useMemo(() => {
     const map = new Map<string, string>();
+    companyJobs.forEach((j) => {
+      if (j.title) map.set(j.title, j.title);
+    });
+    // In case there are candidates for an archived or inactive posting of this company
     candidates.forEach((c) => {
-      if (c.jobTitle) {
+      if (c.jobTitle && !map.has(c.jobTitle)) {
         map.set(c.jobTitle, c.jobTitle);
       }
     });
     return Array.from(map.values());
-  }, [candidates]);
+  }, [companyJobs, candidates]);
 
   // Filtered and sorted candidates
   const filteredCandidates = useMemo(() => {

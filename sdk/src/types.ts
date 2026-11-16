@@ -545,6 +545,12 @@ export interface AtsApplicationItem {
   id: string;
   jobId: string;
   jobTitle: string;
+  companyName?: string;
+  companyLogo?: string;
+  tenantId?: string;
+  location?: string;
+  employmentType?: string;
+  category?: string;
   candidateId: string;
   candidateName: string;
   candidateEmail?: string;

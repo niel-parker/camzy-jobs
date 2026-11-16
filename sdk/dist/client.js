@@ -756,8 +756,24 @@ class JobPortalSdk {
         });
     }
     // --- Recruiter ATS Applications & Pipeline ---
-    async getAtsApplications(jobId) {
-        const qs = jobId ? `?jobId=${encodeURIComponent(jobId)}` : '';
+    async getAtsApplications(params) {
+        let qs = '';
+        if (typeof params === 'string') {
+            qs = `?jobId=${encodeURIComponent(params)}`;
+        }
+        else if (params && typeof params === 'object') {
+            const parts = [];
+            if (params.jobId)
+                parts.push(`jobId=${encodeURIComponent(params.jobId)}`);
+            if (params.tenantId)
+                parts.push(`tenantId=${encodeURIComponent(params.tenantId)}`);
+            if (params.candidateId)
+                parts.push(`candidateId=${encodeURIComponent(params.candidateId)}`);
+            if (params.userId)
+                parts.push(`userId=${encodeURIComponent(params.userId)}`);
+            if (parts.length > 0)
+                qs = `?${parts.join('&')}`;
+        }
         return this.request(`/applications${qs}`);
     }
     async updateAtsStage(id, stage, rating) {

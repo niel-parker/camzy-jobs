@@ -20,18 +20,22 @@ export default function EmployerDashboardPage() {
     async function loadEmployerData() {
       setLoading(true);
       try {
-        const effectiveTenantId = tenantId || '5c88e4d2-4e38-4e15-817b-a19fe3090e8c';
+        let effectiveTenantId = tenantId;
+        if (!effectiveTenantId) {
+          const allTenants = await sdk.request<any[]>('/tenants').catch(() => []);
+          if (allTenants && allTenants.length > 0 && allTenants[0].id) {
+            effectiveTenantId = allTenants[0].id;
+          }
+        }
+
         const [jobList, appsings, subOverview] = await Promise.all([
-          sdk.getJobs({ tenantId: effectiveTenantId }).catch(() => []),
-          sdk.request<any[]>('/applications').catch(() => []),
-          sdk.getCurrentSubscription(effectiveTenantId).catch(() => null),
+          effectiveTenantId ? sdk.getJobs({ tenantId: effectiveTenantId }).catch(() => []) : [],
+          effectiveTenantId ? sdk.getAtsApplications({ tenantId: effectiveTenantId }).catch(() => []) : [],
+          effectiveTenantId ? sdk.getCurrentSubscription(effectiveTenantId).catch(() => null) : null,
         ]);
-        // Strictly filter to only this employer's active postings
-        const companyOnlyJobs = jobList.filter(
-          (j) => j.tenantId === effectiveTenantId || j.companyName?.toLowerCase().includes('techcorp')
-        );
-        setJobs(companyOnlyJobs);
-        setApplicationsCount(appsings.length);
+
+        setJobs(jobList || []);
+        setApplicationsCount((appsings || []).length);
         if (subOverview) {
           setSubscription(subOverview);
         }

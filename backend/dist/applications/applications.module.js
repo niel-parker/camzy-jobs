@@ -14,12 +14,17 @@ const applications_service_1 = require("./applications.service");
 const job_application_entity_1 = require("./entities/job-application.entity");
 const job_posting_entity_1 = require("../jobs/entities/job-posting.entity");
 const candidate_entity_1 = require("../candidates/entities/candidate.entity");
+const user_entity_1 = require("../users/entities/user.entity");
+const auth_module_1 = require("../auth/auth.module");
 let ApplicationsModule = class ApplicationsModule {
 };
 exports.ApplicationsModule = ApplicationsModule;
 exports.ApplicationsModule = ApplicationsModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([job_application_entity_1.JobApplication, job_posting_entity_1.JobPosting, candidate_entity_1.Candidate])],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([job_application_entity_1.JobApplication, job_posting_entity_1.JobPosting, candidate_entity_1.Candidate, user_entity_1.User]),
+            auth_module_1.AuthModule,
+        ],
         controllers: [applications_controller_1.ApplicationsController],
         providers: [applications_service_1.ApplicationsService],
         exports: [applications_service_1.ApplicationsService],

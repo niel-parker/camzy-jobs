@@ -318,7 +318,12 @@ export declare class JobPortalSdk {
         message: string;
         demoRequest?: DemoRequestItem;
     }>;
-    getAtsApplications(jobId?: string): Promise<AtsApplicationItem[]>;
+    getAtsApplications(params?: {
+        jobId?: string;
+        tenantId?: string;
+        candidateId?: string;
+        userId?: string;
+    } | string): Promise<AtsApplicationItem[]>;
     updateAtsStage(id: string, stage: string, rating?: number): Promise<AtsApplicationItem>;
     getLoginActivities(params?: {
         page?: number;
