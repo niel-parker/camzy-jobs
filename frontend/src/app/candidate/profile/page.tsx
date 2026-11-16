@@ -943,148 +943,160 @@ export default function CandidateProfilePage() {
           </div>
         )}
 
-        {/* CANDIDATE HERO / PROFILE CARD WITH PROMINENT EDIT PROFILE BUTTON */}
-        <div className="theme-surface border theme-border rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden bg-gradient-to-r from-indigo-500/5 via-transparent to-transparent">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-            <div className="relative group">
-              {userForm.avatarUrl || user?.avatarUrl ? (
-                <img
-                  src={userForm.avatarUrl || user?.avatarUrl}
-                  alt="Profile Avatar"
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-indigo-500/50 shadow-md"
-                />
-              ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-indigo-50 dark:bg-slate-800 border-2 border-indigo-500/40 shadow-md flex items-center justify-center">
-                  <User className="w-10 h-10 sm:w-12 sm:h-12 text-indigo-500" />
+        {/* UNIFIED CANDIDATE PROFILE CARD */}
+        <div className="theme-surface border theme-border rounded-3xl shadow-sm relative overflow-hidden">
+          {/* Top gradient accent bar */}
+          <div className="h-1.5 bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-500" />
+
+          {/* Main content area */}
+          <div className="p-6 sm:p-8">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+              {/* Left: Avatar + Info */}
+              <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+                {/* Avatar */}
+                <div className="relative group shrink-0">
+                  {userForm.avatarUrl || user?.avatarUrl ? (
+                    <img
+                      src={userForm.avatarUrl || user?.avatarUrl}
+                      alt="Profile Avatar"
+                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-2 border-indigo-500/30 shadow-lg ring-4 ring-indigo-500/10"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-slate-800 dark:to-slate-700 border-2 border-indigo-500/30 shadow-lg ring-4 ring-indigo-500/10 flex items-center justify-center">
+                      <User className="w-12 h-12 sm:w-14 sm:h-14 text-indigo-400" />
+                    </div>
+                  )}
+                  {isUploadingAvatar && (
+                    <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center">
+                      <Loader2 className="w-5 h-5 text-white animate-spin" />
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    id="hero-avatar-file-upload"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleAvatarFileUpload(e.target.files[0]);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="hero-avatar-file-upload"
+                    className="absolute -bottom-1.5 -right-1.5 p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg transition-all cursor-pointer flex items-center justify-center hover:scale-110 active:scale-95"
+                    title="Click to Upload Profile Photo"
+                  >
+                    {isUploadingAvatar ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                  </label>
                 </div>
-              )}
-              {isUploadingAvatar && (
-                <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+
+                {/* Info */}
+                <div className="space-y-2.5 min-w-0">
+                  {/* Name + inline badges */}
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <h2 className="text-xl sm:text-2xl font-black theme-text tracking-tight">
+                      {userForm.firstName || user?.firstName || 'Candidate'} {userForm.lastName || user?.lastName || ''}
+                    </h2>
+                    {user?.isEmailVerified && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-black border border-emerald-500/20 flex items-center gap-1 whitespace-nowrap">
+                        <ShieldCheck className="w-3 h-3" /> Email Verified
+                      </span>
+                    )}
+                    {user?.isPhoneVerified && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-black border border-emerald-500/20 flex items-center gap-1 whitespace-nowrap">
+                        <ShieldCheck className="w-3 h-3" /> Phone Verified
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Headline */}
+                  <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                    {profile.headline || 'Add your professional headline'}
+                  </p>
+
+                  {/* Professional meta chips */}
+                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                      <Briefcase className="w-3.5 h-3.5" /> {profile.currentTitle || 'Professional'} • {profile.experienceYears} Yrs
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-xs font-semibold theme-muted">
+                      <Clock className="w-3.5 h-3.5 text-indigo-500" /> Notice: <strong className="theme-text ml-0.5">{profile.noticePeriod}</strong>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                      <IndianRupee className="w-3.5 h-3.5" /> Expected: ₹{Number(profile.expectedSalary).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  {/* Contact info */}
+                  <div className="flex flex-wrap items-center gap-4 text-xs theme-muted pt-1">
+                    <span className="flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-slate-400" /> {userForm.email || user?.email}
+                    </span>
+                    {userForm.phoneNumber && (
+                      <span className="flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5 text-slate-400" /> {userForm.phoneNumber}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              )}
-              <input
-                type="file"
-                id="hero-avatar-file-upload"
-                accept="image/png,image/jpeg,image/jpg,image/webp"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    handleAvatarFileUpload(e.target.files[0]);
-                  }
-                }}
-                className="hidden"
-              />
-              <label
-                htmlFor="hero-avatar-file-upload"
-                className="absolute -bottom-1 -right-1 p-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg transition-all cursor-pointer flex items-center justify-center hover:scale-110 active:scale-95"
-                title="Click to Upload Profile Photo"
-              >
-                {isUploadingAvatar ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
-              </label>
+              </div>
+
+              {/* Right: Edit button */}
+              <div className="flex items-start shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsEditProfileOpen(true)}
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                >
+                  <Pencil className="w-4 h-4" /> Edit Profile Details
+                </button>
+              </div>
             </div>
+          </div>
 
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl sm:text-2xl font-black theme-text tracking-tight">
-                  {userForm.firstName || user?.firstName || 'Candidate'} {userForm.lastName || user?.lastName || ''}
-                </h2>
-                {user?.isEmailVerified && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-black border border-emerald-500/20 flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3" /> Email Verified
-                  </span>
-                )}
-                {user?.isPhoneVerified && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-black border border-emerald-500/20 flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3" /> Phone Verified
-                  </span>
-                )}
-              </div>
-
-              <p className="text-xs sm:text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                {profile.headline || 'Add your professional headline'}
-              </p>
-
-              <div className="flex flex-wrap items-center gap-3 text-xs theme-muted pt-1">
-                <span className="flex items-center gap-1 font-semibold">
-                  <Briefcase className="w-3.5 h-3.5 text-indigo-500" /> {profile.currentTitle || 'Professional'} • {profile.experienceYears} Yrs Exp
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1 font-semibold">
-                  <Clock className="w-3.5 h-3.5 text-indigo-500" /> Notice: <strong className="theme-text">{profile.noticePeriod}</strong>
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1 font-semibold">
-                  <IndianRupee className="w-3.5 h-3.5 text-emerald-500" /> Exp: ₹{Number(profile.expectedSalary).toLocaleString('en-IN')}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-4 text-xs theme-muted pt-1">
+          {/* Bottom bar: Timestamps + Verification actions */}
+          <div className="border-t theme-border bg-slate-50/50 dark:bg-slate-800/30 px-6 sm:px-8 py-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-4 text-xs">
+              {/* Timestamps */}
+              <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400 font-medium">
                 <span className="flex items-center gap-1.5">
-                  <Mail className="w-3 h-3 text-slate-400" /> {userForm.email || user?.email}
+                  <Clock className="w-3.5 h-3.5 text-indigo-500" /> Member Since: <strong className="theme-text">{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Oct 2026'}</strong>
                 </span>
-                {userForm.phoneNumber && (
-                  <span className="flex items-center gap-1.5">
-                    <Phone className="w-3 h-3 text-slate-400" /> {userForm.phoneNumber}
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span>Last Active: <strong className="text-emerald-500">Just Now</strong></span>
+              </div>
+
+              {/* Verification action badges */}
+              <div className="flex items-center gap-2.5">
+                {user?.isEmailVerified ? (
+                  <span className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5" /> Email Verified ✓
                   </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleStartVerification('EMAIL')}
+                    className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <AlertCircle className="w-3.5 h-3.5" /> Verify Email Now
+                  </button>
+                )}
+
+                {user?.isPhoneVerified ? (
+                  <span className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5" /> Phone Verified ✓
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleStartVerification('PHONE')}
+                    className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <AlertCircle className="w-3.5 h-3.5" /> Verify Mobile Now
+                  </button>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Prominent Edit Profile Details Action Button */}
-          <div className="flex items-center">
-            <button
-              type="button"
-              onClick={() => setIsEditProfileOpen(true)}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
-            >
-              <Pencil className="w-4 h-4" /> Edit Profile Details
-            </button>
-          </div>
-        </div>
-
-        {/* TIME STAMP INDICATORS & VERIFICATION BAR */}
-        <div className="theme-surface border theme-border rounded-2xl p-5 shadow-sm space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-4 text-xs">
-            <div className="flex items-center gap-4 text-slate-500 font-medium">
-              <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-indigo-500" /> Member Since: <strong>{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Oct 2026'}</strong>
-              </span>
-              <span>•</span>
-              <span>Last Active: <strong className="text-emerald-500">Just Now</strong></span>
-            </div>
-
-            {/* Email & Phone Verification Badges */}
-            <div className="flex items-center gap-3">
-              {/* Email Badge */}
-              {user?.isEmailVerified ? (
-                <span className="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Email Verified ✓
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleStartVerification('EMAIL')}
-                  className="px-3 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-bold flex items-center gap-1 transition-all"
-                >
-                  <AlertCircle className="w-3.5 h-3.5" /> Verify Email Now
-                </button>
-              )}
-
-              {/* Phone Badge */}
-              {user?.isPhoneVerified ? (
-                <span className="px-3 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Phone Verified ✓
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleStartVerification('PHONE')}
-                  className="px-3 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-bold flex items-center gap-1 transition-all"
-                >
-                  <AlertCircle className="w-3.5 h-3.5" /> Verify Mobile Now
-                </button>
-              )}
             </div>
           </div>
         </div>
