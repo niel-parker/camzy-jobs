@@ -354,7 +354,7 @@ const EmployerMandatoryVerificationBlock: React.FC<{
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role }) => {
   const pathname = usePathname();
-  const { theme, user, logout, setUser, sdk } = useTheme();
+  const { theme, user, logout, setUser, sdk, isLoadingUser } = useTheme();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isThemePanelOpen, setIsThemePanelOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -362,7 +362,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
 
   const roleTitle = role === 'EMPLOYER' ? 'Employer Workspace' : role === 'CANDIDATE' ? 'Candidate Portal' : 'Super Admin Control';
 
-  // Strict Role Authorization Check
+  // Strict Role Authorization Check - ALL HOOKS MUST REMAIN AT TOP LEVEL
   const isAuthorized = React.useMemo(() => {
     if (!user) return false;
     
@@ -386,6 +386,25 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
     
     return false;
   }, [user, role]);
+
+  // Mandatory Employer Account Verification Check: Block all actions until verified
+  const isEmployerUnverified = React.useMemo(() => {
+    if (!user) return false;
+    if (role === 'EMPLOYER' && user.role !== 'SUPER_ADMIN') {
+      return !user.isEmailVerified || !user.isPhoneVerified;
+    }
+    return false;
+  }, [user, role]);
+
+  // Loading state while restoring session on refresh
+  if (isLoadingUser) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 p-6 theme-transition">
+        <Loader2 className="w-9 h-9 text-indigo-500 animate-spin mb-3" />
+        <p className="text-xs text-slate-400 font-semibold tracking-wide">Loading workspace...</p>
+      </div>
+    );
+  }
 
   if (!isAuthorized) {
     const loginLink = role === 'SUPER_ADMIN' ? '/admin/login' : '/auth/login';
@@ -429,15 +448,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
       </div>
     );
   }
-
-  // Mandatory Employer Account Verification Check: Block all actions until verified
-  const isEmployerUnverified = React.useMemo(() => {
-    if (!user) return false;
-    if (role === 'EMPLOYER' && user.role !== 'SUPER_ADMIN') {
-      return !user.isEmailVerified || !user.isPhoneVerified;
-    }
-    return false;
-  }, [user, role]);
 
   if (isEmployerUnverified) {
     return (

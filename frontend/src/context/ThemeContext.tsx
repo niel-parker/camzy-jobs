@@ -10,6 +10,7 @@ interface ThemeContextType {
   sdk: JobPortalSdk;
   user: User | null;
   isLoadingTheme: boolean;
+  isLoadingUser: boolean;
   updateTheme: (partial: Partial<ThemeConfig>) => Promise<void>;
   applyPreset: (presetId: string) => Promise<void>;
   updateAppConfig: (partial: Partial<AppConfig>) => Promise<void>;
@@ -61,6 +62,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [appConfig, setAppConfig] = useState<AppConfig>(defaultAppConfig);
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingTheme, setIsLoadingTheme] = useState(true);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
   // Load active theme & app config from NestJS Backend
   useEffect(() => {
@@ -89,7 +91,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         } catch {
           sdk.setToken(null);
           setUser(null);
+        } finally {
+          setIsLoadingUser(false);
         }
+      } else {
+        setIsLoadingUser(false);
       }
     }
 
@@ -157,6 +163,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         sdk,
         user,
         isLoadingTheme,
+        isLoadingUser,
         updateTheme,
         applyPreset,
         updateAppConfig,
