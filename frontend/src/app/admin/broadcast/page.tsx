@@ -282,13 +282,13 @@ function BroadcastContent() {
         recipientEmails,
       });
 
-      setSuccessMsg(`Broadcast successfully dispatched to ${result.recipientCount} selected recipient(s)!`);
+      setSuccessMsg((result as any).message || `Broadcast successfully dispatched to ${result.recipientCount} selected recipient(s)!`);
       setTimeout(() => {
         setIsModalOpen(false);
         setSuccessMsg(null);
         setSelectedIds(new Set());
         loadHistoryAndStats();
-      }, 1500);
+      }, 2000);
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to dispatch email broadcast');
     } finally {

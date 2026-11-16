@@ -116,6 +116,12 @@ let CandidatesController = class CandidatesController {
     async getSavedJobs(id) {
         return await this.candidatesService.getSavedJobs(id);
     }
+    async inviteCandidates(body, req) {
+        return await this.candidatesService.inviteCandidate(body, req.user);
+    }
+    async inviteSingleCandidate(id, body, req) {
+        return await this.candidatesService.inviteCandidate({ ...body, candidateId: id }, req.user);
+    }
 };
 exports.CandidatesController = CandidatesController;
 __decorate([
@@ -306,6 +312,25 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], CandidatesController.prototype, "getSavedJobs", null);
+__decorate([
+    (0, common_1.Post)('invite'),
+    (0, swagger_1.ApiOperation)({ summary: 'Employer / Recruiter: Send job opportunity invitation email to candidate(s)' }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], CandidatesController.prototype, "inviteCandidates", null);
+__decorate([
+    (0, common_1.Post)(':id/invite'),
+    (0, swagger_1.ApiOperation)({ summary: 'Employer / Recruiter: Send job opportunity invitation email to single candidate' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:returntype", Promise)
+], CandidatesController.prototype, "inviteSingleCandidate", null);
 exports.CandidatesController = CandidatesController = __decorate([
     (0, swagger_1.ApiTags)('Candidate Profiles & Talent Database Sourcing'),
     (0, common_1.Controller)('api/v1/candidates'),

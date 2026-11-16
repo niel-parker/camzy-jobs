@@ -203,6 +203,12 @@ class JobPortalSdk {
     async getSavedJobs(candidateId) {
         return this.request(`/candidates/${candidateId}/saved-jobs`);
     }
+    async inviteCandidate(data) {
+        return this.request('/candidates/invite', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
     // Theme Management Methods (Super Admin & Public Theme sync)
     async getActiveTheme() {
         return this.request('/theme/active');

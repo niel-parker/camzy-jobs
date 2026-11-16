@@ -28,6 +28,7 @@ import {
   User,
   Download,
   Eye,
+  Send,
 } from 'lucide-react';
 
 export default function EmployerKanbanPage() {
@@ -45,6 +46,57 @@ export default function EmployerKanbanPage() {
   const [selectedJobFilter, setSelectedJobFilter] = useState('ALL');
   const [selectedStageFilter, setSelectedStageFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'rating' | 'name'>('newest');
+
+  // Candidate Email / Outreach State
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailFeedback, setEmailFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const handleOpenEmailModal = (cand: any) => {
+    setEmailFeedback(null);
+    setSendingEmail(false);
+    setEmailSubject(`Next Steps regarding your application for ${cand.jobTitle || 'our opening'}`);
+    setEmailMessage(
+      `Dear ${cand.candidateName},\n\nThank you for applying to the ${cand.jobTitle} position. We reviewed your profile and would love to connect for the next stage of our recruitment process.\n\nPlease let us know your availability over the coming days.\n\nWarm regards,\nHiring Team`
+    );
+    setIsEmailModalOpen(true);
+  };
+
+  const handleSendCandidateEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCandidate) return;
+    setSendingEmail(true);
+    setEmailFeedback(null);
+
+    try {
+      const res = await sdk.inviteCandidate({
+        candidateId: selectedCandidate.candidateId,
+        candidateEmail: selectedCandidate.candidateEmail,
+        jobId: selectedCandidate.jobId,
+        jobTitle: selectedCandidate.jobTitle,
+        subject: emailSubject.trim(),
+        message: emailMessage.trim(),
+      });
+
+      setEmailFeedback({
+        type: 'success',
+        message: res.message || `Email successfully delivered to ${selectedCandidate.candidateEmail || selectedCandidate.candidateName}!`,
+      });
+      setTimeout(() => {
+        setIsEmailModalOpen(false);
+        setEmailFeedback(null);
+      }, 2000);
+    } catch (err: any) {
+      setEmailFeedback({
+        type: 'error',
+        message: err.message || 'Failed to dispatch email. Please check your SMTP configuration.',
+      });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -647,16 +699,26 @@ export default function EmployerKanbanPage() {
                       <p className="text-[11px] theme-muted">{selectedCandidate.resumeUrlSnapshot || 'resume.pdf'}</p>
                     </div>
                   </div>
-                  {selectedCandidate.resumeUrlSnapshot && (
-                    <a
-                      href={selectedCandidate.resumeUrlSnapshot}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm"
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEmailModal(selectedCandidate)}
+                      className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm cursor-pointer"
+                      title="Send Interview Invite or Email to Candidate"
                     >
-                      <ExternalLink className="w-3 h-3" /> Open Resume
-                    </a>
-                  )}
+                      <Send className="w-3 h-3" /> Email / Invite
+                    </button>
+                    {selectedCandidate.resumeUrlSnapshot && (
+                      <a
+                        href={selectedCandidate.resumeUrlSnapshot}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 rounded-lg border theme-border font-bold text-[11px] theme-text hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1 transition-all"
+                      >
+                        <ExternalLink className="w-3 h-3" /> Open Resume
+                      </a>
+                    )}
+                  </div>
                 </div>
 
                 {/* Recruiter Screening Answers */}
@@ -770,6 +832,101 @@ export default function EmployerKanbanPage() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Candidate Direct Email / Interview Outreach Modal */}
+      {isEmailModalOpen && selectedCandidate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-3 sm:p-4 md:p-6 overflow-y-auto animate-fade-in">
+          <div className="relative w-full max-w-lg my-auto flex flex-col bg-white dark:bg-slate-900 border theme-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/40">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0">
+                  <Send className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black theme-text">
+                    Email Candidate: {selectedCandidate.candidateName}
+                  </h3>
+                  <p className="text-[11px] theme-muted">{selectedCandidate.candidateEmail || 'Direct Candidate Inbox'}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEmailModalOpen(false)}
+                className="p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendCandidateEmail} className="p-4 sm:p-5 space-y-4 text-xs">
+              {emailFeedback && (
+                <div
+                  className={`p-3 rounded-xl flex items-center space-x-2 font-bold text-xs ${
+                    emailFeedback.type === 'success'
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                      : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                  }`}
+                >
+                  <span>{emailFeedback.message}</span>
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-black uppercase tracking-wider theme-text block">
+                  Subject Line <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-black uppercase tracking-wider theme-text block">
+                  Email Message Body <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={6}
+                  required
+                  value={emailMessage}
+                  onChange={(e) => setEmailMessage(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none font-sans"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t theme-border">
+                <button
+                  type="button"
+                  onClick={() => setIsEmailModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingEmail}
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center space-x-2 cursor-pointer disabled:opacity-50"
+                >
+                  {sendingEmail ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Sending Email...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Send Message</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -44,4 +44,24 @@ export declare class CandidatesController {
         savedJobIds: string[];
     }>;
     getSavedJobs(id: string): Promise<any[]>;
+    inviteCandidates(body: any, req: any): Promise<{
+        success: boolean;
+        message: string;
+        sentCount: number;
+        failedCount: number;
+        recipients: Array<{
+            email: string;
+            name: string;
+        }>;
+    }>;
+    inviteSingleCandidate(id: string, body: any, req: any): Promise<{
+        success: boolean;
+        message: string;
+        sentCount: number;
+        failedCount: number;
+        recipients: Array<{
+            email: string;
+            name: string;
+        }>;
+    }>;
 }

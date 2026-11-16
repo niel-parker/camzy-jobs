@@ -277,4 +277,20 @@ export class CandidatesController {
   async getSavedJobs(@Param('id') id: string) {
     return await this.candidatesService.getSavedJobs(id);
   }
+
+  @Post('invite')
+  @ApiOperation({ summary: 'Employer / Recruiter: Send job opportunity invitation email to candidate(s)' })
+  async inviteCandidates(@Body() body: any, @Req() req: any) {
+    return await this.candidatesService.inviteCandidate(body, req.user);
+  }
+
+  @Post(':id/invite')
+  @ApiOperation({ summary: 'Employer / Recruiter: Send job opportunity invitation email to single candidate' })
+  async inviteSingleCandidate(
+    @Param('id') id: string,
+    @Body() body: any,
+    @Req() req: any,
+  ) {
+    return await this.candidatesService.inviteCandidate({ ...body, candidateId: id }, req.user);
+  }
 }

@@ -19,4 +19,31 @@ export declare class MailService {
     }>;
     sendOtpEmail(toEmail: string, otpCode: string): Promise<boolean>;
     sendJobShareEmail(toEmail: string, senderName: string, jobTitle: string, companyName: string, jobUrl: string, personalNote?: string): Promise<boolean>;
+    sendBroadcastEmail(options: {
+        toEmail: string;
+        recipientName?: string;
+        subject: string;
+        htmlBody: string;
+        campaignName?: string;
+    }): Promise<boolean>;
+    sendCandidateInviteEmail(options: {
+        toEmail: string;
+        candidateName: string;
+        recruiterName: string;
+        companyName: string;
+        jobTitle: string;
+        jobUrl?: string;
+        message?: string;
+        location?: string;
+        salary?: string;
+    }): Promise<boolean>;
+    sendTeamInviteEmail(options: {
+        toEmail: string;
+        inviteeName: string;
+        inviterName: string;
+        companyName: string;
+        role: string;
+        loginUrl: string;
+        tempPassword?: string;
+    }): Promise<boolean>;
 }

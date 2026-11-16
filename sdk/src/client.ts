@@ -264,6 +264,25 @@ export class JobPortalSdk {
     return this.request<any[]>(`/candidates/${candidateId}/saved-jobs`);
   }
 
+  async inviteCandidate(data: {
+    candidateId?: string;
+    candidateIds?: string[];
+    candidateEmail?: string;
+    candidateEmails?: string[];
+    jobId?: string;
+    jobTitle?: string;
+    companyName?: string;
+    location?: string;
+    salary?: string;
+    message?: string;
+    subject?: string;
+  }): Promise<{ success: boolean; message: string; sentCount: number; failedCount: number; recipients?: any[] }> {
+    return this.request('/candidates/invite', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Theme Management Methods (Super Admin & Public Theme sync)
   async getActiveTheme(): Promise<ThemeConfig> {
     return this.request<ThemeConfig>('/theme/active');

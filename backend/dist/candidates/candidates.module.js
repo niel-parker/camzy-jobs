@@ -14,12 +14,17 @@ const candidates_service_1 = require("./candidates.service");
 const candidate_entity_1 = require("./entities/candidate.entity");
 const user_entity_1 = require("../users/entities/user.entity");
 const job_posting_entity_1 = require("../jobs/entities/job-posting.entity");
+const tenant_entity_1 = require("../tenants/entities/tenant.entity");
+const mail_module_1 = require("../mail/mail.module");
 let CandidatesModule = class CandidatesModule {
 };
 exports.CandidatesModule = CandidatesModule;
 exports.CandidatesModule = CandidatesModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([candidate_entity_1.Candidate, user_entity_1.User, job_posting_entity_1.JobPosting])],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([candidate_entity_1.Candidate, user_entity_1.User, job_posting_entity_1.JobPosting, tenant_entity_1.Tenant]),
+            mail_module_1.MailModule,
+        ],
         controllers: [candidates_controller_1.CandidatesController],
         providers: [candidates_service_1.CandidatesService],
         exports: [candidates_service_1.CandidatesService],

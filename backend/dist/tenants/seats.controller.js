@@ -21,11 +21,13 @@ const user_entity_1 = require("../users/entities/user.entity");
 const tenant_entity_1 = require("./entities/tenant.entity");
 const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-subscription.entity");
 const bcrypt = require("bcryptjs");
+const mail_service_1 = require("../mail/mail.service");
 let SeatsController = class SeatsController {
-    constructor(userRepo, tenantRepo, subRepo) {
+    constructor(userRepo, tenantRepo, subRepo, mailService) {
         this.userRepo = userRepo;
         this.tenantRepo = tenantRepo;
         this.subRepo = subRepo;
+        this.mailService = mailService;
     }
     async resolveTenant(tenantIdOrSlug) {
         if (tenantIdOrSlug && tenantIdOrSlug !== 'undefined' && tenantIdOrSlug !== 'null') {
@@ -100,6 +102,19 @@ let SeatsController = class SeatsController {
             }));
         }
         const updatedUsers = await this.userRepo.find({ where: { tenantId: tenant.id } });
+        try {
+            const siteUrl = process.env.FRONTEND_URL || 'https://jobs.camzytech.com';
+            await this.mailService.sendTeamInviteEmail({
+                toEmail: existing.email,
+                inviteeName: `${existing.firstName} ${existing.lastName}`.trim(),
+                inviterName: tenant.name,
+                companyName: tenant.name,
+                role: existing.role || 'Recruiter',
+                loginUrl: `${siteUrl}/employer/login`,
+            });
+        }
+        catch (mailErr) {
+        }
         return {
             message: `Invitation email sent to ${body.email}`,
             member: {
@@ -143,6 +158,7 @@ exports.SeatsController = SeatsController = __decorate([
     __param(2, (0, typeorm_1.InjectRepository)(tenant_subscription_entity_1.TenantSubscription)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
         typeorm_2.Repository,
-        typeorm_2.Repository])
+        typeorm_2.Repository,
+        mail_service_1.MailService])
 ], SeatsController);
 //# sourceMappingURL=seats.controller.js.map

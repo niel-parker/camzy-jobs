@@ -34,12 +34,14 @@ const govt_job_entity_1 = require("./entities/govt-job.entity");
 const govt_exam_calendar_entity_1 = require("./entities/govt-exam-calendar.entity");
 const govt_commission_portal_entity_1 = require("./entities/govt-commission-portal.entity");
 const demo_request_entity_1 = require("./entities/demo-request.entity");
+const mail_module_1 = require("../mail/mail.module");
 let AdminModule = class AdminModule {
 };
 exports.AdminModule = AdminModule;
 exports.AdminModule = AdminModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            mail_module_1.MailModule,
             typeorm_1.TypeOrmModule.forFeature([
                 job_posting_entity_1.JobPosting,
                 tenant_entity_1.Tenant,

@@ -79,6 +79,25 @@ export declare class JobPortalSdk {
         savedJobIds: string[];
     }>;
     getSavedJobs(candidateId: string): Promise<any[]>;
+    inviteCandidate(data: {
+        candidateId?: string;
+        candidateIds?: string[];
+        candidateEmail?: string;
+        candidateEmails?: string[];
+        jobId?: string;
+        jobTitle?: string;
+        companyName?: string;
+        location?: string;
+        salary?: string;
+        message?: string;
+        subject?: string;
+    }): Promise<{
+        success: boolean;
+        message: string;
+        sentCount: number;
+        failedCount: number;
+        recipients?: any[];
+    }>;
     getActiveTheme(): Promise<ThemeConfig>;
     updateActiveTheme(themeData: Partial<ThemeConfig>): Promise<ThemeConfig>;
     resetThemeToPreset(presetId: string): Promise<ThemeConfig>;

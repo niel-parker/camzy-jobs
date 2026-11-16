@@ -25,9 +25,11 @@ import { GovtJob } from './entities/govt-job.entity';
 import { GovtExamCalendarItem } from './entities/govt-exam-calendar.entity';
 import { GovtCommissionPortal } from './entities/govt-commission-portal.entity';
 import { DemoRequest } from './entities/demo-request.entity';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
+    MailModule,
     TypeOrmModule.forFeature([
       JobPosting,
       Tenant,

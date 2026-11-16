@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Candidate, ProfileVisibility } from './entities/candidate.entity';
 import { User, UserRole } from '../users/entities/user.entity';
 import { JobPosting } from '../jobs/entities/job-posting.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
+import { MailService } from '../mail/mail.service';
 
 export interface CandidateProfileDto {
   id: string;
@@ -106,6 +108,9 @@ export class CandidatesService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(JobPosting)
     private readonly jobRepo: Repository<JobPosting>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepo: Repository<Tenant>,
+    private readonly mailService: MailService,
   ) {}
 
   async findAll(params?: {
@@ -568,6 +573,181 @@ export class CandidatesService {
       visibility: c.visibility || ProfileVisibility.PUBLIC,
       updatedAt: c.updatedAt,
       createdAt: c.createdAt,
+    };
+  }
+
+  /**
+   * Employer / Recruiter: Send candidate job opening invitation email
+   */
+  async inviteCandidate(
+    dto: {
+      candidateId?: string;
+      candidateIds?: string[];
+      candidateEmail?: string;
+      candidateEmails?: string[];
+      jobId?: string;
+      jobTitle?: string;
+      companyName?: string;
+      location?: string;
+      salary?: string;
+      message?: string;
+      subject?: string;
+    },
+    currentUser?: any,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    sentCount: number;
+    failedCount: number;
+    recipients: Array<{ email: string; name: string }>;
+  }> {
+    interface Target {
+      email: string;
+      name: string;
+    }
+    const targetsMap = new Map<string, Target>();
+
+    // 1. Direct candidate emails
+    const rawEmails: string[] = [
+      ...(dto.candidateEmail ? [dto.candidateEmail] : []),
+      ...(Array.isArray(dto.candidateEmails) ? dto.candidateEmails : []),
+    ];
+    for (const em of rawEmails) {
+      const clean = em.trim().toLowerCase();
+      if (clean && clean.includes('@')) {
+        targetsMap.set(clean, { email: clean, name: clean.split('@')[0] });
+      }
+    }
+
+    // 2. Candidate IDs (from Candidate entity or User entity)
+    const rawIds: string[] = [
+      ...(dto.candidateId ? [dto.candidateId] : []),
+      ...(Array.isArray(dto.candidateIds) ? dto.candidateIds : []),
+    ];
+    if (rawIds.length > 0) {
+      try {
+        const candidates = await this.candidateRepo
+          .createQueryBuilder('candidate')
+          .innerJoinAndSelect('candidate.user', 'user')
+          .where('candidate.id IN (:...ids) OR user.id IN (:...ids) OR user.email IN (:...ids)', { ids: rawIds })
+          .getMany();
+
+        for (const c of candidates) {
+          if (c.user?.email) {
+            const clean = c.user.email.toLowerCase();
+            targetsMap.set(clean, {
+              email: clean,
+              name: `${c.user.firstName || ''} ${c.user.lastName || ''}`.trim() || clean.split('@')[0],
+            });
+          }
+        }
+      } catch (err) {
+        // Fallback or partial
+      }
+    }
+
+    // 3. Enrich missing names from user records
+    if (targetsMap.size > 0) {
+      try {
+        const emails = Array.from(targetsMap.keys());
+        const users = await this.userRepo
+          .createQueryBuilder('user')
+          .where('LOWER(user.email) IN (:...emails)', { emails })
+          .getMany();
+        for (const u of users) {
+          const clean = u.email.toLowerCase();
+          const t = targetsMap.get(clean);
+          if (t && u.firstName) {
+            t.name = `${u.firstName} ${u.lastName || ''}`.trim();
+          }
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    if (targetsMap.size === 0) {
+      throw new BadRequestException('No valid candidate recipient email or ID provided for invitation.');
+    }
+
+    // Resolve Job Details
+    let resolvedJobTitle = dto.jobTitle || 'Key Career Opportunity';
+    let resolvedCompanyName = dto.companyName || '';
+    let resolvedLocation = dto.location || '';
+    let resolvedSalary = dto.salary || '';
+    let resolvedJobUrl = 'https://jobs.camzytech.com/jobs';
+
+    if (dto.jobId) {
+      try {
+        const job = await this.jobRepo.findOne({
+          where: { id: dto.jobId },
+          relations: { tenant: true },
+        });
+        if (job) {
+          resolvedJobTitle = dto.jobTitle || job.title;
+          resolvedCompanyName = dto.companyName || job.tenant?.name || resolvedCompanyName;
+          resolvedLocation = dto.location || job.locationCity || job.locationCountry || (job.isRemote ? 'Remote' : '');
+          if (!resolvedSalary && (job.salaryMin || job.salaryMax)) {
+            resolvedSalary = `₹${(job.salaryMin ? Number(job.salaryMin) : 0).toLocaleString()} - ₹${(job.salaryMax ? Number(job.salaryMax) : 0).toLocaleString()}`;
+          }
+          resolvedJobUrl = `https://jobs.camzytech.com/jobs/${job.id}`;
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+
+    // Fallback company name from authenticated user tenant
+    if (!resolvedCompanyName && currentUser?.tenantId) {
+      try {
+        const t = await this.tenantRepo.findOne({ where: { id: currentUser.tenantId } });
+        if (t?.name) resolvedCompanyName = t.name;
+      } catch (err) {
+        // ignore
+      }
+    }
+    if (!resolvedCompanyName) {
+      resolvedCompanyName = 'Camzy Infotech Talent Team';
+    }
+
+    const recruiterName = currentUser
+      ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || 'Hiring Recruiter'
+      : 'Hiring Team';
+
+    const defaultMsg =
+      dto.message ||
+      `We reviewed your profile on Camzy Jobs and were impressed by your background. We would like to invite you to consider this opportunity with ${resolvedCompanyName}.`;
+
+    let sentCount = 0;
+    let failedCount = 0;
+    const targets = Array.from(targetsMap.values());
+
+    for (const target of targets) {
+      try {
+        const ok = await this.mailService.sendCandidateInviteEmail({
+          toEmail: target.email,
+          candidateName: target.name,
+          recruiterName,
+          companyName: resolvedCompanyName,
+          jobTitle: resolvedJobTitle,
+          jobUrl: resolvedJobUrl,
+          location: resolvedLocation,
+          salary: resolvedSalary,
+          message: defaultMsg,
+        });
+        if (ok) sentCount++;
+        else failedCount++;
+      } catch (err) {
+        failedCount++;
+      }
+    }
+
+    return {
+      success: sentCount > 0,
+      message: `Invitation successfully sent to ${sentCount} candidate(s)${failedCount > 0 ? ` (${failedCount} failed)` : ''}!`,
+      sentCount,
+      failedCount,
+      recipients: targets,
     };
   }
 }

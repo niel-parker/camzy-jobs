@@ -75,6 +75,100 @@ export default function CandidateSearchPage() {
   // Saved Searches in LocalStorage
   const [savedSearches, setSavedSearches] = useState<any[]>([]);
 
+  // Candidate Invite Modal State
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [inviteTargets, setInviteTargets] = useState<any[]>([]);
+  const [employerJobs, setEmployerJobs] = useState<any[]>([]);
+  const [loadingJobs, setLoadingJobs] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string>('');
+  const [inviteSubject, setInviteSubject] = useState<string>('');
+  const [inviteMessage, setInviteMessage] = useState<string>('');
+  const [customJobRole, setCustomJobRole] = useState<string>('');
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const [inviteFeedback, setInviteFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const handleOpenInviteModal = async (candidatesToInvite: any[]) => {
+    if (!candidatesToInvite || candidatesToInvite.length === 0) return;
+    setInviteTargets(candidatesToInvite);
+    setInviteFeedback(null);
+    setSendingInvite(false);
+
+    const firstCand = candidatesToInvite[0];
+    const candName = firstCand?.user ? `${firstCand.user.firstName} ${firstCand.user.lastName}`.trim() : (firstCand?.name || 'Candidate');
+    const multiple = candidatesToInvite.length > 1;
+
+    setInviteSubject(
+      multiple
+        ? `Career Opportunity Invitation from our Recruitment Team`
+        : `Job Opportunity Invitation for ${candName}`
+    );
+
+    setInviteMessage(
+      `We came across your profile on Camzy Jobs and were impressed with your experience and technical background. We have an opening that matches your skillset and would love to invite you to consider this role and connect with our hiring team.`
+    );
+
+    setIsInviteModalOpen(true);
+
+    if (employerJobs.length === 0) {
+      setLoadingJobs(true);
+      try {
+        const res: any = await sdk.getJobs();
+        const list = res?.data || res?.jobs || (Array.isArray(res) ? res : []);
+        setEmployerJobs(list);
+        if (list.length > 0) {
+          setSelectedJobId(list[0].id);
+          setInviteSubject(`Job Opportunity Invitation: ${list[0].title}`);
+        }
+      } catch (e) {
+        console.error('Failed to load employer jobs:', e);
+      } finally {
+        setLoadingJobs(false);
+      }
+    }
+  };
+
+  const handleSendInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inviteTargets.length === 0) return;
+    setSendingInvite(true);
+    setInviteFeedback(null);
+
+    const targetJob = employerJobs.find((j) => j.id === selectedJobId);
+    const jobTitle = targetJob?.title || customJobRole.trim() || 'Key Career Opening';
+
+    try {
+      const payload: any = {
+        candidateIds: inviteTargets.map((c) => c.id),
+        candidateEmails: inviteTargets.map((c) => c.user?.email || c.email).filter(Boolean),
+        jobId: targetJob ? targetJob.id : undefined,
+        jobTitle,
+        companyName: targetJob?.tenant?.name || targetJob?.companyName,
+        location: targetJob?.locationCity || targetJob?.locationCountry,
+        salary: targetJob?.salaryMin && targetJob?.salaryMax ? `₹${Number(targetJob.salaryMin).toLocaleString()} - ₹${Number(targetJob.salaryMax).toLocaleString()}` : undefined,
+        message: inviteMessage.trim(),
+        subject: inviteSubject.trim(),
+      };
+
+      const res = await sdk.inviteCandidate(payload);
+      setInviteFeedback({
+        type: 'success',
+        message: res.message || `Invitation successfully sent to ${inviteTargets.length} candidate(s)!`,
+      });
+      setTimeout(() => {
+        setIsInviteModalOpen(false);
+        setInviteFeedback(null);
+        setSelectedCandidateIds([]);
+      }, 2000);
+    } catch (err: any) {
+      setInviteFeedback({
+        type: 'error',
+        message: err.message || 'Failed to dispatch candidate invitation email. Please check your network and mail settings.',
+      });
+    } finally {
+      setSendingInvite(false);
+    }
+  };
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem('camzy_saved_searches');
@@ -833,10 +927,13 @@ export default function CandidateSearchPage() {
             <div className="flex items-center space-x-2">
               <button
                 type="button"
-                onClick={() => alert(`Initiating batch outreach for ${selectedCandidateIds.length} candidate(s)`)}
-                className="px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white font-bold transition-all cursor-pointer flex items-center gap-1"
+                onClick={() => {
+                  const selectedList = candidates.filter((c) => selectedCandidateIds.includes(c.id));
+                  handleOpenInviteModal(selectedList);
+                }}
+                className="px-3.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
               >
-                <Mail className="w-3.5 h-3.5" /> Send NVite / Email
+                <Send className="w-3.5 h-3.5" /> Send NVite / Invite Email
               </button>
               <button
                 type="button"
@@ -1170,9 +1267,20 @@ export default function CandidateSearchPage() {
                       <button
                         type="button"
                         onClick={() => handleToggleRevealContact(cand.id)}
-                        className="px-5 py-2 rounded bg-[#3b49df] hover:bg-[#2f3cb3] text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer"
+                        className="px-4 py-2 rounded border border-slate-300 dark:border-slate-700 hover:border-slate-400 theme-surface theme-text font-semibold text-xs transition-colors cursor-pointer"
                       >
                         {isContactRevealed ? 'Hide Contact' : 'View Contact'}
+                      </button>
+
+                      {/* Invite Candidate Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenInviteModal([cand])}
+                        className="px-4 py-2 rounded bg-[#3b49df] hover:bg-[#2f3cb3] text-white font-semibold text-xs shadow-sm transition-colors cursor-pointer flex items-center gap-1.5"
+                        title="Send Job Opening Invitation Email to Candidate"
+                      >
+                        <Send className="w-3 h-3" />
+                        <span>Invite Candidate</span>
                       </button>
                     </div>
                   </div>
@@ -1261,6 +1369,15 @@ export default function CandidateSearchPage() {
 
                   <button
                     type="button"
+                    onClick={() => handleOpenInviteModal([selectedCand])}
+                    className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Invite Candidate</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => {
                       if (selectedCand.resumeUrl && !selectedCand.resumeUrl.includes('example.com')) {
                         window.open(resolveResumeUrl(selectedCand.resumeUrl), '_blank');
@@ -1268,7 +1385,7 @@ export default function CandidateSearchPage() {
                         setResumePreviewCand(selectedCand);
                       }
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 font-extrabold text-xs hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Download CV</span>
@@ -1642,6 +1759,193 @@ export default function CandidateSearchPage() {
                   Close
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Candidate Opportunity Invitation (NVite) Modal */}
+        {isInviteModalOpen && (
+          <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto animate-fade-in">
+            <div className="relative w-full max-w-xl max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+              {/* Header */}
+              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-gradient-to-r from-indigo-50/50 to-transparent dark:from-indigo-950/30">
+                <div className="flex items-center space-x-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+                    <Send className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-black theme-text truncate">
+                      Invite Candidate{inviteTargets.length > 1 ? `s (${inviteTargets.length})` : ''} to Apply
+                    </h3>
+                    <p className="text-[11px] theme-muted truncate">
+                      Send a branded email invitation directly to verified candidate inboxes
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsInviteModalOpen(false)}
+                  className="p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Form Body */}
+              <form onSubmit={handleSendInvite} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs">
+                {/* Alert feedback */}
+                {inviteFeedback && (
+                  <div
+                    className={`p-3 rounded-xl flex items-center space-x-2 font-bold text-xs ${
+                      inviteFeedback.type === 'success'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                    }`}
+                  >
+                    <span>{inviteFeedback.message}</span>
+                  </div>
+                )}
+
+                {/* Selected Recipients Chip List */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black uppercase tracking-wider theme-text block">
+                    Recipient Candidate{inviteTargets.length > 1 ? 's' : ''} ({inviteTargets.length})
+                  </label>
+                  <div className="p-2.5 rounded-xl border theme-border bg-slate-50/60 dark:bg-slate-900/60 max-h-24 overflow-y-auto flex flex-wrap gap-1.5">
+                    {inviteTargets.map((c) => {
+                      const name = c.user ? `${c.user.firstName} ${c.user.lastName}`.trim() : (c.name || 'Candidate');
+                      const email = c.user?.email || c.email || 'Verified Candidate';
+                      return (
+                        <span
+                          key={c.id}
+                          className="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[11px] font-bold flex items-center gap-1.5"
+                        >
+                          <User className="w-3 h-3" />
+                          <span>{name}</span>
+                          <span className="opacity-60 text-[10px]">({email})</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Job Opening Selector */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                      Target Job Opening <span className="text-rose-500">*</span>
+                    </label>
+                    {loadingJobs && (
+                      <span className="text-[10px] theme-muted flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin text-indigo-500" /> Loading company jobs...
+                      </span>
+                    )}
+                  </div>
+
+                  <select
+                    value={selectedJobId}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedJobId(val);
+                      const target = employerJobs.find((j) => j.id === val);
+                      if (target) {
+                        setInviteSubject(`Job Opportunity Invitation: ${target.title}`);
+                      } else {
+                        setInviteSubject(`Career Opportunity Invitation from our Hiring Team`);
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {employerJobs.map((j) => (
+                      <option key={j.id} value={j.id}>
+                        {j.title} &bull; {j.locationCity || j.locationCountry || 'Remote'}
+                      </option>
+                    ))}
+                    <option value="">+ Custom Opening / Other Position</option>
+                  </select>
+                </div>
+
+                {/* Custom Job Role (when no existing job selected) */}
+                {!selectedJobId && (
+                  <div className="space-y-1.5 animate-in fade-in">
+                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                      Custom Position / Designation <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required={!selectedJobId}
+                      value={customJobRole}
+                      onChange={(e) => {
+                        setCustomJobRole(e.target.value);
+                        setInviteSubject(`Job Opportunity Invitation: ${e.target.value}`);
+                      }}
+                      placeholder="e.g. Senior Full Stack Engineer / Tech Lead"
+                      className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                )}
+
+                {/* Subject Line */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                    Email Subject Line <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={inviteSubject}
+                    onChange={(e) => setInviteSubject(e.target.value)}
+                    placeholder="e.g. Job Opportunity Invitation for Senior Engineer"
+                    className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                {/* Message Body */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
+                      Personal Message to Candidate <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-[10px] theme-muted font-bold">Included in email body</span>
+                  </div>
+                  <textarea
+                    rows={4}
+                    required
+                    value={inviteMessage}
+                    onChange={(e) => setInviteMessage(e.target.value)}
+                    placeholder="Write a personalized note introducing the opportunity..."
+                    className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-2 flex items-center justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsInviteModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={sendingInvite}
+                    className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center space-x-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {sendingInvite ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Sending Invitation Email...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Send Invitation ({inviteTargets.length})</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

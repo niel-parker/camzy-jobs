@@ -15,12 +15,16 @@ const seats_controller_1 = require("./seats.controller");
 const tenant_entity_1 = require("./entities/tenant.entity");
 const user_entity_1 = require("../users/entities/user.entity");
 const tenant_subscription_entity_1 = require("../subscriptions/entities/tenant-subscription.entity");
+const mail_module_1 = require("../mail/mail.module");
 let TenantsModule = class TenantsModule {
 };
 exports.TenantsModule = TenantsModule;
 exports.TenantsModule = TenantsModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([tenant_entity_1.Tenant, user_entity_1.User, tenant_subscription_entity_1.TenantSubscription])],
+        imports: [
+            typeorm_1.TypeOrmModule.forFeature([tenant_entity_1.Tenant, user_entity_1.User, tenant_subscription_entity_1.TenantSubscription]),
+            mail_module_1.MailModule,
+        ],
         controllers: [tenants_controller_1.TenantsController, seats_controller_1.SeatsController],
         providers: [tenants_service_1.TenantsService],
         exports: [tenants_service_1.TenantsService],

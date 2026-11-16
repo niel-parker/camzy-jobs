@@ -6,9 +6,13 @@ import { SeatsController } from './seats.controller';
 import { Tenant } from './entities/tenant.entity';
 import { User } from '../users/entities/user.entity';
 import { TenantSubscription } from '../subscriptions/entities/tenant-subscription.entity';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Tenant, User, TenantSubscription])],
+  imports: [
+    TypeOrmModule.forFeature([Tenant, User, TenantSubscription]),
+    MailModule,
+  ],
   controllers: [TenantsController, SeatsController],
   providers: [TenantsService],
   exports: [TenantsService],

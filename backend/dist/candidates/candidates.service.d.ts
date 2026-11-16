@@ -2,6 +2,8 @@ import { Repository } from 'typeorm';
 import { Candidate, ProfileVisibility } from './entities/candidate.entity';
 import { User } from '../users/entities/user.entity';
 import { JobPosting } from '../jobs/entities/job-posting.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
+import { MailService } from '../mail/mail.service';
 export interface CandidateProfileDto {
     id: string;
     userId: string;
@@ -97,7 +99,9 @@ export declare class CandidatesService {
     private readonly candidateRepo;
     private readonly userRepo;
     private readonly jobRepo;
-    constructor(candidateRepo: Repository<Candidate>, userRepo: Repository<User>, jobRepo: Repository<JobPosting>);
+    private readonly tenantRepo;
+    private readonly mailService;
+    constructor(candidateRepo: Repository<Candidate>, userRepo: Repository<User>, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, mailService: MailService);
     findAll(params?: {
         skill?: string;
         query?: string;
@@ -131,4 +135,26 @@ export declare class CandidatesService {
     }>;
     getSavedJobs(candidateOrUserId: string): Promise<any[]>;
     private mapToDto;
+    inviteCandidate(dto: {
+        candidateId?: string;
+        candidateIds?: string[];
+        candidateEmail?: string;
+        candidateEmails?: string[];
+        jobId?: string;
+        jobTitle?: string;
+        companyName?: string;
+        location?: string;
+        salary?: string;
+        message?: string;
+        subject?: string;
+    }, currentUser?: any): Promise<{
+        success: boolean;
+        message: string;
+        sentCount: number;
+        failedCount: number;
+        recipients: Array<{
+            email: string;
+            name: string;
+        }>;
+    }>;
 }

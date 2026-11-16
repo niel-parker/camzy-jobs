@@ -6,6 +6,7 @@ import { User, UserRole } from '../users/entities/user.entity';
 import { Tenant } from './entities/tenant.entity';
 import { TenantSubscription } from '../subscriptions/entities/tenant-subscription.entity';
 import * as bcrypt from 'bcryptjs';
+import { MailService } from '../mail/mail.service';
 
 export interface RecruiterMemberDto {
   id: string;
@@ -27,6 +28,7 @@ export class SeatsController {
     private readonly tenantRepo: Repository<Tenant>,
     @InjectRepository(TenantSubscription)
     private readonly subRepo: Repository<TenantSubscription>,
+    private readonly mailService: MailService,
   ) {}
 
   private async resolveTenant(tenantIdOrSlug?: string): Promise<Tenant> {
@@ -126,6 +128,21 @@ export class SeatsController {
     }
 
     const updatedUsers = await this.userRepo.find({ where: { tenantId: tenant.id } });
+
+    // Send actual team invitation email via MailService
+    try {
+      const siteUrl = process.env.FRONTEND_URL || 'https://jobs.camzytech.com';
+      await this.mailService.sendTeamInviteEmail({
+        toEmail: existing.email,
+        inviteeName: `${existing.firstName} ${existing.lastName}`.trim(),
+        inviterName: tenant.name,
+        companyName: tenant.name,
+        role: existing.role || 'Recruiter',
+        loginUrl: `${siteUrl}/employer/login`,
+      });
+    } catch (mailErr) {
+      // Non-blocking mail log
+    }
 
     return {
       message: `Invitation email sent to ${body.email}`,

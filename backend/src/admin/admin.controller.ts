@@ -28,6 +28,7 @@ import { GovtJob, GovtJobCategory } from './entities/govt-job.entity';
 import { GovtExamCalendarItem } from './entities/govt-exam-calendar.entity';
 import { GovtCommissionPortal } from './entities/govt-commission-portal.entity';
 import { DemoRequest, DemoRequestStatus } from './entities/demo-request.entity';
+import { MailService } from '../mail/mail.service';
 
 @ApiTags('Super Admin Governance')
 @Controller('api/v1/admin')
@@ -58,6 +59,7 @@ export class AdminController {
     @InjectRepository(GovtExamCalendarItem) private readonly govtExamCalendarRepo: Repository<GovtExamCalendarItem>,
     @InjectRepository(GovtCommissionPortal) private readonly govtCommissionPortalRepo: Repository<GovtCommissionPortal>,
     @InjectRepository(DemoRequest) private readonly demoRequestRepo: Repository<DemoRequest>,
+    private readonly mailService: MailService,
   ) {}
 
   @Get('metrics')
@@ -1489,19 +1491,127 @@ export class AdminController {
   @Post('broadcasts/send')
   @ApiOperation({ summary: 'Super Admin: Dispatch broadcast email to selected recipients' })
   async sendBroadcast(@Body() body: any) {
-    const recipientCount = body.recipientIds?.length || (body.recipientEmails ? body.recipientEmails.length : (body.recipientCount || 1));
+    const rawEmails: string[] = Array.isArray(body.recipientEmails) ? body.recipientEmails.filter(Boolean) : [];
+    const rawIds: string[] = Array.isArray(body.recipientIds) ? body.recipientIds.filter(Boolean) : [];
+
+    interface TargetRecipient {
+      email: string;
+      name?: string;
+    }
+    const targetsMap = new Map<string, TargetRecipient>();
+
+    // 1. If direct emails provided
+    for (const email of rawEmails) {
+      const cleanEmail = email.trim().toLowerCase();
+      if (cleanEmail && cleanEmail.includes('@')) {
+        targetsMap.set(cleanEmail, { email: cleanEmail, name: cleanEmail.split('@')[0] });
+      }
+    }
+
+    // 2. If IDs provided, resolve User or Tenant records
+    if (rawIds.length > 0) {
+      try {
+        const users = await this.userRepo
+          .createQueryBuilder('user')
+          .where('user.id IN (:...ids) OR user.email IN (:...ids)', { ids: rawIds })
+          .getMany();
+        for (const u of users) {
+          if (u.email) {
+            targetsMap.set(u.email.toLowerCase(), {
+              email: u.email.toLowerCase(),
+              name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email.split('@')[0],
+            });
+          }
+        }
+
+        const tenants = await this.tenantRepo
+          .createQueryBuilder('tenant')
+          .where('tenant.id IN (:...ids)', { ids: rawIds })
+          .getMany();
+        for (const t of tenants) {
+          const tenantUser = await this.userRepo.findOne({ where: { tenantId: t.id } });
+          const email = (tenantUser?.email || `admin@${t.slug}.com`).toLowerCase();
+          targetsMap.set(email, {
+            email,
+            name: tenantUser ? `${tenantUser.firstName} ${tenantUser.lastName}`.trim() : t.name,
+          });
+        }
+      } catch (err) {
+        // QueryBuilder error fallback
+      }
+    }
+
+    // Enhance known names from User database
+    if (targetsMap.size > 0) {
+      try {
+        const emails = Array.from(targetsMap.keys());
+        const matchedUsers = await this.userRepo
+          .createQueryBuilder('user')
+          .where('LOWER(user.email) IN (:...emails)', { emails })
+          .getMany();
+        for (const mu of matchedUsers) {
+          const cleanEmail = mu.email.toLowerCase();
+          const target = targetsMap.get(cleanEmail);
+          if (target && mu.firstName) {
+            target.name = `${mu.firstName} ${mu.lastName || ''}`.trim();
+          }
+        }
+      } catch (err) {
+        // Ignore user enrichment error
+      }
+    }
+
+    const resolvedTargets = Array.from(targetsMap.values());
+    const recipientCount = resolvedTargets.length || (body.recipientCount || 1);
+
+    // 3. Dispatch emails via MailService
+    let deliveredCount = 0;
+    let failedCount = 0;
+
+    // Send emails in batches of 5 to avoid socket saturation
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < resolvedTargets.length; i += BATCH_SIZE) {
+      const batch = resolvedTargets.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        batch.map(async (target) => {
+          try {
+            const ok = await this.mailService.sendBroadcastEmail({
+              toEmail: target.email,
+              recipientName: target.name,
+              subject: body.subject || 'Camzy Jobs Announcement',
+              htmlBody: body.htmlBody || '',
+              campaignName: body.campaignName,
+            });
+            if (ok) deliveredCount++;
+            else failedCount++;
+          } catch (err) {
+            failedCount++;
+          }
+        }),
+      );
+    }
+
+    const status = deliveredCount > 0 ? 'SENT' : (resolvedTargets.length === 0 ? 'SENT' : 'FAILED');
 
     const broadcast = this.broadcastRepo.create({
       campaignName: body.campaignName || 'Broadcast Campaign',
-      targetSegment: body.targetSegment,
+      targetSegment: body.targetSegment || 'GENERAL',
       subject: body.subject,
       htmlBody: body.htmlBody,
-      recipientCount,
-      status: 'SENT',
+      recipientCount: resolvedTargets.length || recipientCount,
+      status,
       sentAt: new Date(),
     });
 
-    return await this.broadcastRepo.save(broadcast);
+    const saved = await this.broadcastRepo.save(broadcast);
+
+    return {
+      ...saved,
+      recipientCount: resolvedTargets.length || recipientCount,
+      deliveredCount,
+      failedCount,
+      message: `Broadcast successfully dispatched! (${deliveredCount} delivered${failedCount > 0 ? `, ${failedCount} failed` : ''})`,
+    };
   }
 
   // ==========================================

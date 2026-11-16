@@ -23,6 +23,7 @@ import { GovtJob } from './entities/govt-job.entity';
 import { GovtExamCalendarItem } from './entities/govt-exam-calendar.entity';
 import { GovtCommissionPortal } from './entities/govt-commission-portal.entity';
 import { DemoRequest, DemoRequestStatus } from './entities/demo-request.entity';
+import { MailService } from '../mail/mail.service';
 export declare class AdminController {
     private readonly appConfigService;
     private readonly jobRepo;
@@ -49,7 +50,8 @@ export declare class AdminController {
     private readonly govtExamCalendarRepo;
     private readonly govtCommissionPortalRepo;
     private readonly demoRequestRepo;
-    constructor(appConfigService: AppConfigService, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, txnRepo: Repository<BillingTransaction>, userRepo: Repository<User>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>, domainRepo: Repository<RestrictedDomain>, loginActivityRepo: Repository<LoginActivity>, govtJobRepo: Repository<GovtJob>, govtExamCalendarRepo: Repository<GovtExamCalendarItem>, govtCommissionPortalRepo: Repository<GovtCommissionPortal>, demoRequestRepo: Repository<DemoRequest>);
+    private readonly mailService;
+    constructor(appConfigService: AppConfigService, jobRepo: Repository<JobPosting>, tenantRepo: Repository<Tenant>, candidateRepo: Repository<Candidate>, appRepo: Repository<JobApplication>, subRepo: Repository<TenantSubscription>, planRepo: Repository<SubscriptionPlan>, txnRepo: Repository<BillingTransaction>, userRepo: Repository<User>, locationRepo: Repository<Location>, skillRepo: Repository<SkillKeyword>, expRangeRepo: Repository<ExperienceRange>, taxonomyRepo: Repository<SystemTaxonomy>, cmsRepo: Repository<CmsPage>, blogPostRepo: Repository<BlogPost>, blogCatRepo: Repository<BlogCategory>, seoRepo: Repository<SeoConfig>, faqRepo: Repository<FaqItem>, broadcastRepo: Repository<EmailBroadcast>, domainRepo: Repository<RestrictedDomain>, loginActivityRepo: Repository<LoginActivity>, govtJobRepo: Repository<GovtJob>, govtExamCalendarRepo: Repository<GovtExamCalendarItem>, govtCommissionPortalRepo: Repository<GovtCommissionPortal>, demoRequestRepo: Repository<DemoRequest>, mailService: MailService);
     getDashboardMetrics(): Promise<{
         totalJobs: number;
         totalCompanies: number;
@@ -265,7 +267,20 @@ export declare class AdminController {
         page: number;
         limit: number;
     }>;
-    sendBroadcast(body: any): Promise<EmailBroadcast>;
+    sendBroadcast(body: any): Promise<{
+        recipientCount: any;
+        deliveredCount: number;
+        failedCount: number;
+        message: string;
+        id: string;
+        campaignName: string;
+        targetSegment: string;
+        subject: string;
+        htmlBody: string;
+        status: string;
+        sentAt: Date;
+        createdAt: Date;
+    }>;
     getPackages(): Promise<SubscriptionPlan[]>;
     createPackage(body: any): Promise<SubscriptionPlan>;
     updatePackage(id: string, body: any): Promise<SubscriptionPlan>;
