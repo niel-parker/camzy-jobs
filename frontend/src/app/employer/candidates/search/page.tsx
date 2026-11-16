@@ -59,7 +59,8 @@ export default function CandidateSearchPage() {
   const [candidates, setCandidates] = useState<any[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [hasSearched, setHasSearched] = useState<boolean>(false);
 
   // Multi-Select & Bulk Actions
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
@@ -104,6 +105,7 @@ export default function CandidateSearchPage() {
   // Main Candidate Fetch Function
   const fetchCandidates = async (pageToFetch: number = 1) => {
     setIsLoading(true);
+    setHasSearched(true);
     try {
       const params: any = {
         query: keywordQuery.trim() || undefined,
@@ -148,7 +150,9 @@ export default function CandidateSearchPage() {
   };
 
   useEffect(() => {
-    fetchCandidates(1);
+    if (hasSearched) {
+      fetchCandidates(1);
+    }
   }, [pageSize, sortBy]);
 
   const handleApplySearch = (e: React.FormEvent) => {
@@ -172,21 +176,18 @@ export default function CandidateSearchPage() {
     setIsBooleanOn(false);
     setSelectedCandidateIds([]);
     setCurrentPage(1);
-    sdk.searchCandidates({ page: 1, limit: pageSize }).then((res: any) => {
-      if (res?.candidates) {
-        setCandidates(res.candidates);
-        setTotalCount(res.total);
-      } else if (Array.isArray(res)) {
-        setCandidates(res);
-        setTotalCount(res.length);
-      }
-    });
+    setCandidates([]);
+    setTotalCount(0);
+    setHasSearched(false);
+    setIsLoading(false);
   };
 
   const handleQuickSearchClick = (preset: typeof RECENT_SEARCHES[0]) => {
     setKeywordQuery(preset.query);
     setMinExp(String(preset.minExp));
     setMaxExp(String(preset.maxExp));
+    setHasSearched(true);
+    setIsLoading(true);
     sdk.searchCandidates({
       query: preset.query,
       minExp: preset.minExp,
@@ -196,8 +197,23 @@ export default function CandidateSearchPage() {
     }).then((res: any) => {
       if (res?.candidates) {
         setCandidates(res.candidates);
-        setTotalCount(res.total);
+        setTotalCount(res.total || res.candidates.length);
+        setCurrentPage(1);
+        setTotalPages(res.totalPages || Math.ceil((res.total || res.candidates.length) / pageSize) || 1);
+      } else if (Array.isArray(res)) {
+        setCandidates(res);
+        setTotalCount(res.length);
+        setCurrentPage(1);
+        setTotalPages(Math.ceil(res.length / pageSize) || 1);
+      } else {
+        setCandidates([]);
+        setTotalCount(0);
       }
+    }).catch(() => {
+      setCandidates([]);
+      setTotalCount(0);
+    }).finally(() => {
+      setIsLoading(false);
     });
   };
 
@@ -455,8 +471,8 @@ export default function CandidateSearchPage() {
             </div>
           </div>
 
-          {/* Quick Filter Inputs: Experience, Location, Notice Period, Salary */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs pt-1">
+          {/* Quick Filter Inputs: Experience, Location */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-1">
             
             {/* Total Experience */}
             <div className="space-y-1">
@@ -512,51 +528,6 @@ export default function CandidateSearchPage() {
                 placeholder="Search city, state, or country..."
               />
             </div>
-
-            {/* Annual CTC / Salary Range in Lacs */}
-            <div className="space-y-1">
-              <label className="block font-bold theme-text flex items-center gap-1">
-                <IndianRupee className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Salary / CTC Range (₹ Lacs)</span>
-              </label>
-              <div className="flex items-center space-x-1.5">
-                <input
-                  type="number"
-                  placeholder="Min (e.g. 6)"
-                  value={minSalaryLacs}
-                  onChange={(e) => setMinSalaryLacs(e.target.value)}
-                  className="w-full px-2.5 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none font-mono"
-                />
-                <span className="theme-muted font-bold">to</span>
-                <input
-                  type="number"
-                  placeholder="Max (e.g. 25)"
-                  value={maxSalaryLacs}
-                  onChange={(e) => setMaxSalaryLacs(e.target.value)}
-                  className="w-full px-2.5 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none font-mono"
-                />
-              </div>
-            </div>
-
-            {/* Active Within Dropdown */}
-            <div className="space-y-1">
-              <label className="block font-bold theme-text flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Candidate Active In</span>
-              </label>
-              <select
-                value={activeInFilter}
-                onChange={(e) => setActiveInFilter(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none font-bold"
-              >
-                <option value="all">All Candidates (Anytime)</option>
-                <option value="15d">Active in last 15 days</option>
-                <option value="30d">Active in last 30 days</option>
-                <option value="3m">Active in last 3 months</option>
-                <option value="6m">Active in last 6 months</option>
-                <option value="1y">Active in last 1 year</option>
-              </select>
-            </div>
           </div>
 
           {/* Notice Period Chips Row (Resdex 1-click selectable chips as seen in Image 2) */}
@@ -589,12 +560,75 @@ export default function CandidateSearchPage() {
             </div>
           </div>
 
-          {/* Collapsible More Filters (Company, Designation, Exclude Keywords) */}
+          {/* Collapsible More Criteria (Salary, Candidate Active In, Company, Designation, Exclude Keywords) */}
           {showAdvancedFilters && (
-            <div className="p-4 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/40 space-y-3 text-xs animate-in fade-in duration-200">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-4 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/40 space-y-4 text-xs animate-in fade-in duration-200">
+              <div className="flex items-center justify-between pb-2 border-b theme-border">
+                <span className="text-[11px] font-black uppercase tracking-wider theme-text flex items-center gap-1.5">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-500" /> More Criteria & Additional Filters
+                </span>
+                {(minSalaryLacs || maxSalaryLacs || activeInFilter !== 'all' || companyFilter || designationFilter || excludeKeywords) && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                    Additional criteria active
+                  </span>
+                )}
+              </div>
+
+              {/* Row 1: Salary / CTC Range & Candidate Active In */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Annual CTC / Salary Range in Lacs */}
                 <div className="space-y-1">
-                  <label className="font-bold theme-text">Current / Previous Company</label>
+                  <label className="block font-bold theme-text flex items-center gap-1">
+                    <IndianRupee className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>Salary / CTC Range (₹ Lacs)</span>
+                  </label>
+                  <div className="flex items-center space-x-1.5">
+                    <input
+                      type="number"
+                      placeholder="Min (e.g. 6)"
+                      value={minSalaryLacs}
+                      onChange={(e) => setMinSalaryLacs(e.target.value)}
+                      className="w-full px-2.5 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none font-mono"
+                    />
+                    <span className="theme-muted font-bold">to</span>
+                    <input
+                      type="number"
+                      placeholder="Max (e.g. 25)"
+                      value={maxSalaryLacs}
+                      onChange={(e) => setMaxSalaryLacs(e.target.value)}
+                      className="w-full px-2.5 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Candidate Active In Dropdown */}
+                <div className="space-y-1">
+                  <label className="block font-bold theme-text flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>Candidate Active In</span>
+                  </label>
+                  <select
+                    value={activeInFilter}
+                    onChange={(e) => setActiveInFilter(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none font-bold"
+                  >
+                    <option value="all">All Candidates (Anytime)</option>
+                    <option value="15d">Active in last 15 days</option>
+                    <option value="30d">Active in last 30 days</option>
+                    <option value="3m">Active in last 3 months</option>
+                    <option value="6m">Active in last 6 months</option>
+                    <option value="1y">Active in last 1 year</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 2: Company, Designation, Exclude Keywords */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                <div className="space-y-1">
+                  <label className="font-bold theme-text flex items-center gap-1">
+                    <Building2 className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>Current / Previous Company</span>
+                  </label>
                   <input
                     type="text"
                     placeholder="e.g. TCS, Infosys, Capgemini, Google"
@@ -605,7 +639,10 @@ export default function CandidateSearchPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold theme-text">Candidate Designation</label>
+                  <label className="font-bold theme-text flex items-center gap-1">
+                    <User className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>Candidate Designation</span>
+                  </label>
                   <input
                     type="text"
                     placeholder="e.g. Lead Developer, Solution Architect"
@@ -616,7 +653,10 @@ export default function CandidateSearchPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-bold theme-text">Exclude Keywords</label>
+                  <label className="font-bold theme-text flex items-center gap-1">
+                    <EyeOff className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Exclude Keywords</span>
+                  </label>
                   <input
                     type="text"
                     placeholder="e.g. Intern, Trainee, Support"
@@ -638,7 +678,14 @@ export default function CandidateSearchPage() {
                 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
               >
                 {showAdvancedFilters ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                <span>{showAdvancedFilters ? 'Fewer Criteria' : '+ More Criteria (Company, Designation, Exclude)'}</span>
+                <span>
+                  {showAdvancedFilters
+                    ? 'Fewer Criteria'
+                    : '+ More Criteria (Salary, Active In, Company, Designation, Exclude)'}
+                </span>
+                {(minSalaryLacs || maxSalaryLacs || activeInFilter !== 'all' || companyFilter || designationFilter || excludeKeywords) && (
+                  <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse ml-0.5" />
+                )}
               </button>
             </div>
 
@@ -692,88 +739,90 @@ export default function CandidateSearchPage() {
         </div>
 
         {/* ========================================================= */}
-        {/* RESULTS SUMMARY & TOOLBAR */}
+        {/* RESULTS SUMMARY & TOOLBAR (Only shown after search) */}
         {/* ========================================================= */}
-        <div className="theme-surface border theme-border rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
-          
-          {/* AI Found Stats Banner */}
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-indigo-600 text-white font-black">
-              <User className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs font-black theme-text flex items-center gap-2">
-                <span>{isLoading ? 'Searching database...' : `Found ${totalCount.toLocaleString()} Candidates`}</span>
-                {keywordQuery && (
-                  <span className="text-indigo-600 dark:text-indigo-400 font-bold truncate max-w-xs">
-                    for &ldquo;{keywordQuery}&rdquo;
-                  </span>
-                )}
+        {hasSearched && (
+          <div className="theme-surface border theme-border rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 animate-in fade-in duration-200">
+            
+            {/* AI Found Stats Banner */}
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 rounded-xl bg-indigo-600 text-white font-black">
+                <User className="w-5 h-5" />
               </div>
-              <p className="text-[11px] theme-muted">
-                Displaying page {currentPage} of {totalPages} ({candidates.length} profiles loaded)
-              </p>
-            </div>
-          </div>
-
-          {/* Toolbar Right Controls: Sort, Multi-Select Info, View Switcher */}
-          <div className="flex flex-wrap items-center gap-3 text-xs">
-            {/* Multi-Select Select All */}
-            <button
-              type="button"
-              onClick={handleSelectAll}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border theme-border font-bold theme-text hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-            >
-              {selectedCandidateIds.length === candidates.length && candidates.length > 0 ? (
-                <CheckSquare className="w-4 h-4 text-indigo-600" />
-              ) : (
-                <Square className="w-4 h-4 text-slate-400" />
-              )}
-              <span>Select All ({selectedCandidateIds.length})</span>
-            </button>
-
-            {/* Sort Dropdown */}
-            <div className="flex items-center space-x-1.5">
-              <span className="theme-muted font-bold text-[11px]">Sort:</span>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-2.5 py-1.5 rounded-xl border theme-border theme-surface theme-text font-bold text-xs focus:outline-none"
-              >
-                <option value="relevance">Relevance</option>
-                <option value="exp_desc">Experience: High to Low</option>
-                <option value="exp_asc">Experience: Low to High</option>
-                <option value="active">Recently Active</option>
-                <option value="salary_asc">Salary: Low to High</option>
-                <option value="salary_desc">Salary: High to Low</option>
-              </select>
+              <div>
+                <div className="text-xs font-black theme-text flex items-center gap-2">
+                  <span>{isLoading ? 'Searching database...' : `Found ${totalCount.toLocaleString()} Candidates`}</span>
+                  {keywordQuery && (
+                    <span className="text-indigo-600 dark:text-indigo-400 font-bold truncate max-w-xs">
+                      for &ldquo;{keywordQuery}&rdquo;
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] theme-muted">
+                  Displaying page {currentPage} of {totalPages} ({candidates.length} profiles loaded)
+                </p>
+              </div>
             </div>
 
-            {/* Layout Toggle (Card vs Compact) */}
-            <div className="border theme-border rounded-xl p-0.5 flex items-center">
+            {/* Toolbar Right Controls: Sort, Multi-Select Info, View Switcher */}
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              {/* Multi-Select Select All */}
               <button
                 type="button"
-                onClick={() => setViewLayout('card')}
-                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
-                  viewLayout === 'card' ? 'bg-indigo-600 text-white' : 'theme-muted hover:theme-text'
-                }`}
-                title="Wide Card View"
+                onClick={handleSelectAll}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border theme-border font-bold theme-text hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
-                Card View
+                {selectedCandidateIds.length === candidates.length && candidates.length > 0 ? (
+                  <CheckSquare className="w-4 h-4 text-indigo-600" />
+                ) : (
+                  <Square className="w-4 h-4 text-slate-400" />
+                )}
+                <span>Select All ({selectedCandidateIds.length})</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setViewLayout('compact')}
-                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
-                  viewLayout === 'compact' ? 'bg-indigo-600 text-white' : 'theme-muted hover:theme-text'
-                }`}
-                title="Compact View"
-              >
-                Compact
-              </button>
+
+              {/* Sort Dropdown */}
+              <div className="flex items-center space-x-1.5">
+                <span className="theme-muted font-bold text-[11px]">Sort:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-2.5 py-1.5 rounded-xl border theme-border theme-surface theme-text font-bold text-xs focus:outline-none"
+                >
+                  <option value="relevance">Relevance</option>
+                  <option value="exp_desc">Experience: High to Low</option>
+                  <option value="exp_asc">Experience: Low to High</option>
+                  <option value="active">Recently Active</option>
+                  <option value="salary_asc">Salary: Low to High</option>
+                  <option value="salary_desc">Salary: High to Low</option>
+                </select>
+              </div>
+
+              {/* Layout Toggle (Card vs Compact) */}
+              <div className="border theme-border rounded-xl p-0.5 flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setViewLayout('card')}
+                  className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                    viewLayout === 'card' ? 'bg-indigo-600 text-white' : 'theme-muted hover:theme-text'
+                  }`}
+                  title="Wide Card View"
+                >
+                  Card View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewLayout('compact')}
+                  className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                    viewLayout === 'compact' ? 'bg-indigo-600 text-white' : 'theme-muted hover:theme-text'
+                  }`}
+                  title="Compact View"
+                >
+                  Compact
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Bulk Action Bar (When Candidates are Selected) */}
         {selectedCandidateIds.length > 0 && (
@@ -806,7 +855,35 @@ export default function CandidateSearchPage() {
         {isLoading ? (
           <div className="py-24 text-center space-y-3">
             <Loader2 className="w-9 h-9 animate-spin text-indigo-600 mx-auto" />
-            <p className="text-xs font-bold theme-muted">Searching through 11,750+ candidate resumes...</p>
+            <p className="text-xs font-bold theme-muted">Searching through verified candidate resumes...</p>
+          </div>
+        ) : !hasSearched ? (
+          <div className="py-20 theme-surface border theme-border rounded-2xl text-center space-y-4 p-8 animate-in fade-in duration-200">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center mx-auto shadow-sm">
+              <Search className="w-8 h-8" />
+            </div>
+            <div className="space-y-1.5 max-w-md mx-auto">
+              <h3 className="text-lg font-black theme-text">Search India&apos;s Verified Talent Network</h3>
+              <p className="text-xs theme-muted">
+                Enter target keywords, job designations, experience range, or preferred locations above and click <span className="font-extrabold text-indigo-600 dark:text-indigo-400">&ldquo;Search Candidates&rdquo;</span> to load profiles.
+              </p>
+            </div>
+            {/* Quick 1-click popular search tags */}
+            <div className="pt-2">
+              <span className="text-[11px] font-bold theme-muted block mb-2">Or click a popular search preset:</span>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {RECENT_SEARCHES.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => handleQuickSearchClick(preset)}
+                    className="px-3.5 py-1.5 rounded-xl border theme-border theme-surface hover:border-indigo-500 text-xs font-bold theme-text hover:text-indigo-600 transition-all cursor-pointer shadow-sm"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         ) : candidates.length === 0 ? (
           <div className="py-20 theme-surface border theme-border rounded-2xl text-center space-y-4 p-8">
