@@ -19,7 +19,7 @@ let MailService = MailService_1 = class MailService {
         this.initTransporter();
     }
     initTransporter() {
-        const host = process.env.MAIL_HOST || 'smtp.mailgun.org';
+        const host = process.env.MAIL_HOST || 'localhost';
         const port = Number(process.env.MAIL_PORT) || 587;
         const user = process.env.MAIL_USERNAME;
         const pass = process.env.MAIL_PASSWORD;
@@ -41,7 +41,7 @@ let MailService = MailService_1 = class MailService {
         });
     }
     async verifyConnection() {
-        const host = process.env.MAIL_HOST || 'smtp.mailgun.org';
+        const host = process.env.MAIL_HOST || 'localhost';
         const port = Number(process.env.MAIL_PORT) || 587;
         const user = process.env.MAIL_USERNAME;
         try {

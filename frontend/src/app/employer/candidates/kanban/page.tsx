@@ -91,7 +91,7 @@ export default function EmployerKanbanPage() {
     } catch (err: any) {
       setEmailFeedback({
         type: 'error',
-        message: err.message || 'Failed to dispatch email. Please check your SMTP configuration.',
+        message: err.message || 'Failed to dispatch email. Please try again.',
       });
     } finally {
       setSendingEmail(false);

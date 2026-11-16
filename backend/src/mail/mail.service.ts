@@ -11,7 +11,7 @@ export class MailService {
   }
 
   private initTransporter() {
-    const host = process.env.MAIL_HOST || 'smtp.mailgun.org';
+    const host = process.env.MAIL_HOST || 'localhost';
     const port = Number(process.env.MAIL_PORT) || 587;
     const user = process.env.MAIL_USERNAME;
     const pass = process.env.MAIL_PASSWORD;
@@ -39,7 +39,7 @@ export class MailService {
    * Diagnostic method to test SMTP server handshake and authentication
    */
   async verifyConnection(): Promise<{ success: boolean; message: string; host?: string; port?: number; user?: string; error?: any }> {
-    const host = process.env.MAIL_HOST || 'smtp.mailgun.org';
+    const host = process.env.MAIL_HOST || 'localhost';
     const port = Number(process.env.MAIL_PORT) || 587;
     const user = process.env.MAIL_USERNAME;
 

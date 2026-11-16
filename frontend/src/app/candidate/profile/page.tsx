@@ -847,7 +847,7 @@ export default function CandidateProfilePage() {
       const res = await sdk.requestOtp(verifyIdentifier);
       setVerifyOtpSent(true);
       setResendTimer(180); // 3-Minute Resend Timer
-      setVerifyMsg(res.message || 'OTP verification code dispatched via Mailgun SMTP.');
+      setVerifyMsg(res.message || 'OTP verification code dispatched successfully.');
     } catch (err: any) {
       setVerifyMsg(err.message || 'Failed to send OTP code.');
     } finally {
@@ -2093,7 +2093,7 @@ export default function CandidateProfilePage() {
           </div>
         )}
 
-        {/* VERIFICATION MODAL WITH 3-MINUTE MAILGUN OTP */}
+        {/* VERIFICATION MODAL WITH 3-MINUTE OTP */}
         {verifyModalTarget && (
           <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
             <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95">
@@ -2122,7 +2122,7 @@ export default function CandidateProfilePage() {
                 {!verifyOtpSent ? (
                   <div className="space-y-4 text-xs">
                     <p className="theme-muted">
-                      We will send a 6-digit verification code to <strong>{verifyIdentifier}</strong> via Mailgun SMTP. Valid for <strong>3 minutes</strong>.
+                      We will send a 6-digit verification code to <strong>{verifyIdentifier}</strong>. Valid for <strong>3 minutes</strong>.
                     </p>
                     <button
                       type="button"

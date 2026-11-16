@@ -50,7 +50,7 @@ export default function LoginPage() {
       setOtpSent(true);
       setResendTimer(180); // Start 3-minute timer
       if (res.otpCode) setDemoOtp(res.otpCode);
-      setSuccessMsg(res.message || 'OTP verification code dispatched via Mailgun SMTP.');
+      setSuccessMsg(res.message || 'OTP verification code dispatched successfully.');
     } catch (err: any) {
       setError(err.message || 'Failed to dispatch verification OTP. Please try again.');
     } finally {
@@ -219,7 +219,7 @@ export default function LoginPage() {
                     />
                   </div>
                   <p className="text-[11px] theme-muted mt-1.5">
-                    Enter your email to receive a 6-digit OTP code via Mailgun SMTP. If your account exists, you will be logged in; otherwise a candidate account is created instantly.
+                    Enter your email to receive a 6-digit OTP code. If your account exists, you will be logged in; otherwise a candidate account is created instantly.
                   </p>
                 </div>
 
@@ -229,7 +229,7 @@ export default function LoginPage() {
                   className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-sm shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center space-x-2"
                 >
                   <ShieldCheck className="h-4 w-4" />
-                  <span>{loading ? 'Sending OTP via Mailgun...' : 'Get Verification OTP'}</span>
+                  <span>{loading ? 'Sending OTP...' : 'Get Verification OTP'}</span>
                 </button>
               </form>
             ) : (

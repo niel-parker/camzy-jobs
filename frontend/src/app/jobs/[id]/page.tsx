@@ -246,7 +246,7 @@ export default function JobDetailPage() {
         personalNote: shareMessage,
       });
 
-      setShareSuccess(res.message || 'Job recommendation sent successfully via Mailgun SMTP!');
+      setShareSuccess(res.message || 'Job recommendation sent successfully!');
       setTimeout(() => {
         setIsShareModalOpen(false);
         setShareSuccess(null);
@@ -540,7 +540,7 @@ export default function JobDetailPage() {
         </div>
       </div>
 
-      {/* SHARE JOB MODAL (Email to Friend via Mailgun) */}
+      {/* SHARE JOB MODAL (Email to Friend) */}
       {isShareModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
           <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
@@ -609,7 +609,7 @@ export default function JobDetailPage() {
                     className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {shareLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    Send Job Email via Mailgun
+                    Send Job Email
                   </button>
                 </div>
               </form>
