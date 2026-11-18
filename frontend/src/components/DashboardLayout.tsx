@@ -4,9 +4,9 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from '../context/ThemeContext';
-import { 
-  LayoutDashboard, Briefcase, Users, FileText, Bookmark, Settings, 
-  ShieldCheck, Palette, Bell, Search, ChevronLeft, ChevronRight, 
+import {
+  LayoutDashboard, Briefcase, Users, FileText, Bookmark, Settings,
+  ShieldCheck, Palette, Bell, Search, ChevronLeft, ChevronRight,
   LogOut, User, Building2, Plus, Sparkles, UserCheck, Lock, LogIn, ChevronDown, Eye, Download,
   Globe, BookOpen, HelpCircle, Send, CreditCard, Receipt, MapPin, Layers, ShieldAlert, Activity, Landmark,
   Mail, Phone, CheckCircle2, AlertCircle, Loader2, Headphones
@@ -365,25 +365,25 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
   // Strict Role Authorization Check - ALL HOOKS MUST REMAIN AT TOP LEVEL
   const isAuthorized = React.useMemo(() => {
     if (!user) return false;
-    
+
     if (role === 'SUPER_ADMIN') {
       return user.role === 'SUPER_ADMIN';
     }
-    
+
     if (role === 'EMPLOYER') {
       return (
-        user.role === 'COMPANY_ADMIN' || 
-        user.role === 'RECRUITER' || 
-        user.role === 'CONSULTANCY_ADMIN' || 
+        user.role === 'COMPANY_ADMIN' ||
+        user.role === 'RECRUITER' ||
+        user.role === 'CONSULTANCY_ADMIN' ||
         user.role === 'AGENCY_AGENT' ||
         user.role === 'SUPER_ADMIN'
       );
     }
-    
+
     if (role === 'CANDIDATE') {
       return user.role === 'CANDIDATE' || user.role === 'SUPER_ADMIN';
     }
-    
+
     return false;
   }, [user, role]);
 
@@ -493,11 +493,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
       { label: 'Manage Blogs', href: '/admin/blogs', icon: BookOpen, section: 'Content & Growth' },
       { label: 'SEO Meta Manager', href: '/admin/seo', icon: Globe, section: 'Content & Growth' },
       { label: 'FAQs Management', href: '/admin/faqs', icon: HelpCircle, section: 'Content & Growth' },
-      { 
-        label: 'Email Broadcasting', 
-        href: '/admin/broadcast', 
-        icon: Send, 
-        badge: '6 Lists', 
+      {
+        label: 'Email Broadcasting',
+        href: '/admin/broadcast',
+        icon: Send,
+        badge: '6 Lists',
         section: 'Content & Growth',
         subItems: [
           { label: 'Inactive Users', href: '/admin/broadcast?segment=INACTIVE_USERS', segmentKey: 'INACTIVE_USERS' },
@@ -523,9 +523,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 theme-transition">
       {/* SIDEBAR NAVIGATION */}
       <aside
-        className={`fixed top-0 left-0 z-40 h-screen theme-surface border-r theme-border transition-all duration-300 flex flex-col justify-between ${
-          isSidebarCollapsed ? 'w-20' : 'w-64'
-        }`}
+        className={`fixed top-0 left-0 z-40 h-screen theme-surface border-r theme-border transition-all duration-300 flex flex-col justify-between ${isSidebarCollapsed ? 'w-20' : 'w-64'
+          }`}
       >
         {/* Sidebar Header */}
         <div className="p-4 border-b theme-border flex items-center justify-between">
@@ -564,8 +563,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
             const isActive = isRecruiterViewItem
               ? (typeof window !== 'undefined' && pathname === '/candidate/profile' && window.location.search.includes('view=recruiter'))
               : isResumeItem
-              ? (typeof window !== 'undefined' && pathname === '/candidate/profile' && window.location.search.includes('view=resume'))
-              : (pathname === item.href && (item.href !== '/candidate/profile' || typeof window === 'undefined' || (!window.location.search.includes('view=recruiter') && !window.location.search.includes('view=resume'))));
+                ? (typeof window !== 'undefined' && pathname === '/candidate/profile' && window.location.search.includes('view=resume'))
+                : (pathname === item.href && (item.href !== '/candidate/profile' || typeof window === 'undefined' || (!window.location.search.includes('view=recruiter') && !window.location.search.includes('view=resume'))));
 
             const isMenuExpanded = expandedMenus[item.href] ?? (pathname.startsWith(item.href));
 
@@ -588,11 +587,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
                       onClick={() => {
                         setExpandedMenus(prev => ({ ...prev, [item.href]: !isMenuExpanded }));
                       }}
-                      className={`flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition-all relative cursor-pointer select-none ${
-                        isActive
-                          ? 'bg-indigo-600 text-white shadow-md'
-                          : 'theme-text hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                      }`}
+                      className={`flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition-all relative cursor-pointer select-none ${isActive
+                        ? 'bg-indigo-600 text-white shadow-md'
+                        : 'theme-text hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                        }`}
                       title={item.label}
                     >
                       <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-indigo-500'}`} />
@@ -619,11 +617,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
                             <Link
                               key={sub.href}
                               href={sub.href}
-                              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${
-                                isSubActive
-                                  ? 'bg-slate-200 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-extrabold shadow-sm'
-                                  : 'theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800/40'
-                              }`}
+                              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${isSubActive
+                                ? 'bg-slate-200 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-extrabold shadow-sm'
+                                : 'theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800/40'
+                                }`}
                             >
                               <span className={`w-1.5 h-1.5 rounded-full ${isSubActive ? 'bg-indigo-600 dark:bg-indigo-400' : 'bg-slate-400/40'}`} />
                               <span>{sub.label}</span>
@@ -644,11 +641,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
                         window.dispatchEvent(new CustomEvent('open-resume-view'));
                       }
                     }}
-                    className={`flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition-all relative ${
-                      isActive
-                        ? 'bg-indigo-600 text-white shadow-md'
-                        : 'theme-text hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                    }`}
+                    className={`flex items-center space-x-3 px-3.5 py-3 rounded-xl text-xs font-bold transition-all relative ${isActive
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'theme-text hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                      }`}
                     title={item.label}
                   >
                     <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-indigo-500'}`} />

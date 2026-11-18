@@ -410,7 +410,7 @@ let JobsService = class JobsService {
             tenantId: job.tenantId,
             title: job.title,
             companyName: job.tenant ? job.tenant.name : 'TechCorp Global',
-            companyLogoUrl: job.tenant ? job.tenant.logoUrl : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=120',
+            companyLogoUrl: (job.tenant && job.tenant.logoUrl) ? job.tenant.logoUrl : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=120',
             isConsultancy: false,
             location: job.locationCity || 'Remote',
             locationCountry: job.locationCountry || 'India',

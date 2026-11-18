@@ -4,6 +4,7 @@ import React from 'react';
 import { JobListing } from '@job-portal/sdk';
 import { Building2, MapPin, IndianRupee, Calendar, Sparkles, Award, ArrowUpRight } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { resolveMediaUrl } from '../utils/media';
 
 interface JobCardProps {
   job: JobListing;
@@ -11,6 +12,7 @@ interface JobCardProps {
 
 export const JobCard: React.FC<JobCardProps> = ({ job }) => {
   const { theme } = useTheme();
+  const [logoError, setLogoError] = React.useState(false);
 
   return (
     <div className="glass-card rounded-2xl p-6 transition-all duration-300 hover:border-indigo-500/40 hover:shadow-xl hover:shadow-indigo-500/5 group relative overflow-hidden">
@@ -29,8 +31,13 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
       <div className="flex items-start gap-4">
         {/* Company / Agency Logo */}
         <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
-          {job.companyLogoUrl ? (
-            <img src={job.companyLogoUrl} alt={job.companyName} className="w-full h-full object-cover" />
+          {job.companyLogoUrl && !logoError ? (
+            <img
+              src={resolveMediaUrl(job.companyLogoUrl)}
+              alt={job.companyName}
+              className="w-full h-full object-cover"
+              onError={() => setLogoError(true)}
+            />
           ) : (
             <Building2 className="w-7 h-7 text-indigo-500" />
           )}

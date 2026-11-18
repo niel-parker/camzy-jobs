@@ -4,10 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '../../../components/DashboardLayout';
 import { 
   Briefcase, Plus, Sparkles, Users, Loader2, Pencil, Trash2, X, Check, 
-  RotateCcw, Calendar, Clock, AlertCircle, Info, Lock, ChevronLeft, ChevronRight 
+  RotateCcw, Calendar, Clock, AlertCircle, Info, Lock, ChevronLeft, ChevronRight,
+  Building2
 } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import { JobListing } from '@job-portal/sdk';
+import { resolveMediaUrl } from '../../../utils/media';
 import { LocationSearchDropdown } from '../../../components/LocationSearchDropdown';
 import { ExperienceRangeSelector } from '../../../components/ExperienceRangeSelector';
 import { SkillKeywordAutocomplete } from '../../../components/SkillKeywordAutocomplete';
@@ -353,18 +355,36 @@ export default function EmployerJobListingsPage() {
                     return (
                       <tr key={job.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                         <td className="py-4 px-5">
-                          <div className="font-extrabold theme-text text-sm hover:text-indigo-600 transition-colors">
-                            {job.title}
-                          </div>
-                          <div className="text-xs theme-muted flex flex-wrap items-center gap-1.5 mt-1 font-medium">
-                            <span className="font-semibold text-slate-700 dark:text-slate-300">{job.category}</span>
-                            <span>•</span>
-                            <span>{job.location} {job.isRemote && '(Remote)'}</span>
-                            {job.isFeatured && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                                <Sparkles className="h-3 w-3 mr-0.5" /> Boosted
-                              </span>
-                            )}
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 border theme-border flex items-center justify-center overflow-hidden flex-shrink-0 shadow-xs">
+                              {job.companyLogoUrl ? (
+                                <img
+                                  src={resolveMediaUrl(job.companyLogoUrl)}
+                                  alt={job.companyName || 'Company'}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = 'none';
+                                  }}
+                                />
+                              ) : (
+                                <Building2 className="w-5 h-5 text-indigo-500" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-extrabold theme-text text-sm hover:text-indigo-600 transition-colors truncate">
+                                {job.title}
+                              </div>
+                              <div className="text-xs theme-muted flex flex-wrap items-center gap-1.5 mt-0.5 font-medium">
+                                <span className="font-semibold text-slate-700 dark:text-slate-300">{job.category}</span>
+                                <span>•</span>
+                                <span>{job.location} {job.isRemote && '(Remote)'}</span>
+                                {job.isFeatured && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                                    <Sparkles className="h-3 w-3 mr-0.5" /> Boosted
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </td>
 

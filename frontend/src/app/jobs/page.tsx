@@ -9,6 +9,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { LocationSearchDropdown } from '../../components/LocationSearchDropdown';
 import { MultiSkillSearchInput } from '../../components/MultiSkillSearchInput';
 import { ExperienceRangeItem } from '@job-portal/sdk';
+import { resolveMediaUrl } from '../../utils/media';
 
 interface ScreeningQ {
   id: string;
@@ -22,6 +23,7 @@ interface JobItem {
   id: string;
   title: string;
   companyName: string;
+  companyLogoUrl?: string;
   companySlug: string;
   companyType: 'Product Based' | 'MNC' | 'Startup' | 'Unicorn';
   location: string;
@@ -143,6 +145,7 @@ function JobDirectoryContent() {
             id: j.id,
             title: j.title,
             companyName: j.companyName || 'Verified Corporate Partner',
+            companyLogoUrl: j.companyLogoUrl || '',
             companySlug: j.companySlug || 'company',
             companyType: 'Product Based',
             location: j.locationCity
@@ -617,32 +620,49 @@ function JobDirectoryContent() {
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div className="space-y-1.5 flex-1">
-                    <div className="flex items-center space-x-2">
-                      <Link href={`/jobs/${job.id}`}>
-                        <h2 className="text-lg font-bold theme-text hover:text-indigo-500 cursor-pointer transition-colors">
-                          {job.title}
-                        </h2>
-                      </Link>
-                      {job.isFeatured && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400">
-                          <Sparkles className="h-3 w-3 mr-0.5" /> Featured
-                        </span>
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    {/* Company Logo Thumbnail */}
+                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 border theme-border flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+                      {job.companyLogoUrl ? (
+                        <img
+                          src={resolveMediaUrl(job.companyLogoUrl)}
+                          alt={job.companyName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-indigo-500" />
                       )}
                     </div>
 
-                    <div className="flex items-center space-x-2 text-xs font-semibold">
-                      <span className="text-indigo-500">{job.companyName}</span>
-                      <span className="theme-muted">•</span>
-                      <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] theme-text">
-                        {job.companyType}
-                      </span>
-                      <span className="theme-muted">•</span>
-                      <span className="text-emerald-500 font-bold">{job.matchScore}% Match Score</span>
-                    </div>
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <Link href={`/jobs/${job.id}`}>
+                          <h2 className="text-lg font-bold theme-text hover:text-indigo-500 cursor-pointer transition-colors">
+                            {job.title}
+                          </h2>
+                        </Link>
+                        {job.isFeatured && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                            <Sparkles className="h-3 w-3 mr-0.5" /> Featured
+                          </span>
+                        )}
+                      </div>
 
-                    {/* Metadata Pill Specs */}
-                    <div className="flex flex-wrap items-center gap-3 pt-1 text-xs theme-muted">
+                      <div className="flex items-center space-x-2 text-xs font-semibold">
+                        <span className="text-indigo-500">{job.companyName}</span>
+                        <span className="theme-muted">•</span>
+                        <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] theme-text">
+                          {job.companyType}
+                        </span>
+                        <span className="theme-muted">•</span>
+                        <span className="text-emerald-500 font-bold">{job.matchScore}% Match Score</span>
+                      </div>
+
+                      {/* Metadata Pill Specs */}
+                      <div className="flex flex-wrap items-center gap-3 pt-1 text-xs theme-muted">
                       <span className="inline-flex items-center">
                         <Briefcase className="h-3.5 w-3.5 mr-1 text-indigo-500" /> {job.experienceYears}
                       </span>
@@ -673,6 +693,7 @@ function JobDirectoryContent() {
                       ))}
                     </div>
                   </div>
+                </div>
 
                   {/* Actions */}
                   <div className="flex sm:flex-col items-center sm:items-end justify-between gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 theme-border">

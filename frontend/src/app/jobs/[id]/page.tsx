@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTheme } from '../../../context/ThemeContext';
 import { JobListing } from '@job-portal/sdk';
+import { resolveMediaUrl } from '../../../utils/media';
 import { 
   Building2, MapPin, IndianRupee, ArrowLeft, CheckCircle2, ShieldCheck, 
   AlertCircle, Loader2, Sparkles, FileText, Send, User, Upload, Clock, X, ChevronRight, AlertTriangle, Briefcase, Check, Share2, Mail, Gift, Bookmark
@@ -384,7 +385,14 @@ export default function JobDetailPage() {
           <div className="flex items-start gap-4">
             <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
               {job.companyLogoUrl ? (
-                <img src={job.companyLogoUrl} alt={job.companyName} className="w-full h-full object-cover" />
+                <img
+                  src={resolveMediaUrl(job.companyLogoUrl)}
+                  alt={job.companyName}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
               ) : (
                 <Building2 className="w-8 h-8 text-indigo-500" />
               )}
