@@ -1019,13 +1019,13 @@ export default function CandidateSearchPage() {
                     isSelected ? 'border-indigo-600 ring-2 ring-indigo-500/20 bg-indigo-50/10' : 'theme-border theme-surface'
                   }`}
                 >
-                  {/* Card Main Grid: Left Candidate details & Skills + Right Resdex Box & Metrics */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Card Main Grid: Left Candidate details & Skills (60%) + Right Resdex Box & Metrics (40%) */}
+                  <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
                     
-                    {/* LEFT 7-8 COLS: CANDIDATE IDENTITY, LOCATION, EDUCATION, SKILLS */}
-                    <div className="lg:col-span-7 xl:col-span-8 space-y-3.5">
+                    {/* LEFT 6 COLS (60%): CANDIDATE IDENTITY, LOCATION, EDUCATION, SKILLS */}
+                    <div className="lg:col-span-6 space-y-4">
                       
-                      {/* Name, Gender, Designation, Company, City */}
+                      {/* Name, Designation, Company */}
                       <div className="flex items-start gap-3.5">
                         <input
                           type="checkbox"
@@ -1055,11 +1055,6 @@ export default function CandidateSearchPage() {
                             {cand.user ? `${cand.user.firstName} ${cand.user.lastName}` : 'Ravi Prakash'}
                           </h3>
 
-                          {/* Gender */}
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            {cand.user?.gender || (cand as any).gender || 'Male'}
-                          </div>
-
                           {/* Designation */}
                           <div className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 mt-1">
                             {(currentExp?.designation || cand.currentTitle || cand.headline || 'SOFTWARE ENGINEER').toUpperCase()}
@@ -1069,19 +1064,14 @@ export default function CandidateSearchPage() {
                           <div className="text-xs font-medium text-slate-700 dark:text-slate-300 mt-0.5">
                             {currentExp?.companyName || (cand as any).currentCompany || 'Tata Consultancy'}
                           </div>
-
-                          {/* City */}
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            {cand.preferredLocations?.[0] || 'Pune'}
-                          </div>
                         </div>
                       </div>
 
                       {/* Details Table: Job location, Pf. location, Education, Skills */}
-                      <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300 pl-7 sm:pl-9">
+                      <div className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300 pl-7 sm:pl-9 pt-0.5">
                         {/* Job Location */}
                         <div className="flex items-baseline">
-                          <span className="w-24 sm:w-28 flex-shrink-0 text-slate-500 font-medium">Job location:</span>
+                          <span className="w-24 sm:w-28 flex-shrink-0 text-slate-500 dark:text-slate-400 font-medium">Job location:</span>
                           <span className="font-semibold text-slate-800 dark:text-slate-200">
                             {cand.preferredLocations && cand.preferredLocations[0]
                               ? `${cand.preferredLocations[0]}, India`
@@ -1091,7 +1081,7 @@ export default function CandidateSearchPage() {
 
                         {/* Preferred Location */}
                         <div className="flex items-baseline">
-                          <span className="w-24 sm:w-28 flex-shrink-0 text-slate-500 font-medium">Pf. location:</span>
+                          <span className="w-24 sm:w-28 flex-shrink-0 text-slate-500 dark:text-slate-400 font-medium">Pf. location:</span>
                           <span className="text-slate-700 dark:text-slate-300 font-medium">
                             {cand.preferredLocations && cand.preferredLocations.length > 0
                               ? cand.preferredLocations.join(', ')
@@ -1101,7 +1091,7 @@ export default function CandidateSearchPage() {
 
                         {/* Education */}
                         <div className="flex items-baseline">
-                          <span className="w-24 sm:w-28 flex-shrink-0 text-slate-500 font-medium">Education:</span>
+                          <span className="w-24 sm:w-28 flex-shrink-0 text-slate-500 dark:text-slate-400 font-medium">Education:</span>
                           <span className="text-slate-700 dark:text-slate-300 font-medium truncate">
                             {edu?.degree || 'MTech'}{edu?.institution ? ` (${edu.institution})` : ''}
                           </span>
@@ -1109,7 +1099,7 @@ export default function CandidateSearchPage() {
 
                         {/* Skills Pill Tags */}
                         <div className="flex items-start pt-1">
-                          <span className="w-24 sm:w-28 flex-shrink-0 text-slate-500 font-medium pt-1">Skills:</span>
+                          <span className="w-24 sm:w-28 flex-shrink-0 text-slate-500 dark:text-slate-400 font-medium pt-1">Skills:</span>
                           <div className="flex-1 flex flex-wrap gap-1.5 items-center">
                             {visibleSkills.map((sk: string, idx: number) => {
                               const isMatched = keywordQuery && keywordQuery.toLowerCase().includes(sk.toLowerCase());
@@ -1140,8 +1130,8 @@ export default function CandidateSearchPage() {
                       </div>
                     </div>
 
-                    {/* RIGHT 4-5 COLS: SHADED SUMMARY BOX, STATS STRIP & METADATA */}
-                    <div className="lg:col-span-5 xl:col-span-4 flex flex-col justify-between space-y-3.5">
+                    {/* RIGHT 4 COLS (40%): SHADED SUMMARY BOX, STATS STRIP & METADATA */}
+                    <div className="lg:col-span-4 flex flex-col justify-between space-y-4">
                       
                       {/* Grey Shaded Summary & Metrics Box */}
                       <div className="rounded-xl bg-[#f4f6f8] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-4 space-y-3 shadow-none">
@@ -1178,18 +1168,22 @@ export default function CandidateSearchPage() {
                         </div>
                       </div>
 
-                      {/* Attributes List: Nationality, Current Industries, Pf. role */}
-                      <div className="space-y-1.5 text-xs px-1">
-                        <div className="flex">
-                          <span className="w-32 flex-shrink-0 text-slate-500 font-medium">Nationality:</span>
-                          <span className="text-slate-700 dark:text-slate-300 font-semibold">{cand.nationality || 'Indian'}</span>
+                      {/* Attributes List: Gender, Nationality, Current Industries, Pf. role */}
+                      <div className="space-y-2 text-xs px-1">
+                        <div className="flex items-baseline">
+                          <span className="w-32 sm:w-36 flex-shrink-0 text-slate-500 dark:text-slate-400 font-medium">Gender:</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-semibold">{cand.user?.gender || (cand as any).gender || 'Male'}</span>
                         </div>
-                        <div className="flex">
-                          <span className="w-32 flex-shrink-0 text-slate-500 font-medium">Current Industries:</span>
+                        <div className="flex items-baseline">
+                          <span className="w-32 sm:w-36 flex-shrink-0 text-slate-500 dark:text-slate-400 font-medium">Nationality:</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-semibold">{cand.nationality || 'Indian'}</span>
+                        </div>
+                        <div className="flex items-baseline">
+                          <span className="w-32 sm:w-36 flex-shrink-0 text-slate-500 dark:text-slate-400 font-medium">Current Industries:</span>
                           <span className="text-slate-700 dark:text-slate-300 font-medium truncate">{cand.industry || 'IT Services & Consulting'}</span>
                         </div>
-                        <div className="flex">
-                          <span className="w-32 flex-shrink-0 text-slate-500 font-medium">Pf. role:</span>
+                        <div className="flex items-baseline">
+                          <span className="w-32 sm:w-36 flex-shrink-0 text-slate-500 dark:text-slate-400 font-medium">Pf. role:</span>
                           <span className="text-slate-700 dark:text-slate-300 font-medium truncate">{cand.currentTitle || cand.headline || 'Software Engineer'}</span>
                         </div>
                       </div>
