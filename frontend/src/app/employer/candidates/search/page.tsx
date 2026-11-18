@@ -1019,10 +1019,10 @@ export default function CandidateSearchPage() {
                     isSelected ? 'border-indigo-600 ring-2 ring-indigo-500/20 bg-indigo-50/10' : 'theme-border theme-surface'
                   }`}
                 >
-                  {/* Card Main Grid: Left Candidate details & Skills (60%) + Right Resdex Box & Metrics (40%) */}
-                  <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
+                  {/* Card Main Grid: Left Candidate details & Skills + Right Resdex Box & Metrics (50/50 balance) */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8">
                     
-                    {/* LEFT 6 COLS (60%): CANDIDATE IDENTITY, LOCATION, EDUCATION, SKILLS */}
+                    {/* LEFT 6 COLS (50%): CANDIDATE IDENTITY, LOCATION, EDUCATION, SKILLS */}
                     <div className="lg:col-span-6 space-y-4">
                       
                       {/* Name, Designation, Company */}
@@ -1130,8 +1130,8 @@ export default function CandidateSearchPage() {
                       </div>
                     </div>
 
-                    {/* RIGHT 4 COLS (40%): SHADED SUMMARY BOX, STATS STRIP & METADATA */}
-                    <div className="lg:col-span-4 flex flex-col justify-between space-y-4">
+                    {/* RIGHT 6 COLS (50%): SHADED SUMMARY BOX, STATS STRIP & METADATA */}
+                    <div className="lg:col-span-6 flex flex-col justify-between space-y-4">
                       
                       {/* Grey Shaded Summary & Metrics Box */}
                       <div className="rounded-xl bg-[#f4f6f8] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-4 space-y-3 shadow-none">
@@ -1168,23 +1168,31 @@ export default function CandidateSearchPage() {
                         </div>
                       </div>
 
-                      {/* Attributes List: Gender, Nationality, Current Industries, Pf. role */}
-                      <div className="space-y-2 text-xs px-1">
-                        <div className="flex items-baseline">
-                          <span className="w-32 sm:w-36 flex-shrink-0 text-slate-500 dark:text-slate-400 font-medium">Gender:</span>
-                          <span className="text-slate-800 dark:text-slate-200 font-semibold">{cand.user?.gender || (cand as any).gender || 'Male'}</span>
+                      {/* Attributes Grid: 2 per row across 2 rows */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs px-1">
+                        <div className="flex items-baseline gap-2 min-w-0">
+                          <span className="text-slate-500 dark:text-slate-400 font-medium shrink-0">Gender:</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-semibold truncate">
+                            {cand.user?.gender || (cand as any).gender || 'Male'}
+                          </span>
                         </div>
-                        <div className="flex items-baseline">
-                          <span className="w-32 sm:w-36 flex-shrink-0 text-slate-500 dark:text-slate-400 font-medium">Nationality:</span>
-                          <span className="text-slate-800 dark:text-slate-200 font-semibold">{cand.nationality || 'Indian'}</span>
+                        <div className="flex items-baseline gap-2 min-w-0">
+                          <span className="text-slate-500 dark:text-slate-400 font-medium shrink-0">Nationality:</span>
+                          <span className="text-slate-800 dark:text-slate-200 font-semibold truncate">
+                            {cand.nationality || 'Indian'}
+                          </span>
                         </div>
-                        <div className="flex items-baseline">
-                          <span className="w-32 sm:w-36 flex-shrink-0 text-slate-500 dark:text-slate-400 font-medium">Current Industries:</span>
-                          <span className="text-slate-700 dark:text-slate-300 font-medium truncate">{cand.industry || 'IT Services & Consulting'}</span>
+                        <div className="flex items-baseline gap-2 min-w-0">
+                          <span className="text-slate-500 dark:text-slate-400 font-medium shrink-0">Current Industries:</span>
+                          <span className="text-slate-700 dark:text-slate-300 font-medium truncate" title={cand.industry || 'IT Services & Consulting'}>
+                            {cand.industry || 'IT Services & Consulting'}
+                          </span>
                         </div>
-                        <div className="flex items-baseline">
-                          <span className="w-32 sm:w-36 flex-shrink-0 text-slate-500 dark:text-slate-400 font-medium">Pf. role:</span>
-                          <span className="text-slate-700 dark:text-slate-300 font-medium truncate">{cand.currentTitle || cand.headline || 'Software Engineer'}</span>
+                        <div className="flex items-baseline gap-2 min-w-0">
+                          <span className="text-slate-500 dark:text-slate-400 font-medium shrink-0">Pf. role:</span>
+                          <span className="text-slate-700 dark:text-slate-300 font-medium truncate" title={cand.currentTitle || cand.headline || 'Consultant'}>
+                            {cand.currentTitle || cand.headline || 'Consultant'}
+                          </span>
                         </div>
                       </div>
                     </div>
