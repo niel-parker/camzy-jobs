@@ -31,13 +31,12 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-md"
-                style={{ backgroundColor: theme.primaryColor }}
-              >
-                <Briefcase className="w-4 h-4" />
-              </div>
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/logo.png"
+                alt={appConfig.siteName || 'Camzy Jobs'}
+                className="w-8 h-8 object-contain"
+              />
               <span className="font-bold text-base text-slate-900 dark:text-white">
                 {appConfig.siteName || 'Camzy Jobs'}
               </span>

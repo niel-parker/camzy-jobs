@@ -528,15 +528,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
       >
         {/* Sidebar Header */}
         <div className="p-4 border-b theme-border flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3 overflow-hidden">
-            <div
-              className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-white font-black shadow-md"
-              style={{ backgroundColor: theme.primaryColor }}
-            >
-              <Briefcase className="w-5 h-5" />
-            </div>
+          <Link href="/" className="flex items-center space-x-3 overflow-hidden group">
+            <img
+              src="/logo.png"
+              alt="Camzy Jobs"
+              className="w-10 h-10 object-contain flex-shrink-0 transition-transform group-hover:scale-105"
+            />
             {!isSidebarCollapsed && (
-              <div className="flex flex-col">
+              <div className="flex flex-col min-w-0">
                 <span className="font-extrabold text-sm theme-text tracking-tight truncate">Camzy Jobs</span>
                 <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">{roleTitle}</span>
               </div>

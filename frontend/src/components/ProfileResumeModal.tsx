@@ -280,7 +280,7 @@ export const ProfileResumeModal: React.FC<ProfileResumeModalProps> = ({ isOpen, 
 <body>
   <div class="print-actions-bar">
     <div style="display:flex; align-items:center; gap:12px;">
-      <span style="font-size:22px;">📄</span>
+      <img src="/logo.png" alt="Camzy Jobs" style="height:32px; width:auto; object-fit:contain;" />
       <div>
         <div style="font-weight:800; font-size:15px; letter-spacing: -0.01em;">${fullName} • Executive Resume</div>
         <div style="font-size:11px; opacity:0.85;">Camzy Jobs Talent Profile • Ready to Save as PDF</div>
@@ -443,6 +443,18 @@ export const ProfileResumeModal: React.FC<ProfileResumeModalProps> = ({ isOpen, 
               className="max-w-3xl mx-auto bg-white text-slate-900 shadow-xl rounded-xl border border-slate-200 p-8 sm:p-12 space-y-6 text-sm"
               style={{ minHeight: '1000px', fontFamily: "'Inter', -apple-system, sans-serif" }}
             >
+              {/* TOP BRAND WATERMARK BADGE */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <img src="/logo.png" alt="Camzy Jobs" className="h-7 w-auto object-contain" />
+                  <span className="text-[10px] font-black tracking-wider uppercase text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                    Standardized Candidate Profile
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
+                  Verified by Camzy Jobs Enterprise Platform
+                </span>
+              </div>
               
               {/* HEADER SECTION */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b-2 border-indigo-600">

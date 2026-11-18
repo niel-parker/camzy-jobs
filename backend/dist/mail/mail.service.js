@@ -132,7 +132,8 @@ let MailService = MailService_1 = class MailService {
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 40px 20px;">
         <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
           <div style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); padding: 32px 40px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">Camzy Jobs</h1>
+            <img src="${process.env.FRONTEND_URL || 'https://jobs.camzytech.com'}/logo.png" alt="Camzy Jobs" style="height: 48px; width: auto; margin-bottom: 10px; display: inline-block;" />
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">Camzy Jobs</h1>
             <p style="color: #c7d2fe; margin: 6px 0 0 0; font-size: 13px; font-weight: 500;">Enterprise Talent Acquisition Platform</p>
           </div>
           
@@ -241,7 +242,8 @@ let MailService = MailService_1 = class MailService {
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 40px 16px;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
           <div style="background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); padding: 32px 40px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">Camzy Jobs</h1>
+            <img src="${process.env.FRONTEND_URL || 'https://jobs.camzytech.com'}/logo.png" alt="Camzy Jobs" style="height: 48px; width: auto; margin-bottom: 10px; display: inline-block;" />
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">Camzy Jobs</h1>
             <p style="color: #c7d2fe; margin: 6px 0 0 0; font-size: 13px; font-weight: 500;">India's Premier Talent & Hiring Ecosystem</p>
           </div>
           
@@ -292,7 +294,10 @@ let MailService = MailService_1 = class MailService {
           
           <!-- Header -->
           <div style="background: linear-gradient(135deg, #4338ca 0%, #312e81 100%); padding: 32px 36px; text-align: left;">
-            <span style="display: inline-block; background: rgba(255,255,255,0.18); color: #ffffff; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 4px 10px; border-radius: 6px; margin-bottom: 12px;">Candidate Opportunity Invitation</span>
+            <div style="margin-bottom: 12px;">
+              <img src="${siteUrl}/logo.png" alt="Camzy Jobs" style="height: 36px; width: auto; object-fit: contain; margin-bottom: 8px; display: block;" />
+              <span style="display: inline-block; background: rgba(255,255,255,0.18); color: #ffffff; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 4px 10px; border-radius: 6px;">Candidate Opportunity Invitation</span>
+            </div>
             <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 800; line-height: 1.3;">${options.companyName} is inviting you to apply!</h1>
           </div>
           

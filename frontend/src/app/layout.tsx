@@ -7,6 +7,10 @@ import { Footer } from '../components/Footer';
 export const metadata: Metadata = {
   title: 'Camzy Jobs | Enterprise Multi-Tenant Job Portal for Companies',
   description: 'Connect top companies with talented candidates. Post openings, source candidate resume databases, and manage recruitment quota packages.',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({

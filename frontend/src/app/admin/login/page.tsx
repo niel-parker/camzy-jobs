@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { ShieldCheck, Lock, Mail, AlertCircle, Check } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import { useRouter } from 'next/navigation';
@@ -43,9 +44,13 @@ export default function AdminLoginPage() {
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-purple-500/10 rounded-full blur-xl pointer-events-none" />
 
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-500 mb-2">
-            <ShieldCheck className="w-8 h-8" />
-          </div>
+          <Link href="/" className="inline-block mb-1 group">
+            <img
+              src="/logo.png"
+              alt="Camzy Jobs"
+              className="h-12 w-auto mx-auto object-contain transition-transform group-hover:scale-105"
+            />
+          </Link>
           <h1 className="text-2xl font-extrabold tracking-tight theme-text">
             Super Admin Portal
           </h1>

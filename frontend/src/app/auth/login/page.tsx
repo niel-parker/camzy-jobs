@@ -123,9 +123,13 @@ export default function LoginPage() {
 
         {/* Header Title */}
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-indigo-500/10 text-indigo-500 mb-1 border border-indigo-500/20">
-            <Sparkles className="w-6 h-6" />
-          </div>
+          <Link href="/" className="inline-block mb-1 group">
+            <img
+              src="/logo.png"
+              alt="Camzy Jobs"
+              className="h-12 w-auto mx-auto object-contain transition-transform group-hover:scale-105"
+            />
+          </Link>
           <h1 className="text-2xl font-black tracking-tight theme-text">
             Sign In or <span className="text-indigo-500">Register</span>
           </h1>

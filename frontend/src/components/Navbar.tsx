@@ -40,12 +40,11 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md theme-transition"
-                style={{ backgroundColor: theme.primaryColor }}
-              >
-                <Briefcase className="w-5 h-5 transform group-hover:scale-110 transition-transform" />
-              </div>
+              <img
+                src="/logo.png"
+                alt={appConfig.siteName || 'Camzy Jobs'}
+                className="h-11 w-auto max-w-[50px] sm:max-w-none object-contain transition-transform group-hover:scale-105"
+              />
               <div className="flex flex-col">
                 <span className="text-xl font-extrabold tracking-tight theme-text flex items-center gap-1.5">
                   {appConfig.siteName || 'Camzy Jobs'}{' '}

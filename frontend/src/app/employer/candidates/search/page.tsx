@@ -4,11 +4,11 @@ import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '../../../../components/DashboardLayout';
 import { useTheme } from '../../../../context/ThemeContext';
-import { 
-  Search, Filter, MapPin, IndianRupee, Clock, FileText, Download, Briefcase, 
+import {
+  Search, Filter, MapPin, IndianRupee, Clock, FileText, Download, Briefcase,
   ShieldCheck, Sparkles, User, ExternalLink, Loader2, Award, ChevronRight, Check, Eye,
-  Phone, Mail, MessageSquare, Bookmark, BookmarkCheck, Calendar, Building2, 
-  GraduationCap, X, ChevronDown, ChevronUp, RotateCcw, SlidersHorizontal, Layers, 
+  Phone, Mail, MessageSquare, Bookmark, BookmarkCheck, Calendar, Building2,
+  GraduationCap, X, ChevronDown, ChevronUp, RotateCcw, SlidersHorizontal, Layers,
   Send, Printer, Copy, CheckSquare, Square, EyeOff, Tag, HelpCircle, ArrowUpRight, Globe,
   CheckCircle2, RefreshCw, Edit3, AtSign, Users
 } from 'lucide-react';
@@ -117,8 +117,8 @@ export default function CandidateSearchPage() {
     const location = job?.locationCity
       ? `${job.locationCity}${job.locationCountry ? `, ${job.locationCountry}` : ''}`
       : job?.isRemote
-      ? 'Remote'
-      : 'India';
+        ? 'Remote'
+        : 'India';
     const salary =
       job?.salaryMin && job?.salaryMax
         ? `₹${Number(job.salaryMin).toLocaleString('en-IN')} - ₹${Number(job.salaryMax).toLocaleString('en-IN')}`
@@ -299,8 +299,8 @@ Hiring Team | ${comp}`,
         location: targetJob?.locationCity
           ? `${targetJob.locationCity}${targetJob.locationCountry ? `, ${targetJob.locationCountry}` : ''}`
           : targetJob?.isRemote
-          ? 'Remote'
-          : undefined,
+            ? 'Remote'
+            : undefined,
         salary: targetJob?.salaryMin && targetJob?.salaryMax
           ? `₹${Number(targetJob.salaryMin).toLocaleString()} - ₹${Number(targetJob.salaryMax).toLocaleString()}`
           : undefined,
@@ -334,7 +334,7 @@ Hiring Team | ${comp}`,
     try {
       const stored = localStorage.getItem('camzy_saved_searches');
       if (stored) setSavedSearches(JSON.parse(stored));
-    } catch (e) {}
+    } catch (e) { }
   }, []);
 
   const resolveResumeUrl = (rawUrl?: string) => {
@@ -342,8 +342,8 @@ Hiring Team | ${comp}`,
       return 'http://localhost:4000/uploads/resumes/sample-resume.pdf';
     }
     if (rawUrl.startsWith('/uploads')) {
-      const apiHost = typeof window !== 'undefined' && window.location.hostname === 'jobs.camzytech.com' 
-        ? 'https://api.jobs.camzytech.com' 
+      const apiHost = typeof window !== 'undefined' && window.location.hostname === 'jobs.camzytech.com'
+        ? 'https://api.jobs.camzytech.com'
         : 'http://localhost:4000';
       return `${apiHost}${rawUrl}`;
     }
@@ -527,7 +527,7 @@ Hiring Team | ${comp}`,
       try {
         const parsed = JSON.parse(cand.skills);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch {}
+      } catch { }
       const split = cand.skills.split(',').map((s: string) => s.trim()).filter(Boolean);
       if (split.length > 0) return split;
     }
@@ -571,7 +571,7 @@ Hiring Team | ${comp}`,
   return (
     <DashboardLayout role="EMPLOYER">
       <div className="space-y-5 max-w-[1500px] mx-auto pb-16">
-        
+
         {/* ========================================================= */}
         {/* TOP BAR / RESDEX BRANDED HEADER */}
         {/* ========================================================= */}
@@ -612,7 +612,7 @@ Hiring Team | ${comp}`,
         {/* CAMZYJOBS TALENT SEARCH BUILDER FORM */}
         {/* ========================================================= */}
         <form onSubmit={handleApplySearch} className="theme-surface border theme-border rounded-2xl p-5 shadow-sm space-y-4">
-          
+
           {/* Top Row: Search Mode Selector & Boolean Switch */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b theme-border gap-3">
             <div className="flex items-center space-x-4">
@@ -622,11 +622,10 @@ Hiring Team | ${comp}`,
                   setSearchMode('standard');
                   setIsBooleanOn(false);
                 }}
-                className={`text-xs font-black pb-1 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
-                  searchMode === 'standard'
-                    ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                    : 'border-transparent theme-muted hover:theme-text'
-                }`}
+                className={`text-xs font-black pb-1 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${searchMode === 'standard'
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent theme-muted hover:theme-text'
+                  }`}
               >
                 <Search className="w-3.5 h-3.5" />
                 <span>Search Candidates</span>
@@ -638,11 +637,10 @@ Hiring Team | ${comp}`,
                   setSearchMode('boolean');
                   setIsBooleanOn(true);
                 }}
-                className={`text-xs font-black pb-1 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
-                  searchMode === 'boolean'
-                    ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                    : 'border-transparent theme-muted hover:theme-text'
-                }`}
+                className={`text-xs font-black pb-1 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${searchMode === 'boolean'
+                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                  : 'border-transparent theme-muted hover:theme-text'
+                  }`}
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
                 <span>Advanced Boolean Search (AND / OR / NOT)</span>
@@ -728,7 +726,7 @@ Hiring Team | ${comp}`,
 
           {/* Quick Filter Inputs: Experience, Location */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-1">
-            
+
             {/* Total Experience */}
             <div className="space-y-1">
               <label className="block font-bold theme-text flex items-center gap-1">
@@ -803,11 +801,10 @@ Hiring Team | ${comp}`,
                   type="button"
                   key={chip.val}
                   onClick={() => setNoticePeriodFilter(chip.val)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
-                    noticePeriodFilter === chip.val
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'theme-surface border-slate-200 dark:border-slate-800 theme-text hover:bg-slate-100 dark:hover:bg-slate-800'
-                  }`}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${noticePeriodFilter === chip.val
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                    : 'theme-surface border-slate-200 dark:border-slate-800 theme-text hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
                 >
                   {chip.label}
                 </button>
@@ -998,9 +995,9 @@ Hiring Team | ${comp}`,
         {/* ========================================================= */}
         {hasSearched && (
           <div className="theme-surface border theme-border rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 animate-in fade-in duration-200">
-            
+
             {/* AI Found Stats Banner */}
-            <div className="flex items-center space-x-3">
+            {/* <div className="flex items-center space-x-3">
               <div className="p-2.5 rounded-xl bg-indigo-600 text-white font-black">
                 <User className="w-5 h-5" />
               </div>
@@ -1017,7 +1014,7 @@ Hiring Team | ${comp}`,
                   Displaying page {currentPage} of {totalPages} ({candidates.length} profiles loaded)
                 </p>
               </div>
-            </div>
+            </div> */}
 
             {/* Toolbar Right Controls: Sort, Multi-Select Info, View Switcher */}
             <div className="flex flex-wrap items-center gap-3 text-xs">
@@ -1057,9 +1054,8 @@ Hiring Team | ${comp}`,
                 <button
                   type="button"
                   onClick={() => setViewLayout('card')}
-                  className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
-                    viewLayout === 'card' ? 'bg-indigo-600 text-white' : 'theme-muted hover:theme-text'
-                  }`}
+                  className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${viewLayout === 'card' ? 'bg-indigo-600 text-white' : 'theme-muted hover:theme-text'
+                    }`}
                   title="Wide Card View"
                 >
                   Card View
@@ -1067,9 +1063,8 @@ Hiring Team | ${comp}`,
                 <button
                   type="button"
                   onClick={() => setViewLayout('compact')}
-                  className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
-                    viewLayout === 'compact' ? 'bg-indigo-600 text-white' : 'theme-muted hover:theme-text'
-                  }`}
+                  className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${viewLayout === 'compact' ? 'bg-indigo-600 text-white' : 'theme-muted hover:theme-text'
+                    }`}
                   title="Compact View"
                 >
                   Compact
@@ -1176,16 +1171,15 @@ Hiring Team | ${comp}`,
               return (
                 <div
                   key={cand.id}
-                  className={`border rounded-xl p-6 shadow-sm hover:shadow transition-all space-y-4 relative ${
-                    isSelected ? 'border-indigo-600 ring-2 ring-indigo-500/20 bg-indigo-50/10' : 'theme-border theme-surface'
-                  }`}
+                  className={`border rounded-xl p-6 shadow-sm hover:shadow transition-all space-y-4 relative ${isSelected ? 'border-indigo-600 ring-2 ring-indigo-500/20 bg-indigo-50/10' : 'theme-border theme-surface'
+                    }`}
                 >
                   {/* Card Main Grid: Left Candidate details & Skills + Right Resdex Box & Metrics (50/50 balance) */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8">
-                    
+
                     {/* LEFT 6 COLS (50%): CANDIDATE IDENTITY, LOCATION, EDUCATION, SKILLS */}
                     <div className="lg:col-span-6 space-y-4">
-                      
+
                       {/* Name, Designation, Company */}
                       <div className="flex items-start gap-3.5">
                         <input
@@ -1267,11 +1261,10 @@ Hiring Team | ${comp}`,
                               return (
                                 <span
                                   key={idx}
-                                  className={`px-2 py-0.5 rounded text-[11px] font-medium tracking-wide uppercase border transition-colors ${
-                                    isMatched
-                                      ? 'bg-amber-100 text-amber-800 border-amber-300 font-bold'
-                                      : 'bg-[#f1f3f5] dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                                  }`}
+                                  className={`px-2 py-0.5 rounded text-[11px] font-medium tracking-wide uppercase border transition-colors ${isMatched
+                                    ? 'bg-amber-100 text-amber-800 border-amber-300 font-bold'
+                                    : 'bg-[#f1f3f5] dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                                    }`}
                                 >
                                   {sk}
                                 </span>
@@ -1293,7 +1286,7 @@ Hiring Team | ${comp}`,
 
                     {/* RIGHT 6 COLS (50%): SHADED SUMMARY BOX, STATS STRIP & METADATA */}
                     <div className="lg:col-span-6 flex flex-col justify-between space-y-4">
-                      
+
                       {/* Grey Shaded Summary & Metrics Box */}
                       <div className="rounded-xl bg-[#f4f6f8] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-4 space-y-3 shadow-none">
                         {/* Summary Quote Text */}
@@ -1387,11 +1380,10 @@ Hiring Team | ${comp}`,
                       <button
                         type="button"
                         onClick={() => handleToggleBookmark(cand.id)}
-                        className={`p-1.5 rounded border transition-colors ${
-                          isBookmarked
-                            ? 'bg-amber-50 border-amber-300 text-amber-600'
-                            : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600'
-                        }`}
+                        className={`p-1.5 rounded border transition-colors ${isBookmarked
+                          ? 'bg-amber-50 border-amber-300 text-amber-600'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600'
+                          }`}
                         title={isBookmarked ? 'Saved' : 'Save Candidate'}
                       >
                         {isBookmarked ? <BookmarkCheck className="w-4 h-4 text-amber-500" /> : <Bookmark className="w-4 h-4" />}
@@ -1510,7 +1502,7 @@ Hiring Team | ${comp}`,
         {selectedCand && (
           <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex justify-end animate-fade-in">
             <div className="w-full max-w-4xl h-full theme-surface border-l theme-border shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-200">
-              
+
               {/* Drawer Header Action Bar */}
               <div className="p-4 border-b theme-border flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
                 <div className="flex items-center space-x-2">
@@ -1566,7 +1558,7 @@ Hiring Team | ${comp}`,
 
               {/* Drawer Body */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                
+
                 {/* Candidate Banner Card */}
                 <div className="p-5 rounded-2xl border theme-border bg-gradient-to-r from-indigo-50/40 to-slate-50 dark:from-indigo-950/20 dark:to-slate-900/40 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -1685,11 +1677,10 @@ Hiring Team | ${comp}`,
                   <button
                     type="button"
                     onClick={() => setActiveDrawerTab('profile')}
-                    className={`pb-3 text-xs font-black transition-all flex items-center gap-1.5 border-b-2 cursor-pointer ${
-                      activeDrawerTab === 'profile'
-                        ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                        : 'border-transparent theme-muted hover:theme-text'
-                    }`}
+                    className={`pb-3 text-xs font-black transition-all flex items-center gap-1.5 border-b-2 cursor-pointer ${activeDrawerTab === 'profile'
+                      ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                      : 'border-transparent theme-muted hover:theme-text'
+                      }`}
                   >
                     <User className="w-3.5 h-3.5" />
                     <span>Profile Details</span>
@@ -1698,11 +1689,10 @@ Hiring Team | ${comp}`,
                   <button
                     type="button"
                     onClick={() => setActiveDrawerTab('cv')}
-                    className={`pb-3 text-xs font-black transition-all flex items-center gap-1.5 border-b-2 cursor-pointer ${
-                      activeDrawerTab === 'cv'
-                        ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                        : 'border-transparent theme-muted hover:theme-text'
-                    }`}
+                    className={`pb-3 text-xs font-black transition-all flex items-center gap-1.5 border-b-2 cursor-pointer ${activeDrawerTab === 'cv'
+                      ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+                      : 'border-transparent theme-muted hover:theme-text'
+                      }`}
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>Attached CV Document</span>
@@ -1712,7 +1702,7 @@ Hiring Team | ${comp}`,
                 {/* TAB 1: PROFILE DETAILS */}
                 {activeDrawerTab === 'profile' && (
                   <div className="space-y-5 text-xs">
-                    
+
                     {/* Executive Summary */}
                     <div className="space-y-1.5">
                       <h4 className="text-[11px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
@@ -1930,7 +1920,7 @@ Hiring Team | ${comp}`,
         {isInviteModalOpen && (
           <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto animate-fade-in">
             <div className="relative w-full max-w-3xl max-h-[92vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
-              
+
               {/* Inbox Header Bar */}
               <div className="flex-shrink-0 px-5 py-4 border-b theme-border flex items-center justify-between gap-3 bg-gradient-to-r from-indigo-50/70 via-slate-50/50 to-transparent dark:from-indigo-950/40 dark:via-slate-900/40">
                 <div className="flex items-center space-x-3 min-w-0">
@@ -1958,11 +1948,10 @@ Hiring Team | ${comp}`,
                     <button
                       type="button"
                       onClick={() => setComposeTab('compose')}
-                      className={`px-3 py-1 rounded-md font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
-                        composeTab === 'compose'
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'theme-muted hover:theme-text'
-                      }`}
+                      className={`px-3 py-1 rounded-md font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${composeTab === 'compose'
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'theme-muted hover:theme-text'
+                        }`}
                     >
                       <Edit3 className="w-3 h-3" />
                       <span>Compose</span>
@@ -1970,11 +1959,10 @@ Hiring Team | ${comp}`,
                     <button
                       type="button"
                       onClick={() => setComposeTab('preview')}
-                      className={`px-3 py-1 rounded-md font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
-                        composeTab === 'preview'
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'theme-muted hover:theme-text'
-                      }`}
+                      className={`px-3 py-1 rounded-md font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${composeTab === 'preview'
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'theme-muted hover:theme-text'
+                        }`}
                     >
                       <Eye className="w-3 h-3" />
                       <span>Preview Email</span>
@@ -1997,11 +1985,10 @@ Hiring Team | ${comp}`,
                 {inviteFeedback && (
                   <div className="p-4 pb-0">
                     <div
-                      className={`p-3 rounded-xl flex items-center space-x-2 font-bold text-xs ${
-                        inviteFeedback.type === 'success'
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                          : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-                      }`}
+                      className={`p-3 rounded-xl flex items-center space-x-2 font-bold text-xs ${inviteFeedback.type === 'success'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                        }`}
                     >
                       <span>{inviteFeedback.message}</span>
                     </div>
@@ -2010,7 +1997,7 @@ Hiring Team | ${comp}`,
 
                 {composeTab === 'compose' ? (
                   <div className="flex-1 flex flex-col text-xs">
-                    
+
                     {/* FROM Row */}
                     <div className="flex items-center gap-3 px-5 py-2.5 border-b theme-border bg-slate-50/40 dark:bg-slate-900/40">
                       <span className="w-16 text-slate-500 dark:text-slate-400 font-semibold shrink-0">From:</span>
@@ -2048,22 +2035,20 @@ Hiring Team | ${comp}`,
                         <button
                           type="button"
                           onClick={() => setShowCc(!showCc)}
-                          className={`px-2 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${
-                            showCc || inviteCc
-                              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300'
-                              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                          }`}
+                          className={`px-2 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${showCc || inviteCc
+                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300'
+                            : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
                         >
                           + Cc
                         </button>
                         <button
                           type="button"
                           onClick={() => setShowBcc(!showBcc)}
-                          className={`px-2 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${
-                            showBcc || inviteBcc
-                              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300'
-                              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
-                          }`}
+                          className={`px-2 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${showBcc || inviteBcc
+                            ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300'
+                            : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
                         >
                           + Bcc
                         </button>
@@ -2165,11 +2150,10 @@ Hiring Team | ${comp}`,
                             key={tmpl.id}
                             type="button"
                             onClick={() => handleSwitchTemplate(tmpl.id as any)}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer shrink-0 ${
-                              activeTemplateType === tmpl.id
-                                ? 'bg-indigo-600 text-white shadow-sm'
-                                : 'theme-surface theme-text border theme-border hover:bg-slate-100 dark:hover:bg-slate-800'
-                            }`}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer shrink-0 ${activeTemplateType === tmpl.id
+                              ? 'bg-indigo-600 text-white shadow-sm'
+                              : 'theme-surface theme-text border theme-border hover:bg-slate-100 dark:hover:bg-slate-800'
+                              }`}
                           >
                             {tmpl.label}
                           </button>
@@ -2243,12 +2227,15 @@ Hiring Team | ${comp}`,
                   /* LIVE EMAIL PREVIEW TAB */
                   <div className="flex-1 p-5 overflow-y-auto bg-slate-100 dark:bg-slate-900/60 flex justify-center">
                     <div className="w-full max-w-xl bg-white text-slate-900 rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-xs my-auto">
-                      
+
                       {/* Branded Header */}
                       <div className="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-6">
-                        <span className="inline-block px-2.5 py-1 rounded bg-white/20 text-[10px] font-black uppercase tracking-wider mb-2">
-                          Candidate Opportunity Invitation
-                        </span>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="inline-block px-2.5 py-1 rounded bg-white/20 text-[10px] font-black uppercase tracking-wider">
+                            Candidate Opportunity Invitation
+                          </span>
+                          <img src="/logo.png" alt="Camzy Jobs" className="h-6 w-auto object-contain brightness-0 invert opacity-90" />
+                        </div>
                         <h4 className="text-lg font-extrabold leading-snug">
                           {companyName} is inviting you to apply!
                         </h4>
