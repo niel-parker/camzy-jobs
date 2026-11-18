@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { JobListing } from '@job-portal/sdk';
-import { Building2, MapPin, IndianRupee, Calendar, Sparkles, Award, ArrowUpRight } from 'lucide-react';
+import { Building2, MapPin, IndianRupee, Calendar, Sparkles, Award, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { resolveMediaUrl } from '../utils/media';
 
@@ -45,8 +45,11 @@ export const JobCard: React.FC<JobCardProps> = ({ job }) => {
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{job.companyName}</span>
+          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{job.companyName}</span>
+            <span title="Verified Employer" className="inline-flex items-center">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+            </span>
             
             {/* Consultancy Indicator */}
             {job.isConsultancy && (

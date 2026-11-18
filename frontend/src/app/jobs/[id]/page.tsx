@@ -399,22 +399,14 @@ export default function JobDetailPage() {
             </div>
 
             <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{job.companyName}</span>
-                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 font-bold flex items-center gap-1 border border-emerald-500/20">
-                  <ShieldCheck className="w-3 h-3 text-emerald-500" /> Verified Employer
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{job.companyName}</span>
+                <span title="Verified Employer" className="inline-flex items-center">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                 </span>
-                {isJobExpired ? (
+                {isJobExpired && (
                   <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold border border-rose-500/20">
                     Expired
-                  </span>
-                ) : job.applyType === 'INTERNAL' ? (
-                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold border border-indigo-500/20">
-                    Apply on Camzy Jobs
-                  </span>
-                ) : (
-                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold border border-purple-500/20">
-                    External Site Apply ↗
                   </span>
                 )}
               </div>
@@ -468,7 +460,7 @@ export default function JobDetailPage() {
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4" /> Apply on Camzy Jobs
+                    <Send className="w-4 h-4" /> Apply Now
                   </>
                 )}
               </button>
@@ -665,7 +657,7 @@ export default function JobDetailPage() {
                 <div className="flex-shrink-0 p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between gap-3 bg-white dark:bg-slate-900">
                   <div className="min-w-0 flex-1">
                     <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 uppercase tracking-wider inline-block">
-                      Apply on Camzy Jobs
+                      Quick Apply
                     </span>
                     <h3 className="text-base sm:text-lg font-black theme-text mt-1 truncate">{job.title}</h3>
                     <p className="text-xs theme-muted truncate">{job.companyName} • {job.location}</p>

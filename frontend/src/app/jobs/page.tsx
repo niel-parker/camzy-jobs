@@ -651,8 +651,11 @@ function JobDirectoryContent() {
                         )}
                       </div>
 
-                      <div className="flex items-center space-x-2 text-xs font-semibold">
-                        <span className="text-indigo-500">{job.companyName}</span>
+                      <div className="flex items-center space-x-1.5 text-xs font-semibold">
+                        <span className="text-indigo-600 dark:text-indigo-400 font-bold">{job.companyName}</span>
+                        <span title="Verified Employer" className="inline-flex items-center">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                        </span>
                         <span className="theme-muted">•</span>
                         <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] theme-text">
                           {job.companyType}
