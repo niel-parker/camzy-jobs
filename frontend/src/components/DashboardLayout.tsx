@@ -663,7 +663,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
           })}
 
           {/* Candidate Dedicated Recruiter View & Resume Card in Sidebar */}
-          {role === 'CANDIDATE' && !isSidebarCollapsed && (
+          {/* {role === 'CANDIDATE' && !isSidebarCollapsed && (
             <div className="mt-4 p-3.5 rounded-2xl border theme-border bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent space-y-2.5">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-indigo-600 text-white shadow-sm">
@@ -707,7 +707,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, role
                 </Link>
               </div>
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Sidebar Footer User Info */}

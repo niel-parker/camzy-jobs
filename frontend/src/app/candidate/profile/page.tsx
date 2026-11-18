@@ -214,6 +214,7 @@ export default function CandidateProfilePage() {
   const [activeModal, setActiveModal] = useState<'EXP' | 'EDU' | 'CERT' | 'PROJ' | 'RESUME' | 'LANG' | null>(null);
 
   // Form State for Modals
+  const [editingExpIndex, setEditingExpIndex] = useState<number | null>(null);
   const [expForm, setExpForm] = useState<ExperienceItem>({
     designation: '',
     companyName: '',
@@ -869,10 +870,8 @@ export default function CandidateProfilePage() {
     return results.slice(0, 10);
   }, [skillSearchInput, masterSkillClusters, masterSkills, skillsList]);
 
-  // Add Item Handlers
-  const handleAddExperience = () => {
-    if (!expForm.designation || !expForm.companyName) return;
-    setExperienceList([...experienceList, { ...expForm, id: `exp_${Date.now()}` }]);
+  // Work Experience Handlers
+  const handleOpenAddExperience = () => {
     setExpForm({
       designation: '',
       companyName: '',
@@ -884,7 +883,84 @@ export default function CandidateProfilePage() {
       jobSummary: '',
       rolesAndResponsibilities: '',
     });
+    setEditingExpIndex(null);
+    setActiveModal('EXP');
+  };
+
+  const handleOpenEditExperience = (idx: number) => {
+    const item = experienceList[idx];
+    if (item) {
+      setExpForm({
+        id: item.id,
+        designation: item.designation || (item as any).title || '',
+        companyName: item.companyName || (item as any).company || '',
+        isCurrentJob: Boolean(item.isCurrentJob ?? (item as any).isCurrent),
+        startDate: item.startDate || '',
+        endDate: item.endDate || '',
+        noticePeriod: item.noticePeriod || '30 Days',
+        location: item.location || '',
+        jobSummary: item.jobSummary || '',
+        rolesAndResponsibilities: item.rolesAndResponsibilities || (item as any).description || '',
+      });
+      setEditingExpIndex(idx);
+      setActiveModal('EXP');
+    }
+  };
+
+  const handleSaveExperience = async () => {
+    if (!expForm.designation.trim() || !expForm.companyName.trim()) return;
+
+    let updatedList: ExperienceItem[];
+    if (editingExpIndex !== null && editingExpIndex >= 0 && editingExpIndex < experienceList.length) {
+      updatedList = [...experienceList];
+      updatedList[editingExpIndex] = {
+        ...expForm,
+        id: expForm.id || experienceList[editingExpIndex].id || `exp_${Date.now()}`,
+      };
+    } else {
+      updatedList = [
+        ...experienceList,
+        { ...expForm, id: `exp_${Date.now()}` },
+      ];
+    }
+
+    setExperienceList(updatedList);
     setActiveModal(null);
+    setEditingExpIndex(null);
+    setExpForm({
+      designation: '',
+      companyName: '',
+      isCurrentJob: false,
+      startDate: '',
+      endDate: '',
+      noticePeriod: '30 Days',
+      location: '',
+      jobSummary: '',
+      rolesAndResponsibilities: '',
+    });
+
+    // Auto-save experience updates to profile
+    const formatted = updatedList.map((exp) => ({
+      ...exp,
+      title: exp.designation,
+      company: exp.companyName,
+      description: exp.rolesAndResponsibilities || exp.jobSummary,
+      isCurrent: exp.isCurrentJob,
+    }));
+    triggerAutoSave({ experience: formatted }, editingExpIndex !== null ? 'Updated work experience ✓' : 'Added work experience ✓');
+  };
+
+  const handleDeleteExperience = (idx: number) => {
+    const updatedList = experienceList.filter((_, i) => i !== idx);
+    setExperienceList(updatedList);
+    const formatted = updatedList.map((exp) => ({
+      ...exp,
+      title: exp.designation,
+      company: exp.companyName,
+      description: exp.rolesAndResponsibilities || exp.jobSummary,
+      isCurrent: exp.isCurrentJob,
+    }));
+    triggerAutoSave({ experience: formatted }, 'Removed experience entry ✓');
   };
 
   const handleAddEducation = () => {
@@ -1068,7 +1144,7 @@ export default function CandidateProfilePage() {
             </span>
 
             {/* Recruiter View (Slide-over drawer) Button */}
-            <button
+            {/* <button
               type="button"
               onClick={() => setIsRecruiterDrawerOpen(true)}
               className="px-3.5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
@@ -1076,7 +1152,7 @@ export default function CandidateProfilePage() {
             >
               <Eye className="w-3.5 h-3.5" />
               <span>Recruiter View</span>
-            </button>
+            </button> */}
 
             <button
               onClick={() => handleSaveAll()}
@@ -1932,8 +2008,8 @@ export default function CandidateProfilePage() {
             </h2>
             <button
               type="button"
-              onClick={() => setActiveModal('EXP')}
-              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1 shadow-sm transition-all"
+              onClick={handleOpenAddExperience}
+              className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" /> Add Employment Entry
             </button>
@@ -1942,18 +2018,29 @@ export default function CandidateProfilePage() {
           <div className="space-y-3">
             {experienceList.map((exp, idx) => (
               <div key={exp.id || idx} className="p-4 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 space-y-1.5 relative">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="text-xs font-black theme-text">{exp.designation || (exp as any).title || 'Role'}</h3>
                     <p className="text-xs font-bold text-indigo-500">{exp.companyName || (exp as any).company || 'Company'} {exp.location && `• ${exp.location}`}</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setExperienceList(experienceList.filter((_, i) => i !== idx))}
-                    className="p-1 text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditExperience(idx)}
+                      className="px-2.5 py-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800/60 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                      title="Edit Experience"
+                    >
+                      <Pencil className="w-3 h-3" /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteExperience(idx)}
+                      className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all cursor-pointer"
+                      title="Delete Entry"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
                 <p className="text-[11px] theme-muted font-medium">
                   {exp.startDate || 'Started'} – {exp.isCurrentJob || (exp as any).isCurrent ? 'Present (Current Job)' : exp.endDate || 'Ended'} {exp.noticePeriod && `• Notice Period: ${exp.noticePeriod}`}
@@ -2752,8 +2839,14 @@ export default function CandidateProfilePage() {
             <div className="relative w-full max-w-lg max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95">
               <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-inherit">
                 <div className="min-w-0 flex-1 truncate">
-                  <h3 className="text-base font-extrabold theme-text truncate">Add Employment History</h3>
-                  <p className="text-[11px] theme-muted truncate">Add your past or current job role with key responsibilities</p>
+                  <h3 className="text-base font-extrabold theme-text truncate">
+                    {editingExpIndex !== null ? 'Edit Employment History' : 'Add Employment History'}
+                  </h3>
+                  <p className="text-[11px] theme-muted truncate">
+                    {editingExpIndex !== null
+                      ? 'Update your past or current job role with key responsibilities'
+                      : 'Add your past or current job role with key responsibilities'}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -2880,22 +2973,42 @@ export default function CandidateProfilePage() {
                 </div>
               </div>
 
-              <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-slate-900/50">
-                <button
-                  type="button"
-                  onClick={() => setActiveModal(null)}
-                  className="px-4 py-2.5 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAddExperience}
-                  disabled={!expForm.designation || !expForm.companyName}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Briefcase className="w-4 h-4" /> Save Experience
-                </button>
+              <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                {editingExpIndex !== null ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleDeleteExperience(editingExpIndex);
+                      setActiveModal(null);
+                      setEditingExpIndex(null);
+                    }}
+                    className="text-xs font-bold text-rose-500 hover:text-rose-600 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Entry</span>
+                  </button>
+                ) : <div />}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveModal(null);
+                      setEditingExpIndex(null);
+                    }}
+                    className="px-4 py-2.5 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveExperience}
+                    disabled={!expForm.designation.trim() || !expForm.companyName.trim()}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Briefcase className="w-4 h-4" /> {editingExpIndex !== null ? 'Update Experience' : 'Save Experience'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
