@@ -873,17 +873,6 @@ export default function CandidateProfilePage() {
               <span>Recruiter View</span>
             </button>
 
-            {/* Resume (By Camzy) Button */}
-            <button
-              type="button"
-              onClick={() => setIsResumeModalOpen(true)}
-              className="px-3.5 py-2.5 rounded-xl border theme-border font-extrabold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-all cursor-pointer"
-              title="View and download standardized Camzy Resume PDF format"
-            >
-              <FileText className="w-3.5 h-3.5 text-indigo-500" />
-              <span>Resume (By Camzy)</span>
-            </button>
-
             <button
               onClick={() => handleSaveAll()}
               disabled={isSaving}
@@ -1327,15 +1316,7 @@ export default function CandidateProfilePage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setIsResumeModalOpen(true)}
-                    className="px-4 py-2.5 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 font-extrabold text-xs text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-slate-700 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                  >
-                    <FileText className="w-4 h-4 text-indigo-600" /> Resume (By Camzy)
-                  </button>
-
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => {
@@ -1344,7 +1325,7 @@ export default function CandidateProfilePage() {
                       setNewResumeTitle('');
                       setActiveModal('RESUME');
                     }}
-                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
                   >
                     <Upload className="w-4 h-4" /> Upload Resume
                   </button>
