@@ -592,6 +592,8 @@ export class CandidatesService {
       salary?: string;
       message?: string;
       subject?: string;
+      cc?: string | string[];
+      bcc?: string | string[];
     },
     currentUser?: any,
   ): Promise<{
@@ -734,6 +736,9 @@ export class CandidatesService {
           location: resolvedLocation,
           salary: resolvedSalary,
           message: defaultMsg,
+          subject: dto.subject,
+          cc: dto.cc,
+          bcc: dto.bcc,
         });
         if (ok) sentCount++;
         else failedCount++;

@@ -9,7 +9,8 @@ import {
   ShieldCheck, Sparkles, User, ExternalLink, Loader2, Award, ChevronRight, Check, Eye,
   Phone, Mail, MessageSquare, Bookmark, BookmarkCheck, Calendar, Building2, 
   GraduationCap, X, ChevronDown, ChevronUp, RotateCcw, SlidersHorizontal, Layers, 
-  Send, Printer, Copy, CheckSquare, Square, EyeOff, Tag, HelpCircle, ArrowUpRight, Globe
+  Send, Printer, Copy, CheckSquare, Square, EyeOff, Tag, HelpCircle, ArrowUpRight, Globe,
+  CheckCircle2, RefreshCw, Edit3, AtSign, Users
 } from 'lucide-react';
 import { ProfileResumeModal } from '../../../../components/ProfileResumeModal';
 import { LocationSearchDropdown } from '../../../../components/LocationSearchDropdown';
@@ -24,7 +25,7 @@ const RECENT_SEARCHES = [
 ];
 
 export default function CandidateSearchPage() {
-  const { theme, sdk } = useTheme();
+  const { theme, sdk, user } = useTheme();
 
   // Search Mode: Standard vs Boolean Advanced
   const [searchMode, setSearchMode] = useState<'standard' | 'boolean'>('standard');
@@ -75,7 +76,7 @@ export default function CandidateSearchPage() {
   // Saved Searches in LocalStorage
   const [savedSearches, setSavedSearches] = useState<any[]>([]);
 
-  // Candidate Invite Modal State
+  // Candidate Invite Modal & Inbox Composer State
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteTargets, setInviteTargets] = useState<any[]>([]);
   const [employerJobs, setEmployerJobs] = useState<any[]>([]);
@@ -84,47 +85,199 @@ export default function CandidateSearchPage() {
   const [inviteSubject, setInviteSubject] = useState<string>('');
   const [inviteMessage, setInviteMessage] = useState<string>('');
   const [customJobRole, setCustomJobRole] = useState<string>('');
+  const [inviteCc, setInviteCc] = useState<string>('');
+  const [inviteBcc, setInviteBcc] = useState<string>('');
+  const [showCc, setShowCc] = useState(false);
+  const [showBcc, setShowBcc] = useState(false);
+  const [activeTemplateType, setActiveTemplateType] = useState<'standard' | 'shortlist' | 'executive' | 'casual'>('standard');
+  const [composeTab, setComposeTab] = useState<'compose' | 'preview'>('compose');
   const [sendingInvite, setSendingInvite] = useState(false);
   const [inviteFeedback, setInviteFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Recruiter and company info
+  const recruiterName = user
+    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Hiring Team'
+    : 'Hiring Team';
+  const companyName = (user as any)?.tenant?.name || (user as any)?.companyName || 'Camzy Infotech Pvt Ltd';
+
+  // Preloaded Email Template Builder
+  const buildInviteTemplate = (
+    job: any,
+    candidate: any,
+    rName: string,
+    cName: string,
+    templateType: 'standard' | 'shortlist' | 'executive' | 'casual' = 'standard',
+    customRole: string = ''
+  ) => {
+    const candName = candidate?.user
+      ? `${candidate.user.firstName || ''} ${candidate.user.lastName || ''}`.trim()
+      : candidate?.name || 'Candidate';
+    const roleTitle = job?.title || customRole.trim() || 'Software Engineer';
+    const comp = job?.tenant?.name || job?.companyName || cName || 'Camzy Infotech';
+    const location = job?.locationCity
+      ? `${job.locationCity}${job.locationCountry ? `, ${job.locationCountry}` : ''}`
+      : job?.isRemote
+      ? 'Remote'
+      : 'India';
+    const salary =
+      job?.salaryMin && job?.salaryMax
+        ? `₹${Number(job.salaryMin).toLocaleString('en-IN')} - ₹${Number(job.salaryMax).toLocaleString('en-IN')}`
+        : '';
+
+    switch (templateType) {
+      case 'shortlist':
+        return {
+          subject: `Shortlisted for ${roleTitle} at ${comp} - Interview Invitation`,
+          message: `Hi ${candName},
+
+Great news! We reviewed your profile and verified background on Camzy Jobs and believe your skills are a strong match for our ${roleTitle} position at ${comp}.
+
+Role Snapshot:
+• Position: ${roleTitle}
+• Location: ${location}${salary ? `\n• Compensation: ${salary}` : ''}
+
+We would like to fast-track your profile and invite you to apply directly so our hiring team can review your details and schedule an introductory conversation.
+
+Looking forward to connecting with you!
+
+Warm regards,
+${rName}
+Talent Acquisition Team | ${comp}`,
+        };
+
+      case 'executive':
+        return {
+          subject: `Confidential Leadership Opportunity: ${roleTitle} at ${comp}`,
+          message: `Dear ${candName},
+
+I hope this message finds you well. I lead senior and executive talent sourcing at ${comp}.
+
+Having evaluated your career progression and leadership background on Camzy Jobs, we are very keen to invite you to consider our ${roleTitle} position based in ${location}.
+
+Key Highlights:
+• Strategic role at ${comp} leading impactful product and engineering initiatives.
+• Highly competitive package and leadership benefits${salary ? ` (${salary})` : ''}.
+• High degree of autonomy and flexible working model.
+
+Please review the opportunity and apply at your convenience, or reply directly to this invitation so we can coordinate a confidential discussion.
+
+Best regards,
+${rName}
+Leadership Hiring | ${comp}`,
+        };
+
+      case 'casual':
+        return {
+          subject: `Exciting opening for ${roleTitle} at ${comp} - Let's connect!`,
+          message: `Hey ${candName},
+
+I stumbled across your profile on Camzy Jobs and was really impressed by your background and work.
+
+We're currently scaling our team at ${comp} and looking for a passionate ${roleTitle} (${location})${salary ? ` offering around ${salary}` : ''}. We think you'd be a great cultural and technical fit!
+
+Check out the job link and apply if you're open to exploring new opportunities. We'd love to chat!
+
+Cheers,
+${rName}
+Hiring Team | ${comp}`,
+        };
+
+      case 'standard':
+      default:
+        return {
+          subject: `Job Opportunity Invitation: ${roleTitle} at ${comp}`,
+          message: `Dear ${candName},
+
+We came across your profile on Camzy Jobs and were impressed with your technical expertise and professional experience.
+
+We currently have an active opening for ${roleTitle} at ${comp} (${location})${salary ? ` with compensation ${salary}` : ''} that aligns closely with your skillset.
+
+We would love to invite you to explore this opportunity and submit your application so we can connect. Please click below to review the job opening details and apply.
+
+If you have any questions, feel free to reply directly to this invitation.
+
+Best regards,
+${rName}
+Hiring Team | ${comp}`,
+        };
+    }
+  };
 
   const handleOpenInviteModal = async (candidatesToInvite: any[]) => {
     if (!candidatesToInvite || candidatesToInvite.length === 0) return;
     setInviteTargets(candidatesToInvite);
     setInviteFeedback(null);
     setSendingInvite(false);
+    setComposeTab('compose');
+    setShowCc(false);
+    setShowBcc(false);
+    setInviteCc('');
+    setInviteBcc('');
 
     const firstCand = candidatesToInvite[0];
-    const candName = firstCand?.user ? `${firstCand.user.firstName} ${firstCand.user.lastName}`.trim() : (firstCand?.name || 'Candidate');
-    const multiple = candidatesToInvite.length > 1;
-
-    setInviteSubject(
-      multiple
-        ? `Career Opportunity Invitation from our Recruitment Team`
-        : `Job Opportunity Invitation for ${candName}`
-    );
-
-    setInviteMessage(
-      `We came across your profile on Camzy Jobs and were impressed with your experience and technical background. We have an opening that matches your skillset and would love to invite you to consider this role and connect with our hiring team.`
-    );
-
     setIsInviteModalOpen(true);
 
-    if (employerJobs.length === 0) {
+    let jobsList = employerJobs;
+    if (jobsList.length === 0) {
       setLoadingJobs(true);
       try {
         const res: any = await sdk.getJobs();
-        const list = res?.data || res?.jobs || (Array.isArray(res) ? res : []);
-        setEmployerJobs(list);
-        if (list.length > 0) {
-          setSelectedJobId(list[0].id);
-          setInviteSubject(`Job Opportunity Invitation: ${list[0].title}`);
-        }
+        jobsList = res?.data || res?.jobs || (Array.isArray(res) ? res : []);
+        setEmployerJobs(jobsList);
       } catch (e) {
         console.error('Failed to load employer jobs:', e);
       } finally {
         setLoadingJobs(false);
       }
     }
+
+    const currentJob = jobsList.find((j) => j.id === selectedJobId) || jobsList[0];
+    if (currentJob) {
+      setSelectedJobId(currentJob.id);
+      const tmpl = buildInviteTemplate(currentJob, firstCand, recruiterName, companyName, activeTemplateType, customJobRole);
+      setInviteSubject(tmpl.subject);
+      setInviteMessage(tmpl.message);
+    } else {
+      const tmpl = buildInviteTemplate(null, firstCand, recruiterName, companyName, activeTemplateType, customJobRole);
+      setInviteSubject(tmpl.subject);
+      setInviteMessage(tmpl.message);
+    }
+  };
+
+  const handleSelectJob = (jobId: string) => {
+    setSelectedJobId(jobId);
+    const targetJob = employerJobs.find((j) => j.id === jobId);
+    const firstCand = inviteTargets[0];
+    const tmpl = buildInviteTemplate(
+      targetJob || null,
+      firstCand,
+      recruiterName,
+      companyName,
+      activeTemplateType,
+      customJobRole
+    );
+    setInviteSubject(tmpl.subject);
+    setInviteMessage(tmpl.message);
+  };
+
+  const handleSwitchTemplate = (type: 'standard' | 'shortlist' | 'executive' | 'casual') => {
+    setActiveTemplateType(type);
+    const targetJob = employerJobs.find((j) => j.id === selectedJobId);
+    const firstCand = inviteTargets[0];
+    const tmpl = buildInviteTemplate(
+      targetJob || null,
+      firstCand,
+      recruiterName,
+      companyName,
+      type,
+      customJobRole
+    );
+    setInviteSubject(tmpl.subject);
+    setInviteMessage(tmpl.message);
+  };
+
+  const insertMergeTag = (tag: string) => {
+    setInviteMessage((prev) => `${prev} ${tag}`);
   };
 
   const handleSendInvite = async (e: React.FormEvent) => {
@@ -142,11 +295,19 @@ export default function CandidateSearchPage() {
         candidateEmails: inviteTargets.map((c) => c.user?.email || c.email).filter(Boolean),
         jobId: targetJob ? targetJob.id : undefined,
         jobTitle,
-        companyName: targetJob?.tenant?.name || targetJob?.companyName,
-        location: targetJob?.locationCity || targetJob?.locationCountry,
-        salary: targetJob?.salaryMin && targetJob?.salaryMax ? `₹${Number(targetJob.salaryMin).toLocaleString()} - ₹${Number(targetJob.salaryMax).toLocaleString()}` : undefined,
+        companyName: targetJob?.tenant?.name || targetJob?.companyName || companyName,
+        location: targetJob?.locationCity
+          ? `${targetJob.locationCity}${targetJob.locationCountry ? `, ${targetJob.locationCountry}` : ''}`
+          : targetJob?.isRemote
+          ? 'Remote'
+          : undefined,
+        salary: targetJob?.salaryMin && targetJob?.salaryMax
+          ? `₹${Number(targetJob.salaryMin).toLocaleString()} - ₹${Number(targetJob.salaryMax).toLocaleString()}`
+          : undefined,
         message: inviteMessage.trim(),
         subject: inviteSubject.trim(),
+        cc: inviteCc.trim() ? inviteCc.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
+        bcc: inviteBcc.trim() ? inviteBcc.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
       };
 
       const res = await sdk.inviteCandidate(payload);
@@ -1765,187 +1926,431 @@ export default function CandidateSearchPage() {
           </div>
         )}
 
-        {/* Candidate Opportunity Invitation (NVite) Modal */}
+        {/* Candidate Opportunity Invitation (NVite) Inbox Composer Modal */}
         {isInviteModalOpen && (
           <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto animate-fade-in">
-            <div className="relative w-full max-w-xl max-h-[90vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
-              {/* Header */}
-              <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-gradient-to-r from-indigo-50/50 to-transparent dark:from-indigo-950/30">
-                <div className="flex items-center space-x-2.5 min-w-0">
+            <div className="relative w-full max-w-3xl max-h-[92vh] my-auto flex flex-col theme-surface border theme-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+              
+              {/* Inbox Header Bar */}
+              <div className="flex-shrink-0 px-5 py-4 border-b theme-border flex items-center justify-between gap-3 bg-gradient-to-r from-indigo-50/70 via-slate-50/50 to-transparent dark:from-indigo-950/40 dark:via-slate-900/40">
+                <div className="flex items-center space-x-3 min-w-0">
                   <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
                     <Send className="w-4.5 h-4.5" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-black theme-text truncate">
-                      Invite Candidate{inviteTargets.length > 1 ? `s (${inviteTargets.length})` : ''} to Apply
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-black theme-text truncate">
+                        NVite Candidate &bull; Opportunity Outreach
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">
+                        {inviteTargets.length} Recipient{inviteTargets.length > 1 ? 's' : ''}
+                      </span>
+                    </div>
                     <p className="text-[11px] theme-muted truncate">
-                      Send a branded email invitation directly to verified candidate inboxes
+                      Send personalized branded email invitations directly to verified candidate inboxes
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsInviteModalOpen(false)}
-                  className="p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+
+                {/* View Tabs & Close */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center p-0.5 rounded-lg border theme-border bg-slate-100/80 dark:bg-slate-800/80 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setComposeTab('compose')}
+                      className={`px-3 py-1 rounded-md font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                        composeTab === 'compose'
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'theme-muted hover:theme-text'
+                      }`}
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      <span>Compose</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setComposeTab('preview')}
+                      className={`px-3 py-1 rounded-md font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                        composeTab === 'preview'
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'theme-muted hover:theme-text'
+                      }`}
+                    >
+                      <Eye className="w-3 h-3" />
+                      <span>Preview Email</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsInviteModalOpen(false)}
+                    className="p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
 
               {/* Form Body */}
-              <form onSubmit={handleSendInvite} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 text-xs">
+              <form onSubmit={handleSendInvite} className="flex-1 overflow-y-auto flex flex-col">
                 {/* Alert feedback */}
                 {inviteFeedback && (
-                  <div
-                    className={`p-3 rounded-xl flex items-center space-x-2 font-bold text-xs ${
-                      inviteFeedback.type === 'success'
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                        : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
-                    }`}
-                  >
-                    <span>{inviteFeedback.message}</span>
+                  <div className="p-4 pb-0">
+                    <div
+                      className={`p-3 rounded-xl flex items-center space-x-2 font-bold text-xs ${
+                        inviteFeedback.type === 'success'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                          : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                      }`}
+                    >
+                      <span>{inviteFeedback.message}</span>
+                    </div>
                   </div>
                 )}
 
-                {/* Selected Recipients Chip List */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-black uppercase tracking-wider theme-text block">
-                    Recipient Candidate{inviteTargets.length > 1 ? 's' : ''} ({inviteTargets.length})
-                  </label>
-                  <div className="p-2.5 rounded-xl border theme-border bg-slate-50/60 dark:bg-slate-900/60 max-h-24 overflow-y-auto flex flex-wrap gap-1.5">
-                    {inviteTargets.map((c) => {
-                      const name = c.user ? `${c.user.firstName} ${c.user.lastName}`.trim() : (c.name || 'Candidate');
-                      const email = c.user?.email || c.email || 'Verified Candidate';
-                      return (
-                        <span
-                          key={c.id}
-                          className="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[11px] font-bold flex items-center gap-1.5"
-                        >
-                          <User className="w-3 h-3" />
-                          <span>{name}</span>
-                          <span className="opacity-60 text-[10px]">({email})</span>
+                {composeTab === 'compose' ? (
+                  <div className="flex-1 flex flex-col text-xs">
+                    
+                    {/* FROM Row */}
+                    <div className="flex items-center gap-3 px-5 py-2.5 border-b theme-border bg-slate-50/40 dark:bg-slate-900/40">
+                      <span className="w-16 text-slate-500 dark:text-slate-400 font-semibold shrink-0">From:</span>
+                      <div className="flex-1 flex flex-wrap items-center gap-2 text-slate-800 dark:text-slate-200 min-w-0">
+                        <span className="font-bold">{recruiterName}</span>
+                        <span className="text-slate-500 font-medium">({companyName})</span>
+                        <span className="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Camzy Jobs Verified Sender
                         </span>
-                      );
-                    })}
-                  </div>
-                </div>
+                      </div>
+                    </div>
 
-                {/* Job Opening Selector */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      Target Job Opening <span className="text-rose-500">*</span>
-                    </label>
-                    {loadingJobs && (
-                      <span className="text-[10px] theme-muted flex items-center gap-1">
-                        <Loader2 className="w-3 h-3 animate-spin text-indigo-500" /> Loading company jobs...
+                    {/* TO Row */}
+                    <div className="flex items-start gap-3 px-5 py-2.5 border-b theme-border">
+                      <span className="w-16 text-slate-500 dark:text-slate-400 font-semibold pt-1 shrink-0">To:</span>
+                      <div className="flex-1 flex flex-wrap gap-1.5 items-center min-w-0">
+                        {inviteTargets.map((c) => {
+                          const name = c.user ? `${c.user.firstName} ${c.user.lastName}`.trim() : (c.name || 'Candidate');
+                          const email = c.user?.email || c.email || 'Verified Candidate';
+                          return (
+                            <span
+                              key={c.id}
+                              className="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[11px] font-bold flex items-center gap-1.5 shadow-xs"
+                            >
+                              <User className="w-3 h-3 text-indigo-500" />
+                              <span>{name}</span>
+                              <span className="opacity-60 text-[10px]">({email})</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+
+                      {/* CC & BCC Toggle Action Buttons */}
+                      <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setShowCc(!showCc)}
+                          className={`px-2 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${
+                            showCc || inviteCc
+                              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300'
+                              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          + Cc
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowBcc(!showBcc)}
+                          className={`px-2 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${
+                            showBcc || inviteBcc
+                              ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300'
+                              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          + Bcc
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* CC Row (Expandable) */}
+                    {(showCc || inviteCc) && (
+                      <div className="flex items-center gap-3 px-5 py-2 border-b theme-border bg-slate-50/20 dark:bg-slate-900/20 animate-in fade-in">
+                        <span className="w-16 text-slate-500 dark:text-slate-400 font-semibold shrink-0">Cc:</span>
+                        <input
+                          type="text"
+                          value={inviteCc}
+                          onChange={(e) => setInviteCc(e.target.value)}
+                          placeholder="Add team emails separated by comma (e.g. hr@camzytech.com, techlead@company.com)"
+                          className="flex-1 px-2 py-1 bg-transparent text-xs theme-text focus:outline-none placeholder:text-slate-400"
+                        />
+                        <span className="text-[10px] theme-muted hidden sm:inline">Recruiter team copies</span>
+                      </div>
+                    )}
+
+                    {/* BCC Row (Expandable) */}
+                    {(showBcc || inviteBcc) && (
+                      <div className="flex items-center gap-3 px-5 py-2 border-b theme-border bg-slate-50/20 dark:bg-slate-900/20 animate-in fade-in">
+                        <span className="w-16 text-slate-500 dark:text-slate-400 font-semibold shrink-0">Bcc:</span>
+                        <input
+                          type="text"
+                          value={inviteBcc}
+                          onChange={(e) => setInviteBcc(e.target.value)}
+                          placeholder="Add BCC emails separated by comma (e.g. audit@company.com)"
+                          className="flex-1 px-2 py-1 bg-transparent text-xs theme-text focus:outline-none placeholder:text-slate-400"
+                        />
+                        <span className="text-[10px] theme-muted hidden sm:inline">Confidential archives</span>
+                      </div>
+                    )}
+
+                    {/* Active Job Opening Selector */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-5 py-3 border-b theme-border bg-indigo-50/30 dark:bg-indigo-950/20">
+                      <span className="w-16 text-indigo-700 dark:text-indigo-400 font-bold shrink-0 flex items-center gap-1.5">
+                        <Briefcase className="w-3.5 h-3.5" />
+                        <span>Job:</span>
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <select
+                          value={selectedJobId}
+                          onChange={(e) => handleSelectJob(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm"
+                        >
+                          {employerJobs.map((j) => (
+                            <option key={j.id} value={j.id}>
+                              {j.title} &bull; {j.locationCity || (j.isRemote ? 'Remote' : 'India')} {j.salaryMin && j.salaryMax ? `(₹${Number(j.salaryMin).toLocaleString('en-IN')} - ₹${Number(j.salaryMax).toLocaleString('en-IN')})` : ''}
+                            </option>
+                          ))}
+                          <option value="">+ Custom / Other Job Opening</option>
+                        </select>
+                      </div>
+                      {loadingJobs && (
+                        <span className="text-[10px] theme-muted flex items-center gap-1 shrink-0">
+                          <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />
+                          Loading company jobs...
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Custom Position Role Input (When '+ Custom' is chosen) */}
+                    {!selectedJobId && (
+                      <div className="flex items-center gap-3 px-5 py-2.5 border-b theme-border animate-in fade-in bg-amber-50/30 dark:bg-amber-950/20">
+                        <span className="w-16 text-amber-700 dark:text-amber-400 font-bold shrink-0">Role:</span>
+                        <input
+                          type="text"
+                          required={!selectedJobId}
+                          value={customJobRole}
+                          onChange={(e) => {
+                            setCustomJobRole(e.target.value);
+                            const firstCand = inviteTargets[0];
+                            const tmpl = buildInviteTemplate(null, firstCand, recruiterName, companyName, activeTemplateType, e.target.value);
+                            setInviteSubject(tmpl.subject);
+                            setInviteMessage(tmpl.message);
+                          }}
+                          placeholder="e.g. Senior Full Stack Engineer / Technical Lead"
+                          className="flex-1 px-2 py-1 bg-transparent text-xs theme-text focus:outline-none placeholder:text-slate-400 font-semibold"
+                        />
+                      </div>
+                    )}
+
+                    {/* Templates Selector & Reset */}
+                    <div className="px-5 py-2.5 border-b theme-border bg-slate-50/50 dark:bg-slate-900/50 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
+                        <span className="text-[11px] font-bold text-slate-500 mr-1 flex items-center gap-1 shrink-0">
+                          <FileText className="w-3 h-3 text-indigo-500" /> Template:
+                        </span>
+                        {[
+                          { id: 'standard', label: 'Standard Invitation' },
+                          { id: 'shortlist', label: 'Direct Shortlist' },
+                          { id: 'executive', label: 'Senior / Leadership' },
+                          { id: 'casual', label: 'Casual Outreach' },
+                        ].map((tmpl) => (
+                          <button
+                            key={tmpl.id}
+                            type="button"
+                            onClick={() => handleSwitchTemplate(tmpl.id as any)}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer shrink-0 ${
+                              activeTemplateType === tmpl.id
+                                ? 'bg-indigo-600 text-white shadow-sm'
+                                : 'theme-surface theme-text border theme-border hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            {tmpl.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const targetJob = employerJobs.find((j) => j.id === selectedJobId);
+                          const firstCand = inviteTargets[0];
+                          const tmpl = buildInviteTemplate(targetJob || null, firstCand, recruiterName, companyName, activeTemplateType, customJobRole);
+                          setInviteSubject(tmpl.subject);
+                          setInviteMessage(tmpl.message);
+                        }}
+                        className="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1 cursor-pointer shrink-0"
+                        title="Reset message and subject to default for this template"
+                      >
+                        <RefreshCw className="w-3 h-3" /> Reset Template
+                      </button>
+                    </div>
+
+                    {/* Subject Line */}
+                    <div className="flex items-center gap-3 px-5 py-2.5 border-b theme-border">
+                      <span className="w-16 text-slate-500 dark:text-slate-400 font-semibold shrink-0">Subject:</span>
+                      <input
+                        type="text"
+                        required
+                        value={inviteSubject}
+                        onChange={(e) => setInviteSubject(e.target.value)}
+                        placeholder="e.g. Job Opportunity Invitation for Senior Engineer"
+                        className="flex-1 px-2 py-1 bg-transparent text-xs font-bold theme-text focus:outline-none placeholder:text-slate-400"
+                      />
+                    </div>
+
+                    {/* Email Message Body & Merge Tags */}
+                    <div className="p-5 flex-1 flex flex-col space-y-2">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-500 font-semibold">Message Body:</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-slate-400 text-[10px]">Insert token:</span>
+                          {[
+                            { label: '+ Candidate Name', tag: '{{candidateName}}' },
+                            { label: '+ Job Title', tag: '{{jobTitle}}' },
+                            { label: '+ Company', tag: '{{companyName}}' },
+                            { label: '+ Location', tag: '{{location}}' },
+                          ].map((t, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => insertMergeTag(t.tag)}
+                              className="px-1.5 py-0.5 rounded border theme-border theme-text hover:bg-slate-100 dark:hover:bg-slate-800 text-[10px] font-medium cursor-pointer"
+                            >
+                              {t.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <textarea
+                        rows={10}
+                        required
+                        value={inviteMessage}
+                        onChange={(e) => setInviteMessage(e.target.value)}
+                        placeholder="Write a personalized note introducing the opportunity..."
+                        className="w-full flex-1 p-3.5 rounded-xl border theme-border theme-surface theme-text text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none font-sans shadow-inner"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  /* LIVE EMAIL PREVIEW TAB */
+                  <div className="flex-1 p-5 overflow-y-auto bg-slate-100 dark:bg-slate-900/60 flex justify-center">
+                    <div className="w-full max-w-xl bg-white text-slate-900 rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-xs my-auto">
+                      
+                      {/* Branded Header */}
+                      <div className="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-6">
+                        <span className="inline-block px-2.5 py-1 rounded bg-white/20 text-[10px] font-black uppercase tracking-wider mb-2">
+                          Candidate Opportunity Invitation
+                        </span>
+                        <h4 className="text-lg font-extrabold leading-snug">
+                          {companyName} is inviting you to apply!
+                        </h4>
+                      </div>
+
+                      {/* Email Body */}
+                      <div className="p-6 space-y-4">
+                        <p className="font-semibold text-slate-800">
+                          Dear {inviteTargets[0]?.user ? `${inviteTargets[0].user.firstName}` : 'Candidate'},
+                        </p>
+
+                        <p className="text-slate-600 leading-relaxed">
+                          <strong>{recruiterName}</strong> from <strong>{companyName}</strong> reviewed your profile in the Camzy Jobs talent network and is inviting you to consider this exclusive opening:
+                        </p>
+
+                        {/* Job Card Box */}
+                        {(() => {
+                          const targetJob = employerJobs.find((j) => j.id === selectedJobId);
+                          const title = targetJob?.title || customJobRole || 'Software Engineer';
+                          const loc = targetJob?.locationCity ? `${targetJob.locationCity}, India` : (targetJob?.isRemote ? 'Remote' : 'India');
+                          const sal = targetJob?.salaryMin && targetJob?.salaryMax ? `₹${Number(targetJob.salaryMin).toLocaleString('en-IN')} - ₹${Number(targetJob.salaryMax).toLocaleString('en-IN')}` : 'Best in Industry';
+                          return (
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 border-l-4 border-l-indigo-600 space-y-2">
+                              <h5 className="text-sm font-extrabold text-slate-900">{title}</h5>
+                              <p className="text-xs font-bold text-indigo-700">{companyName}</p>
+                              <div className="text-[11px] text-slate-600 space-y-0.5 pt-1 border-t border-slate-200">
+                                <div><span className="text-slate-400 font-medium">Location:</span> <span className="font-semibold text-slate-800">{loc}</span></div>
+                                <div><span className="text-slate-400 font-medium">Compensation:</span> <span className="font-semibold text-slate-800">{sal}</span></div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Recruiter Custom Message Note */}
+                        {inviteMessage && (
+                          <div className="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200 text-slate-800 space-y-1">
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-700 block">
+                              Message from Recruiter:
+                            </span>
+                            <div className="text-xs whitespace-pre-line leading-relaxed text-slate-700">
+                              {inviteMessage}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* CTA Apply Button */}
+                        <div className="text-center pt-2 pb-2">
+                          <span className="inline-block px-6 py-3 rounded-xl bg-indigo-600 text-white font-extrabold text-xs shadow-md">
+                            View Job & Apply on Camzy Jobs &rarr;
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Footer */}
+                      <div className="bg-slate-50 px-6 py-3 border-t border-slate-200 text-center text-[10px] text-slate-400">
+                        &copy; {new Date().getFullYear()} Camzy Jobs. All rights reserved.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bottom Action Footer Bar */}
+                <div className="flex-shrink-0 px-5 py-3 border-t theme-border flex flex-wrap items-center justify-between gap-3 bg-slate-50/60 dark:bg-slate-900/60">
+                  <div className="flex items-center gap-2 text-xs theme-muted">
+                    <span className="font-semibold theme-text flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-indigo-500" />
+                      {inviteTargets.length} Recipient{inviteTargets.length > 1 ? 's' : ''}
+                    </span>
+                    {(inviteCc || inviteBcc) && (
+                      <span className="text-[11px] px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-medium">
+                        {inviteCc ? 'Cc added' : ''}{inviteCc && inviteBcc ? ' • ' : ''}{inviteBcc ? 'Bcc added' : ''}
                       </span>
                     )}
                   </div>
 
-                  <select
-                    value={selectedJobId}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setSelectedJobId(val);
-                      const target = employerJobs.find((j) => j.id === val);
-                      if (target) {
-                        setInviteSubject(`Job Opportunity Invitation: ${target.title}`);
-                      } else {
-                        setInviteSubject(`Career Opportunity Invitation from our Hiring Team`);
-                      }
-                    }}
-                    className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {employerJobs.map((j) => (
-                      <option key={j.id} value={j.id}>
-                        {j.title} &bull; {j.locationCity || j.locationCountry || 'Remote'}
-                      </option>
-                    ))}
-                    <option value="">+ Custom Opening / Other Position</option>
-                  </select>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsInviteModalOpen(false)}
+                      className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    >
+                      Discard
+                    </button>
 
-                {/* Custom Job Role (when no existing job selected) */}
-                {!selectedJobId && (
-                  <div className="space-y-1.5 animate-in fade-in">
-                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      Custom Position / Designation <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required={!selectedJobId}
-                      value={customJobRole}
-                      onChange={(e) => {
-                        setCustomJobRole(e.target.value);
-                        setInviteSubject(`Job Opportunity Invitation: ${e.target.value}`);
-                      }}
-                      placeholder="e.g. Senior Full Stack Engineer / Tech Lead"
-                      className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
+                    <button
+                      type="submit"
+                      disabled={sendingInvite}
+                      className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center space-x-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {sendingInvite ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Sending NVite Email...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-3.5 h-3.5" />
+                          <span>Send Invitation ({inviteTargets.length})</span>
+                        </>
+                      )}
+                    </button>
                   </div>
-                )}
-
-                {/* Subject Line */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                    Email Subject Line <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={inviteSubject}
-                    onChange={(e) => setInviteSubject(e.target.value)}
-                    placeholder="e.g. Job Opportunity Invitation for Senior Engineer"
-                    className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-
-                {/* Message Body */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-black uppercase tracking-wider theme-text">
-                      Personal Message to Candidate <span className="text-rose-500">*</span>
-                    </label>
-                    <span className="text-[10px] theme-muted font-bold">Included in email body</span>
-                  </div>
-                  <textarea
-                    rows={4}
-                    required
-                    value={inviteMessage}
-                    onChange={(e) => setInviteMessage(e.target.value)}
-                    placeholder="Write a personalized note introducing the opportunity..."
-                    className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                  />
-                </div>
-
-                {/* Action Buttons */}
-                <div className="pt-2 flex items-center justify-end space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsInviteModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={sendingInvite}
-                    className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center space-x-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {sendingInvite ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Sending Invitation Email...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-3.5 h-3.5" />
-                        <span>Send Invitation ({inviteTargets.length})</span>
-                      </>
-                    )}
-                  </button>
                 </div>
               </form>
             </div>

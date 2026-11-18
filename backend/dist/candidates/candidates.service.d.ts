@@ -147,6 +147,8 @@ export declare class CandidatesService {
         salary?: string;
         message?: string;
         subject?: string;
+        cc?: string | string[];
+        bcc?: string | string[];
     }, currentUser?: any): Promise<{
         success: boolean;
         message: string;

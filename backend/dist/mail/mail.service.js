@@ -321,9 +321,7 @@ let MailService = MailService_1 = class MailService {
             ${options.message ? `
               <div style="background: #eef2ff; border-radius: 10px; padding: 18px 20px; margin-bottom: 24px; border: 1px dashed #a5b4fc;">
                 <p style="font-size: 11px; font-weight: 700; color: #4338ca; text-transform: uppercase; margin: 0 0 6px 0; letter-spacing: 0.5px;">Message from Recruiter:</p>
-                <p style="font-size: 13px; color: #1e293b; margin: 0; line-height: 1.5; font-style: italic;">
-                  "${options.message}"
-                </p>
+                <div style="font-size: 13px; color: #1e293b; margin: 0; line-height: 1.6; white-space: pre-line;">${options.message}</div>
               </div>
             ` : ''}
 
@@ -349,12 +347,19 @@ let MailService = MailService_1 = class MailService {
       </html>
     `;
         try {
-            const info = await this.transporter.sendMail({
+            const mailPayload = {
                 from: defaultFrom,
                 to: options.toEmail,
-                subject: `Job Opportunity Invitation: ${options.jobTitle} at ${options.companyName}`,
+                subject: options.subject || `Job Opportunity Invitation: ${options.jobTitle} at ${options.companyName}`,
                 html: htmlContent,
-            });
+            };
+            if (options.cc) {
+                mailPayload.cc = options.cc;
+            }
+            if (options.bcc) {
+                mailPayload.bcc = options.bcc;
+            }
+            const info = await this.transporter.sendMail(mailPayload);
             this.logger.log(`Candidate invite sent to ${options.toEmail}. Message ID: ${info.messageId}`);
             return true;
         }

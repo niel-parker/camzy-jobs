@@ -276,6 +276,8 @@ export class JobPortalSdk {
     salary?: string;
     message?: string;
     subject?: string;
+    cc?: string | string[];
+    bcc?: string | string[];
   }): Promise<{ success: boolean; message: string; sentCount: number; failedCount: number; recipients?: any[] }> {
     return this.request('/candidates/invite', {
       method: 'POST',

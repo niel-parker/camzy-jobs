@@ -591,6 +591,9 @@ let CandidatesService = class CandidatesService {
                     location: resolvedLocation,
                     salary: resolvedSalary,
                     message: defaultMsg,
+                    subject: dto.subject,
+                    cc: dto.cc,
+                    bcc: dto.bcc,
                 });
                 if (ok)
                     sentCount++;

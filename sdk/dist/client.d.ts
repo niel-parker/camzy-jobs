@@ -91,6 +91,8 @@ export declare class JobPortalSdk {
         salary?: string;
         message?: string;
         subject?: string;
+        cc?: string | string[];
+        bcc?: string | string[];
     }): Promise<{
         success: boolean;
         message: string;

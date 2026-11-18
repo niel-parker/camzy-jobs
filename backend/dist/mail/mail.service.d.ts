@@ -36,6 +36,9 @@ export declare class MailService {
         message?: string;
         location?: string;
         salary?: string;
+        subject?: string;
+        cc?: string | string[];
+        bcc?: string | string[];
     }): Promise<boolean>;
     sendTeamInviteEmail(options: {
         toEmail: string;
