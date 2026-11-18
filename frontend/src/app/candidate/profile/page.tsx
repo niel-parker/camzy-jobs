@@ -5,7 +5,7 @@ import { DashboardLayout } from '../../../components/DashboardLayout';
 import { useTheme } from '../../../context/ThemeContext';
 import { 
   User, FileText, Upload, Sparkles, Save, CheckCircle2, IndianRupee, Briefcase, 
-  AlertCircle, Loader2, Check, Plus, Trash2, GraduationCap, Award, FolderGit2, Globe, Github, Linkedin, Languages, Pencil, X, ShieldCheck, Clock, MapPin, RefreshCw, Star, Download, ExternalLink, Camera, Phone, Mail, Eye
+  AlertCircle, Loader2, Check, Plus, Trash2, GraduationCap, Award, FolderGit2, Globe, Github, Linkedin, Languages, Pencil, X, ShieldCheck, Clock, MapPin, RefreshCw, Star, Download, ExternalLink, Camera, Phone, Mail, Eye, Search, Tag, ChevronDown
 } from 'lucide-react';
 import { ProfileResumeModal } from '../../../components/ProfileResumeModal';
 import { CandidateRecruiterDrawer } from '../../../components/CandidateRecruiterDrawer';
@@ -190,8 +190,25 @@ export default function CandidateProfilePage() {
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [verifyMsg, setVerifyMsg] = useState<string | null>(null);
 
-  // New Location Input Tag
-  const [newCityInput, setNewCityInput] = useState('');
+  // Master Data & Autocomplete for Locations and Skills
+  const [masterLocations, setMasterLocations] = useState<{ id: string; city: string; state?: string | null; country: string; isPopular?: boolean }[]>([]);
+  const [masterSkills, setMasterSkills] = useState<string[]>([]);
+  const [masterSkillClusters, setMasterSkillClusters] = useState<{ id: string; name: string; category: string; keywords: string[] }[]>([]);
+
+  // City Search & Autocomplete
+  const [citySearchInput, setCitySearchInput] = useState('');
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+  const [highlightedCityIndex, setHighlightedCityIndex] = useState(0);
+
+  // Skills List & Autocomplete
+  const [skillsList, setSkillsList] = useState<string[]>([]);
+  const [skillSearchInput, setSkillSearchInput] = useState('');
+  const [isSkillDropdownOpen, setIsSkillDropdownOpen] = useState(false);
+  const [highlightedSkillIndex, setHighlightedSkillIndex] = useState(0);
+
+  // Auto-Save Status Indicator
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [autoSaveMsg, setAutoSaveMsg] = useState('');
 
   // Modals for Adding Entries
   const [activeModal, setActiveModal] = useState<'EXP' | 'EDU' | 'CERT' | 'PROJ' | 'RESUME' | 'LANG' | null>(null);
@@ -259,6 +276,40 @@ export default function CandidateProfilePage() {
     };
   }, [resendTimer]);
 
+  // Load master locations and master skills taxonomy from database
+  useEffect(() => {
+    async function loadTaxonomyData() {
+      try {
+        const [locs, skillsData] = await Promise.all([
+          sdk.request<any[]>('/admin/locations').catch(() => []),
+          sdk.request<any[]>('/admin/skills').catch(() => []),
+        ]);
+
+        if (Array.isArray(locs) && locs.length > 0) {
+          setMasterLocations(locs);
+        }
+
+        if (Array.isArray(skillsData) && skillsData.length > 0) {
+          setMasterSkillClusters(skillsData);
+          const allKeywords = new Set<string>();
+          skillsData.forEach((c) => {
+            if (Array.isArray(c.keywords)) {
+              c.keywords.forEach((kw: string) => {
+                if (kw && typeof kw === 'string' && kw.trim()) {
+                  allKeywords.add(kw.trim());
+                }
+              });
+            }
+          });
+          setMasterSkills(Array.from(allKeywords));
+        }
+      } catch (err) {
+        console.warn('Could not load master taxonomy data:', err);
+      }
+    }
+    loadTaxonomyData();
+  }, [sdk]);
+
   useEffect(() => {
     // Check if opened with ?view=recruiter or ?view=resume
     const checkViewParam = () => {
@@ -313,6 +364,15 @@ export default function CandidateProfilePage() {
           const hasCustomSalary = data.expectedSalary != null && Number(data.expectedSalary) !== 80000;
           const hasCustomExp = data.experienceYears != null && !(Number(data.experienceYears) === 1 && Number(data.expectedSalary) === 80000);
 
+          const initialLocations = Array.isArray(data.preferredLocations) ? data.preferredLocations : [];
+          const initialSkills: string[] = Array.isArray(data.skills)
+            ? data.skills.map((s: any) => String(s).trim()).filter(Boolean)
+            : (typeof data.skills === 'string' && data.skills.trim())
+            ? data.skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+            : [];
+
+          setSkillsList(initialSkills);
+
           setProfile({
             headline: hasCustomHeadline ? data.headline : '',
             summary: data.summary || '',
@@ -321,8 +381,8 @@ export default function CandidateProfilePage() {
             currentSalary: data.currentSalary != null ? String(data.currentSalary) : '',
             expectedSalary: hasCustomSalary ? String(data.expectedSalary) : '',
             noticePeriod: data.noticePeriod || '',
-            preferredLocations: Array.isArray(data.preferredLocations) ? data.preferredLocations : [],
-            skills: Array.isArray(data.skills) ? data.skills.join(', ') : data.skills || '',
+            preferredLocations: initialLocations,
+            skills: initialSkills.join(', '),
             visibility: data.visibility || 'PUBLIC',
             resumeFileName: resumeName,
           });
@@ -462,7 +522,7 @@ export default function CandidateProfilePage() {
     let score = 0;
     if (resumesList.length > 0) score += 20;
     if (profile.headline) score += 15;
-    if (profile.skills) score += 15;
+    if (skillsList.length > 0 || profile.skills) score += 15;
     if (profile.noticePeriod) score += 10;
     if (profile.preferredLocations.length > 0) score += 10;
     if (experienceList.length > 0) score += 10;
@@ -504,7 +564,7 @@ export default function CandidateProfilePage() {
           expectedSalary: Number(profile.expectedSalary) || 0,
           noticePeriod: profile.noticePeriod,
           preferredLocations: profile.preferredLocations,
-          skills: profile.skills.split(',').map((s) => s.trim()).filter(Boolean),
+          skills: skillsList.length > 0 ? skillsList : profile.skills.split(',').map((s) => s.trim()).filter(Boolean),
           visibility: profile.visibility,
           resumeUrl: updatedResumeUrl,
           resumes: resumesList.map((r) => ({
@@ -653,16 +713,161 @@ export default function CandidateProfilePage() {
     }
   };
 
-  // Add City Tag
-  const handleAddCity = () => {
-    if (!newCityInput.trim()) return;
+  // Auto-Save helper for instant persistent background save with smooth UI feedback
+  const triggerAutoSave = async (partialUpdate: Record<string, any>, successMessage = 'Auto-saved ✓') => {
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const targetCandidateId = urlParams?.get('id') || urlParams?.get('candidateId') || user?.candidateId || user?.id;
+    if (!targetCandidateId) return;
+
+    setAutoSaveStatus('saving');
+    try {
+      await sdk.request(`/candidates/${targetCandidateId}`, {
+        method: 'PUT',
+        body: JSON.stringify(partialUpdate),
+      });
+      setAutoSaveStatus('saved');
+      setAutoSaveMsg(successMessage);
+      setTimeout(() => {
+        setAutoSaveStatus((curr) => (curr === 'saved' ? 'idle' : curr));
+      }, 2500);
+    } catch (err: any) {
+      console.error('Auto-save error:', err);
+      setAutoSaveStatus('error');
+      setAutoSaveMsg('Failed to auto-save');
+      setTimeout(() => {
+        setAutoSaveStatus((curr) => (curr === 'error' ? 'idle' : curr));
+      }, 3500);
+    }
+  };
+
+  // City Search & Auto-Save Handlers
+  const handleAddCity = (cityToAdd?: string) => {
+    const rawCity = (cityToAdd || citySearchInput).trim();
+    if (!rawCity) return;
+
     if (profile.preferredLocations.length >= 3) {
-      setError('You can select up to 3 preferred cities.');
+      setAutoSaveStatus('error');
+      setAutoSaveMsg('Maximum 3 preferred cities allowed');
+      setTimeout(() => setAutoSaveStatus((curr) => (curr === 'error' ? 'idle' : curr)), 3000);
       return;
     }
-    setProfile({ ...profile, preferredLocations: [...profile.preferredLocations, newCityInput.trim()] });
-    setNewCityInput('');
+
+    if (profile.preferredLocations.some((c) => c.toLowerCase() === rawCity.toLowerCase())) {
+      setCitySearchInput('');
+      setIsCityDropdownOpen(false);
+      return;
+    }
+
+    // Match master locations canonical city name if exists
+    const match = masterLocations.find((l) => l.city.toLowerCase() === rawCity.toLowerCase());
+    const canonicalCity = match ? match.city : rawCity;
+
+    const updated = [...profile.preferredLocations, canonicalCity];
+    setProfile((prev) => ({ ...prev, preferredLocations: updated }));
+    setCitySearchInput('');
+    setIsCityDropdownOpen(false);
+    setHighlightedCityIndex(0);
+
+    triggerAutoSave({ preferredLocations: updated }, `Saved "${canonicalCity}" ✓`);
   };
+
+  const handleRemoveCity = (cityToRemove: string) => {
+    const updated = profile.preferredLocations.filter((c) => c !== cityToRemove);
+    setProfile((prev) => ({ ...prev, preferredLocations: updated }));
+    triggerAutoSave({ preferredLocations: updated }, `Removed "${cityToRemove}" ✓`);
+  };
+
+  // Filtered Cities for Autocomplete (from real master locations)
+  const filteredCities = React.useMemo(() => {
+    const q = citySearchInput.trim().toLowerCase();
+    if (!q) {
+      return masterLocations
+        .filter((l) => l.isPopular && !profile.preferredLocations.some((c) => c.toLowerCase() === l.city.toLowerCase()))
+        .slice(0, 8);
+    }
+    return masterLocations
+      .filter((l) => {
+        const matchCity = l.city.toLowerCase().includes(q);
+        const matchState = l.state ? l.state.toLowerCase().includes(q) : false;
+        const matchCountry = l.country.toLowerCase().includes(q);
+        const notPicked = !profile.preferredLocations.some((c) => c.toLowerCase() === l.city.toLowerCase());
+        return (matchCity || matchState || matchCountry) && notPicked;
+      })
+      .slice(0, 10);
+  }, [citySearchInput, masterLocations, profile.preferredLocations]);
+
+  // Skills Search & Auto-Save Handlers
+  const handleAddSkill = (skillToAdd?: string) => {
+    const rawSkill = (skillToAdd || skillSearchInput).trim();
+    if (!rawSkill) return;
+
+    if (skillsList.some((s) => s.toLowerCase() === rawSkill.toLowerCase())) {
+      setSkillSearchInput('');
+      setIsSkillDropdownOpen(false);
+      return;
+    }
+
+    // Match master skill canonical casing if exists
+    const match = masterSkills.find((s) => s.toLowerCase() === rawSkill.toLowerCase());
+    const canonicalSkill = match || rawSkill;
+
+    const updated = [...skillsList, canonicalSkill];
+    setSkillsList(updated);
+    setProfile((prev) => ({ ...prev, skills: updated.join(', ') }));
+    setSkillSearchInput('');
+    setIsSkillDropdownOpen(false);
+    setHighlightedSkillIndex(0);
+
+    triggerAutoSave({ skills: updated }, `Saved "${canonicalSkill}" ✓`);
+  };
+
+  const handleRemoveSkill = (skillToRemove: string) => {
+    const updated = skillsList.filter((s) => s !== skillToRemove);
+    setSkillsList(updated);
+    setProfile((prev) => ({ ...prev, skills: updated.join(', ') }));
+    triggerAutoSave({ skills: updated }, `Removed "${skillToRemove}" ✓`);
+  };
+
+  // Filtered Skills for Autocomplete (from real master skill taxonomy)
+  const filteredSkills = React.useMemo(() => {
+    const q = skillSearchInput.trim().toLowerCase();
+    if (!q) {
+      const topPicks = [
+        'Java', 'Spring Boot', 'Microservices', 'TypeScript', 'React', 'Next.js',
+        'Node.js', 'Python', 'AWS', 'Docker', 'Kubernetes', 'MySQL', 'PostgreSQL',
+        'Redis', 'Kafka', 'GraphQL', 'Tailwind CSS', 'FastAPI', 'MongoDB',
+      ];
+      return topPicks
+        .filter((s) => !skillsList.some((item) => item.toLowerCase() === s.toLowerCase()))
+        .slice(0, 8)
+        .map((name) => ({ name, category: 'Recommended' }));
+    }
+
+    const results: { name: string; category?: string }[] = [];
+    masterSkillClusters.forEach((cluster) => {
+      cluster.keywords.forEach((kw) => {
+        if (
+          kw.toLowerCase().includes(q) &&
+          !skillsList.some((s) => s.toLowerCase() === kw.toLowerCase()) &&
+          !results.some((r) => r.name.toLowerCase() === kw.toLowerCase())
+        ) {
+          results.push({ name: kw, category: cluster.name });
+        }
+      });
+    });
+
+    masterSkills.forEach((kw) => {
+      if (
+        kw.toLowerCase().includes(q) &&
+        !skillsList.some((s) => s.toLowerCase() === kw.toLowerCase()) &&
+        !results.some((r) => r.name.toLowerCase() === kw.toLowerCase())
+      ) {
+        results.push({ name: kw, category: 'General' });
+      }
+    });
+
+    return results.slice(0, 10);
+  }, [skillSearchInput, masterSkillClusters, masterSkills, skillsList]);
 
   // Add Item Handlers
   const handleAddExperience = () => {
@@ -1098,14 +1303,36 @@ export default function CandidateProfilePage() {
 
         {/* SECTION 1: PERSONAL, SALARY & PREFERENCES */}
         <div className="theme-surface border theme-border rounded-2xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black theme-text uppercase tracking-wider flex items-center gap-2">
-              <FileText className="w-4 h-4 text-indigo-500" /> Professional Overview & Preferences
-            </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b theme-border">
+            <div className="flex items-center gap-3">
+              <h2 className="text-sm font-black theme-text uppercase tracking-wider flex items-center gap-2">
+                <FileText className="w-4 h-4 text-indigo-500" /> Professional Overview & Preferences
+              </h2>
+              {autoSaveStatus !== 'idle' && (
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all shadow-xs ${
+                    autoSaveStatus === 'saving'
+                      ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 animate-pulse'
+                      : autoSaveStatus === 'saved'
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                      : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                  }`}
+                >
+                  {autoSaveStatus === 'saving' && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
+                  {autoSaveStatus === 'saved' && <Check className="w-3 h-3 text-emerald-500" />}
+                  {autoSaveStatus === 'error' && <AlertCircle className="w-3 h-3 text-rose-500" />}
+                  <span>
+                    {autoSaveStatus === 'saving'
+                      ? 'Auto-saving...'
+                      : autoSaveMsg || (autoSaveStatus === 'saved' ? 'Auto-saved ✓' : 'Auto-save failed')}
+                  </span>
+                </span>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => setIsEditProfileOpen(true)}
-              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer self-start sm:self-auto"
             >
               <Pencil className="w-3 h-3" /> Quick Edit
             </button>
@@ -1212,54 +1439,307 @@ export default function CandidateProfilePage() {
               />
             </div>
 
-            {/* Preferred Cities Tag Manager */}
-            <div className="sm:col-span-2 space-y-1.5">
-              <label className="block font-bold theme-text mb-1">Preferred Location Cities (Up to 3 Cities)</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Add preferred city (e.g. Bangalore, Pune, Remote)"
-                  value={newCityInput}
-                  onChange={(e) => setNewCityInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCity())}
-                  className="flex-1 px-3 py-2 rounded-xl border theme-border theme-surface theme-text focus:outline-none text-xs"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCity}
-                  className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
-                >
-                  Add City
-                </button>
+            {/* Preferred Cities Tag Manager with Autocomplete & Auto-Save */}
+            <div className="sm:col-span-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="block font-bold theme-text">
+                  Preferred Location Cities <span className="text-[11px] theme-muted font-normal">(Up to 3 Cities from master database)</span>
+                </label>
+                <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                  {profile.preferredLocations.length}/3 selected
+                </span>
               </div>
 
-              <div className="flex flex-wrap gap-2 pt-1">
+              {/* City Autocomplete Input */}
+              <div className="relative">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      disabled={profile.preferredLocations.length >= 3}
+                      placeholder={
+                        profile.preferredLocations.length >= 3
+                          ? 'Maximum 3 preferred cities reached (remove one below to change)'
+                          : 'Search city from master database (e.g. Bangalore, Pune, Mumbai, Remote)...'
+                      }
+                      value={citySearchInput}
+                      onChange={(e) => {
+                        setCitySearchInput(e.target.value);
+                        setIsCityDropdownOpen(true);
+                        setHighlightedCityIndex(0);
+                      }}
+                      onFocus={() => {
+                        if (profile.preferredLocations.length < 3) {
+                          setIsCityDropdownOpen(true);
+                        }
+                      }}
+                      onBlur={() => {
+                        setTimeout(() => setIsCityDropdownOpen(false), 250);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          setHighlightedCityIndex((prev) => Math.min(prev + 1, filteredCities.length - 1));
+                        } else if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          setHighlightedCityIndex((prev) => Math.max(prev - 1, 0));
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (filteredCities.length > 0 && highlightedCityIndex >= 0 && highlightedCityIndex < filteredCities.length) {
+                            handleAddCity(filteredCities[highlightedCityIndex].city);
+                          } else if (citySearchInput.trim()) {
+                            handleAddCity(citySearchInput.trim());
+                          }
+                        } else if (e.key === 'Escape') {
+                          setIsCityDropdownOpen(false);
+                        }
+                      }}
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none text-xs disabled:opacity-60 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!citySearchInput.trim() || profile.preferredLocations.length >= 3}
+                    onClick={() => handleAddCity()}
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add City
+                  </button>
+                </div>
+
+                {/* Autocomplete Dropdown */}
+                {isCityDropdownOpen && profile.preferredLocations.length < 3 && filteredCities.length > 0 && (
+                  <div className="absolute z-30 left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-slate-900 border theme-border rounded-xl shadow-xl py-1 text-xs divide-y divide-slate-100 dark:divide-slate-800">
+                    <div className="px-3 py-1.5 text-[10px] uppercase font-black tracking-wider text-slate-400 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
+                      <span>{citySearchInput ? 'Matching Master Locations' : 'Popular Location Hubs'}</span>
+                      <span className="font-normal lowercase">Press Enter ↵ to add & auto-save</span>
+                    </div>
+                    {filteredCities.map((loc, idx) => (
+                      <div
+                        key={loc.id || `${loc.city}-${idx}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleAddCity(loc.city);
+                        }}
+                        onMouseEnter={() => setHighlightedCityIndex(idx)}
+                        className={`px-3 py-2 cursor-pointer flex items-center justify-between transition-colors ${
+                          highlightedCityIndex === idx
+                            ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <MapPin className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                          <span className="font-bold truncate">{loc.city}</span>
+                          {(loc.state || loc.country) && (
+                            <span className="text-[11px] theme-muted truncate">
+                              {[loc.state, loc.country].filter(Boolean).join(', ')}
+                            </span>
+                          )}
+                        </div>
+                        {loc.isPopular && (
+                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
+                            Popular
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Selected Preferred Cities Chips */}
+              <div className="flex flex-wrap items-center gap-2 min-h-[32px] pt-0.5">
                 {profile.preferredLocations.map((city, idx) => (
-                  <span key={idx} className="px-3 py-1 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-xs font-bold flex items-center gap-1.5">
-                    <MapPin className="w-3 h-3 text-indigo-500" />
-                    {city}
+                  <span
+                    key={idx}
+                    className="px-3 py-1.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-xs font-bold flex items-center gap-1.5 shadow-2xs animate-in zoom-in-95"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>{city}</span>
                     <button
                       type="button"
-                      onClick={() => setProfile({ ...profile, preferredLocations: profile.preferredLocations.filter((_, i) => i !== idx) })}
-                      className="hover:text-rose-500"
+                      onClick={() => handleRemoveCity(city)}
+                      className="p-0.5 rounded-md hover:bg-rose-500/20 hover:text-rose-500 transition-colors cursor-pointer"
+                      title={`Remove ${city}`}
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </span>
                 ))}
+                {profile.preferredLocations.length === 0 && (
+                  <span className="text-xs theme-muted italic py-1">
+                    No preferred cities selected yet. Search above and press Enter, or click quick recommendations below.
+                  </span>
+                )}
               </div>
+
+              {/* Quick-Pick Popular Cities (Auto-save on click) */}
+              {profile.preferredLocations.length < 3 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[11px] theme-muted font-bold mr-1">Popular Cities:</span>
+                  {['Bengaluru', 'Mumbai', 'Pune', 'Hyderabad', 'Noida', 'Gurugram', 'Chennai', 'Remote']
+                    .filter((c) => !profile.preferredLocations.some((item) => item.toLowerCase() === c.toLowerCase()))
+                    .slice(0, 6)
+                    .map((city) => (
+                      <button
+                        key={city}
+                        type="button"
+                        onClick={() => handleAddCity(city)}
+                        className="px-2.5 py-1 rounded-lg border theme-border bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-[11px] font-bold theme-text hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1 transition-all cursor-pointer"
+                      >
+                        <Plus className="w-2.5 h-2.5 text-indigo-500" /> {city}
+                      </button>
+                    ))}
+                </div>
+              )}
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="block font-bold theme-text mb-1">Key Skills & Tech Stack (Comma Separated) <span className="text-rose-500">*</span></label>
-              <input
-                type="text"
-                required
-                placeholder="TypeScript, Next.js, NestJS, React, MySQL"
-                value={profile.skills}
-                onChange={(e) => setProfile({ ...profile, skills: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              />
+            {/* Key Skills & Tech Stack with Autocomplete & Auto-Save */}
+            <div className="sm:col-span-2 space-y-2 pt-3 border-t theme-border">
+              <div className="flex items-center justify-between">
+                <label className="block font-bold theme-text">
+                  Key Skills & Tech Stack <span className="text-rose-500">*</span>{' '}
+                  <span className="text-[11px] theme-muted font-normal">(Loaded from master skill taxonomy)</span>
+                </label>
+                <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                  {skillsList.length} skills added
+                </span>
+              </div>
+
+              {/* Skills Autocomplete Input */}
+              <div className="relative">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Type a skill from master data (e.g. React, Spring Boot, Python, AWS, Docker)..."
+                      value={skillSearchInput}
+                      onChange={(e) => {
+                        setSkillSearchInput(e.target.value);
+                        setIsSkillDropdownOpen(true);
+                        setHighlightedSkillIndex(0);
+                      }}
+                      onFocus={() => setIsSkillDropdownOpen(true)}
+                      onBlur={() => {
+                        setTimeout(() => setIsSkillDropdownOpen(false), 250);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          setHighlightedSkillIndex((prev) => Math.min(prev + 1, filteredSkills.length - 1));
+                        } else if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          setHighlightedSkillIndex((prev) => Math.max(prev - 1, 0));
+                        } else if (e.key === 'Enter' || e.key === ',') {
+                          e.preventDefault();
+                          if (filteredSkills.length > 0 && highlightedSkillIndex >= 0 && highlightedSkillIndex < filteredSkills.length) {
+                            handleAddSkill(filteredSkills[highlightedSkillIndex].name);
+                          } else if (skillSearchInput.trim()) {
+                            handleAddSkill(skillSearchInput.trim());
+                          }
+                        } else if (e.key === 'Backspace' && !skillSearchInput && skillsList.length > 0) {
+                          handleRemoveSkill(skillsList[skillsList.length - 1]);
+                        } else if (e.key === 'Escape') {
+                          setIsSkillDropdownOpen(false);
+                        }
+                      }}
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none text-xs"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!skillSearchInput.trim()}
+                    onClick={() => handleAddSkill()}
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Skill
+                  </button>
+                </div>
+
+                {/* Autocomplete Dropdown */}
+                {isSkillDropdownOpen && filteredSkills.length > 0 && (
+                  <div className="absolute z-30 left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white dark:bg-slate-900 border theme-border rounded-xl shadow-xl py-1 text-xs divide-y divide-slate-100 dark:divide-slate-800">
+                    <div className="px-3 py-1.5 text-[10px] uppercase font-black tracking-wider text-slate-400 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
+                      <span>{skillSearchInput ? 'Matching Skills & Taxonomy' : 'Popular Tech Skills'}</span>
+                      <span className="font-normal lowercase">Press Enter ↵ to add & auto-save</span>
+                    </div>
+                    {filteredSkills.map((sk, idx) => (
+                      <div
+                        key={`${sk.name}-${idx}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleAddSkill(sk.name);
+                        }}
+                        onMouseEnter={() => setHighlightedSkillIndex(idx)}
+                        className={`px-3 py-2 cursor-pointer flex items-center justify-between transition-colors ${
+                          highlightedSkillIndex === idx
+                            ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Tag className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                          <span className="font-bold truncate">{sk.name}</span>
+                        </div>
+                        {sk.category && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border theme-border shrink-0">
+                            {sk.category}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Selected Skills Interactive Chips */}
+              <div className="flex flex-wrap items-center gap-2 min-h-[36px] pt-1">
+                {skillsList.map((skill, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1.5 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-xs font-bold flex items-center gap-1.5 shadow-2xs animate-in zoom-in-95 group"
+                  >
+                    <span>{skill}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSkill(skill)}
+                      className="p-0.5 rounded-md hover:bg-rose-500/20 hover:text-rose-500 transition-colors cursor-pointer"
+                      title={`Remove ${skill}`}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
+                {skillsList.length === 0 && (
+                  <span className="text-xs theme-muted italic py-1">
+                    No skills added yet. Type above and press Enter, or click recommendations below.
+                  </span>
+                )}
+              </div>
+
+              {/* Quick-Pick Recommended Skills (Auto-save on click) */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[11px] theme-muted font-bold mr-1">Recommended:</span>
+                {[
+                  'Java', 'Spring Boot', 'Microservices', 'TypeScript', 'React', 'Next.js',
+                  'Node.js', 'Python', 'AWS', 'Docker', 'PostgreSQL', 'MySQL', 'Redis'
+                ]
+                  .filter((s) => !skillsList.some((item) => item.toLowerCase() === s.toLowerCase()))
+                  .slice(0, 8)
+                  .map((skill) => (
+                    <button
+                      key={skill}
+                      type="button"
+                      onClick={() => handleAddSkill(skill)}
+                      className="px-2.5 py-1 rounded-lg border theme-border bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-[11px] font-bold theme-text hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-1 transition-all cursor-pointer"
+                    >
+                      <Plus className="w-2.5 h-2.5 text-indigo-500" /> {skill}
+                    </button>
+                  ))}
+              </div>
             </div>
           </div>
         </div>
@@ -2764,6 +3244,7 @@ export default function CandidateProfilePage() {
           }}
           candidate={{
             ...profile,
+            skills: skillsList.length > 0 ? skillsList : profile.skills,
             user: userForm,
             experience: experienceList,
             education: educationList,
@@ -2786,6 +3267,7 @@ export default function CandidateProfilePage() {
           }}
           candidate={{
             ...profile,
+            skills: skillsList.length > 0 ? skillsList : profile.skills,
             user: userForm,
             experience: experienceList,
             education: educationList,
