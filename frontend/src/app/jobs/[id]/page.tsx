@@ -8,7 +8,7 @@ import { JobListing } from '@job-portal/sdk';
 import { resolveMediaUrl } from '../../../utils/media';
 import { 
   Building2, MapPin, IndianRupee, ArrowLeft, CheckCircle2, ShieldCheck, 
-  AlertCircle, Loader2, Sparkles, FileText, Send, User, Upload, Clock, X, ChevronRight, AlertTriangle, Briefcase, Check, Share2, Mail, Gift, Bookmark
+  AlertCircle, Loader2, Sparkles, FileText, Send, User, Upload, Clock, X, ChevronRight, AlertTriangle, Briefcase, Check, Share2, Mail, Gift, Bookmark, Search
 } from 'lucide-react';
 
 export default function JobDetailPage() {
@@ -336,10 +336,50 @@ export default function JobDetailPage() {
     }
   };
 
-  if (isLoading || !job) {
+  if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center text-slate-500 animate-pulse text-xs">
-        Loading job posting details...
+      <div className="max-w-4xl mx-auto px-4 py-24 text-center space-y-3">
+        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+        <p className="text-xs text-slate-500 font-medium animate-pulse">Loading job posting details...</p>
+      </div>
+    );
+  }
+
+  if (!job) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-20 text-center space-y-6">
+        <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center justify-center mx-auto shadow-sm">
+          <Briefcase className="w-8 h-8" />
+        </div>
+
+        <div className="space-y-2">
+          <h2 className="text-xl sm:text-2xl font-black theme-text tracking-tight">
+            Job Posting Not Found
+          </h2>
+          <p className="text-xs sm:text-sm theme-muted max-w-md mx-auto leading-relaxed">
+            The job listing you are looking for is either no longer available, has expired, or has been removed by the employer.
+          </p>
+          <div className="pt-2 text-[11px] font-mono theme-muted">
+            Job Reference ID: <span className="font-semibold text-slate-700 dark:text-slate-300">{String(id)}</span>
+          </div>
+        </div>
+
+        <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/jobs"
+            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Search className="w-3.5 h-3.5" />
+            <span>Browse All Active Jobs</span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => window.history.back()}
+            className="px-5 py-2.5 rounded-xl border theme-border theme-text font-bold text-xs hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            Go Back
+          </button>
+        </div>
       </div>
     );
   }

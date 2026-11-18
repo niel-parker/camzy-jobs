@@ -618,9 +618,9 @@ export class AuthService {
 
     if (!user) {
       isNewAccount = true;
-      const nameParts = clean.includes('@') ? clean.split('@')[0].split('.') : ['User', 'Candidate'];
-      const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : 'Candidate';
-      const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : 'User';
+      // Do not invent fake names from email or dummy "User" - keep blank until candidate fills their profile
+      const firstName = '';
+      const lastName = '';
 
       user = this.userRepo.create({
         email: clean.includes('@') ? clean : `${clean}@phoneuser.com`,
@@ -637,14 +637,33 @@ export class AuthService {
       user = await this.userRepo.save(user);
 
       const candidate = this.candidateRepo.create({
+        user,
         userId: user.id,
-        headline: 'Full Stack Candidate',
-        experienceYears: 1,
-        expectedSalary: 80000,
-      });
+        headline: '',
+        skills: '[]',
+        experience: '[]',
+        education: '[]',
+        certifications: '[]',
+        projects: '[]',
+      } as any);
       await this.candidateRepo.save(candidate);
     } else {
       user.lastLoginAt = new Date();
+      // If user had legacy dummy name generated from email prefix + "User", clean it up
+      if (clean.includes('@') && user.lastName === 'User' && user.firstName && clean.toLowerCase().startsWith(user.firstName.toLowerCase())) {
+        user.firstName = '';
+        user.lastName = '';
+        await this.userRepo.save(user);
+
+        // Also clean up dummy "Full Stack Candidate" headline and 80000 dummy salary if present
+        const existingCand = await this.candidateRepo.findOne({ where: { userId: user.id } });
+        if (existingCand && existingCand.headline === 'Full Stack Candidate' && Number(existingCand.expectedSalary) === 80000) {
+          existingCand.headline = '';
+          existingCand.experienceYears = null as any;
+          existingCand.expectedSalary = null as any;
+          await this.candidateRepo.save(existingCand);
+        }
+      }
       if (clean.includes('@')) {
         user.isEmailVerified = true;
       } else {

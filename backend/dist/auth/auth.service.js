@@ -503,9 +503,8 @@ let AuthService = AuthService_1 = class AuthService {
         let isNewAccount = false;
         if (!user) {
             isNewAccount = true;
-            const nameParts = clean.includes('@') ? clean.split('@')[0].split('.') : ['User', 'Candidate'];
-            const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : 'Candidate';
-            const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : 'User';
+            const firstName = '';
+            const lastName = '';
             user = this.userRepo.create({
                 email: clean.includes('@') ? clean : `${clean}@phoneuser.com`,
                 phoneNumber: clean.includes('@') ? undefined : clean,
@@ -520,15 +519,31 @@ let AuthService = AuthService_1 = class AuthService {
             });
             user = await this.userRepo.save(user);
             const candidate = this.candidateRepo.create({
+                user,
                 userId: user.id,
-                headline: 'Full Stack Candidate',
-                experienceYears: 1,
-                expectedSalary: 80000,
+                headline: '',
+                skills: '[]',
+                experience: '[]',
+                education: '[]',
+                certifications: '[]',
+                projects: '[]',
             });
             await this.candidateRepo.save(candidate);
         }
         else {
             user.lastLoginAt = new Date();
+            if (clean.includes('@') && user.lastName === 'User' && user.firstName && clean.toLowerCase().startsWith(user.firstName.toLowerCase())) {
+                user.firstName = '';
+                user.lastName = '';
+                await this.userRepo.save(user);
+                const existingCand = await this.candidateRepo.findOne({ where: { userId: user.id } });
+                if (existingCand && existingCand.headline === 'Full Stack Candidate' && Number(existingCand.expectedSalary) === 80000) {
+                    existingCand.headline = '';
+                    existingCand.experienceYears = null;
+                    existingCand.expectedSalary = null;
+                    await this.candidateRepo.save(existingCand);
+                }
+            }
             if (clean.includes('@')) {
                 user.isEmailVerified = true;
             }

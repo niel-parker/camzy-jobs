@@ -117,40 +117,32 @@ export default function CandidateProfilePage() {
   const [isRecruiterDrawerOpen, setIsRecruiterDrawerOpen] = useState(false);
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
 
-  // User Identity & Personal Details State
+  // User Identity & Personal Details State (Clean - No dummy or mock data)
   const [userForm, setUserForm] = useState({
-    firstName: 'Alex',
-    lastName: 'Candidate',
-    phoneNumber: '+91 98765 43210',
-    email: 'candidate@camzyjobs.com',
+    firstName: '',
+    lastName: '',
+    phoneNumber: '',
+    email: '',
     avatarUrl: '',
   });
 
-  // Main Candidate Profile State
+  // Main Candidate Profile State (Clean - populated from database)
   const [profile, setProfile] = useState({
-    headline: 'Senior Full Stack Engineer | Next.js & NestJS Specialist',
-    summary: 'Passionate developer with 6+ years building enterprise web applications, microservices, and dynamic design systems.',
-    currentTitle: 'Senior Full Stack Developer',
-    experienceYears: '6',
-    currentSalary: '1800000',
-    expectedSalary: '2400000',
-    noticePeriod: '30 Days',
-    preferredLocations: ['Bangalore', 'Mumbai', 'Remote'],
-    skills: 'TypeScript, Next.js, NestJS, React, Tailwind CSS, TypeORM, MySQL, Redis',
+    headline: '',
+    summary: '',
+    currentTitle: '',
+    experienceYears: '',
+    currentSalary: '',
+    expectedSalary: '',
+    noticePeriod: '',
+    preferredLocations: [] as string[],
+    skills: '',
     visibility: 'PUBLIC',
-    resumeFileName: 'candidate-resume.pdf',
+    resumeFileName: '',
   });
 
-  // Multiple Resumes Array State
-  const [resumesList, setResumesList] = useState<ResumeItem[]>([
-    {
-      id: 'res-default-1',
-      title: 'Primary Technical Resume (Full-Stack).pdf',
-      resumeUrl: 'http://localhost:4000/uploads/resumes/sample-resume.pdf',
-      isDefault: true,
-      uploadedAt: new Date().toISOString(),
-    },
-  ]);
+  // Multiple Resumes Array State (Empty until candidate uploads their own)
+  const [resumesList, setResumesList] = useState<ResumeItem[]>([]);
 
   // Real Resume Upload State
   const [resumeUploadFile, setResumeUploadFile] = useState<File | null>(null);
@@ -162,56 +154,11 @@ export default function CandidateProfilePage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarUploadError, setAvatarUploadError] = useState<string | null>(null);
 
-  // Multi-Entry Section Arrays
-  const [experienceList, setExperienceList] = useState<ExperienceItem[]>([
-    {
-      id: 'exp-1',
-      designation: 'Senior Full Stack Engineer',
-      companyName: 'TechCorp Global',
-      isCurrentJob: true,
-      startDate: '03/2022',
-      endDate: 'Present',
-      noticePeriod: '30 Days',
-      location: 'Bengaluru, India',
-      jobSummary: 'Led micro-frontend architectures with Next.js and high-scale NestJS backend APIs.',
-      rolesAndResponsibilities: '• Led sprint planning, architectural design, and deployment pipelines.\n• Engineered core microservices and optimized query response by 45%.\n• Mentored junior developers and performed automated code reviews.',
-    },
-  ]);
-
-  const [educationList, setEducationList] = useState<EducationItem[]>([
-    {
-      id: 'edu-1',
-      degree: 'B.Tech in Computer Science',
-      fieldOfStudy: 'Software Engineering',
-      institution: 'Indian Institute of Technology (IIT)',
-      startYear: '2016',
-      endYear: '2020',
-      grade: '8.8 CGPA',
-    },
-  ]);
-
-  const [certificationList, setCertificationList] = useState<CertificationItem[]>([
-    {
-      id: 'cert-1',
-      title: 'AWS Certified Solutions Architect',
-      issuingOrganization: 'Amazon Web Services',
-      issueDate: '01/2023',
-      expiryDate: '01/2026',
-      credentialUrl: 'https://aws.amazon.com/verify/123456',
-    },
-  ]);
-
-  const [projectList, setProjectList] = useState<ProjectItem[]>([
-    {
-      id: 'proj-1',
-      projectTitle: 'Enterprise Recruitment & ATS Engine',
-      client: 'Camzy Jobs Enterprise',
-      role: 'Lead Full Stack Architect',
-      projectDescription: 'Architected subscription plans, Kanban candidate ATS pipeline, and CamzyJobs application workflows.',
-      technologies: ['Next.js', 'NestJS', 'TypeORM', 'MySQL'],
-      projectUrl: 'https://jobs.camzytech.com',
-    },
-  ]);
+  // Multi-Entry Section Arrays (Clean - populated from database)
+  const [experienceList, setExperienceList] = useState<ExperienceItem[]>([]);
+  const [educationList, setEducationList] = useState<EducationItem[]>([]);
+  const [certificationList, setCertificationList] = useState<CertificationItem[]>([]);
+  const [projectList, setProjectList] = useState<ProjectItem[]>([]);
 
   const [socialLinks, setSocialLinks] = useState({
     github: '',
@@ -288,10 +235,10 @@ export default function CandidateProfilePage() {
     projectUrl: '',
   });
 
-  // Helper to resolve resume URLs (prevents any redirect to example.com and routes to backend server)
+  // Helper to resolve resume URLs (prevents any redirect to example.com or dummy sample files)
   const resolveResumeUrl = (rawUrl?: string) => {
-    if (!rawUrl || rawUrl.includes('example.com')) {
-      return 'http://localhost:4000/uploads/resumes/sample-resume.pdf';
+    if (!rawUrl || rawUrl.includes('example.com') || rawUrl.includes('sample-resume')) {
+      return '';
     }
     if (rawUrl.startsWith('/uploads')) {
       const apiHost = typeof window !== 'undefined' && window.location.hostname === 'jobs.camzytech.com' 
@@ -356,68 +303,76 @@ export default function CandidateProfilePage() {
         const targetCandidateId = urlParams?.get('id') || urlParams?.get('candidateId') || user.candidateId || user.id;
         const data = await sdk.request<any>(`/candidates/${targetCandidateId}`);
         if (data) {
-          let resumeName = 'candidate-resume.pdf';
-          if (data.resumeUrl) {
+          let resumeName = '';
+          if (data.resumeUrl && !data.resumeUrl.includes('sample-resume') && !data.resumeUrl.includes('example.com')) {
             const parts = data.resumeUrl.split('/');
-            resumeName = parts[parts.length - 1] || 'candidate-resume.pdf';
+            resumeName = parts[parts.length - 1] || '';
           }
+
+          const hasCustomHeadline = data.headline && data.headline !== 'Full Stack Candidate';
+          const hasCustomSalary = data.expectedSalary != null && Number(data.expectedSalary) !== 80000;
+          const hasCustomExp = data.experienceYears != null && !(Number(data.experienceYears) === 1 && Number(data.expectedSalary) === 80000);
+
           setProfile({
-            headline: data.headline || '',
+            headline: hasCustomHeadline ? data.headline : '',
             summary: data.summary || '',
             currentTitle: data.currentTitle || '',
-            experienceYears: String(data.experienceYears || 0),
-            currentSalary: String(data.currentSalary || 1800000),
-            expectedSalary: String(data.expectedSalary || 2400000),
-            noticePeriod: data.noticePeriod || '30 Days',
-            preferredLocations: Array.isArray(data.preferredLocations) ? data.preferredLocations : ['Bangalore', 'Mumbai', 'Remote'],
+            experienceYears: hasCustomExp ? String(data.experienceYears) : '',
+            currentSalary: data.currentSalary != null ? String(data.currentSalary) : '',
+            expectedSalary: hasCustomSalary ? String(data.expectedSalary) : '',
+            noticePeriod: data.noticePeriod || '',
+            preferredLocations: Array.isArray(data.preferredLocations) ? data.preferredLocations : [],
             skills: Array.isArray(data.skills) ? data.skills.join(', ') : data.skills || '',
             visibility: data.visibility || 'PUBLIC',
             resumeFileName: resumeName,
           });
 
-          // Sync user identity details
-          if (data.user) {
-            setUserForm({
-              firstName: data.user.firstName || user.firstName || '',
-              lastName: data.user.lastName || user.lastName || '',
-              phoneNumber: data.user.phoneNumber || user.phoneNumber || '',
-              email: data.user.email || user.email || '',
-              avatarUrl: data.user.avatarUrl || user.avatarUrl || '',
-            });
-          } else {
-            setUserForm({
-              firstName: user.firstName || '',
-              lastName: user.lastName || '',
-              phoneNumber: user.phoneNumber || '',
-              email: user.email || '',
-              avatarUrl: user.avatarUrl || '',
-            });
-          }
+          // Sync user identity details (filter out legacy dummy email prefixes like "name@... User")
+          const rawFirst = data.user?.firstName || user.firstName || '';
+          const rawLast = data.user?.lastName || user.lastName || '';
+          const emailVal = data.user?.email || user.email || '';
+          const emailPrefix = emailVal.includes('@') ? emailVal.split('@')[0].toLowerCase() : '';
+          const isFakeName = (rawLast === 'User' || !rawLast) && emailPrefix && rawFirst.toLowerCase() === emailPrefix;
 
+          setUserForm({
+            firstName: isFakeName ? '' : rawFirst,
+            lastName: isFakeName ? '' : rawLast,
+            phoneNumber: data.user?.phoneNumber || user.phoneNumber || '',
+            email: emailVal,
+            avatarUrl: data.user?.avatarUrl || user.avatarUrl || '',
+          });
+
+          // Real uploaded resumes only (exclude non-existent sample files)
           if (data.resumes && Array.isArray(data.resumes) && data.resumes.length > 0) {
-            setResumesList(data.resumes.map((r: any, idx: number) => ({
+            const validResumes = data.resumes.filter((r: any) => {
+              const u = r.resumeUrl || r.url || '';
+              return u && !u.includes('sample-resume') && !u.includes('example.com');
+            });
+            setResumesList(validResumes.map((r: any, idx: number) => ({
               id: r.id || `res_${idx}`,
               title: r.title || (r.resumeUrl || r.url ? (r.resumeUrl || r.url).split('/').pop() : `Resume ${idx + 1}.pdf`),
-              resumeUrl: r.resumeUrl || r.url || data.resumeUrl || '',
+              resumeUrl: r.resumeUrl || r.url || '',
               isDefault: Boolean(r.isDefault ?? (idx === 0)),
               uploadedAt: r.uploadedAt || new Date().toISOString(),
             })));
-          } else if (data.resumeUrl) {
+          } else if (data.resumeUrl && !data.resumeUrl.includes('sample-resume') && !data.resumeUrl.includes('example.com')) {
             const parts = data.resumeUrl.split('/');
             setResumesList([{
               id: 'res-default',
-              title: parts[parts.length - 1] || 'Primary Resume.pdf',
+              title: parts[parts.length - 1] || 'Uploaded Resume.pdf',
               resumeUrl: data.resumeUrl,
               isDefault: true,
               uploadedAt: new Date().toISOString(),
             }]);
+          } else {
+            setResumesList([]);
           }
 
           if (data.experience && Array.isArray(data.experience)) {
             setExperienceList(data.experience.map((e: any, idx: number) => ({
               id: e.id || `exp_${idx}`,
-              designation: e.designation || e.title || 'Role',
-              companyName: e.companyName || e.company || 'Company',
+              designation: e.designation || e.title || '',
+              companyName: e.companyName || e.company || '',
               startDate: e.startDate || '',
               endDate: e.endDate || '',
               isCurrentJob: Boolean(e.isCurrentJob ?? e.isCurrent),
@@ -426,25 +381,34 @@ export default function CandidateProfilePage() {
               jobSummary: e.jobSummary || '',
               rolesAndResponsibilities: e.rolesAndResponsibilities || e.description || '',
             })));
+          } else {
+            setExperienceList([]);
           }
 
           if (data.education && Array.isArray(data.education)) {
             setEducationList(data.education.map((ed: any, idx: number) => ({
               id: ed.id || `edu_${idx}`,
-              degree: ed.degree || ed.degree_title || 'Degree',
-              institution: ed.institution || 'Institution',
+              degree: ed.degree || ed.degree_title || '',
+              institution: ed.institution || '',
               fieldOfStudy: ed.fieldOfStudy || '',
               startYear: ed.startYear || '',
               endYear: ed.endYear || ed.year || '',
               grade: ed.grade || ed.result || '',
             })));
+          } else {
+            setEducationList([]);
           }
 
           if (data.certifications && Array.isArray(data.certifications) && data.certifications.length > 0) {
             setCertificationList(data.certifications);
+          } else {
+            setCertificationList([]);
           }
+
           if (data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
             setProjectList(data.projects);
+          } else {
+            setProjectList([]);
           }
           if (data.socialLinks && typeof data.socialLinks === 'object') {
             setSocialLinks({
@@ -995,9 +959,23 @@ export default function CandidateProfilePage() {
                 <div className="space-y-2.5 min-w-0">
                   {/* Name + inline badges */}
                   <div className="flex flex-wrap items-center gap-2.5">
-                    <h2 className="text-xl sm:text-2xl font-black theme-text tracking-tight">
-                      {userForm.firstName || user?.firstName || 'Candidate'} {userForm.lastName || user?.lastName || ''}
-                    </h2>
+                    {(userForm.firstName || userForm.lastName) ? (
+                      <h2 className="text-xl sm:text-2xl font-black theme-text tracking-tight">
+                        {userForm.firstName} {userForm.lastName}
+                      </h2>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditProfileOpen(true)}
+                        className="text-lg sm:text-xl font-black text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-2 cursor-pointer"
+                        title="Click to add your full name"
+                      >
+                        <span>Add Your Name</span>
+                        <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                          Name Required
+                        </span>
+                      </button>
+                    )}
                     {user?.isEmailVerified && (
                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-black border border-emerald-500/20 flex items-center gap-1 whitespace-nowrap">
                         <ShieldCheck className="w-3 h-3" /> Email Verified
@@ -1011,21 +989,49 @@ export default function CandidateProfilePage() {
                   </div>
 
                   {/* Headline */}
-                  <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                    {profile.headline || 'Add your professional headline'}
-                  </p>
+                  {profile.headline ? (
+                    <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                      {profile.headline}
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditProfileOpen(true)}
+                      className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-indigo-600 flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" /> Add professional headline (e.g. Senior Software Engineer)
+                    </button>
+                  )}
 
                   {/* Professional meta chips */}
                   <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
-                      <Briefcase className="w-3.5 h-3.5" /> {profile.currentTitle || 'Professional'} • {profile.experienceYears} Yrs
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-xs font-semibold theme-muted">
-                      <Clock className="w-3.5 h-3.5 text-indigo-500" /> Notice: <strong className="theme-text ml-0.5">{profile.noticePeriod}</strong>
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-                      <IndianRupee className="w-3.5 h-3.5" /> Expected: ₹{Number(profile.expectedSalary).toLocaleString('en-IN')}
-                    </span>
+                    {(profile.currentTitle || profile.experienceYears) ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                        <Briefcase className="w-3.5 h-3.5" /> {profile.currentTitle || 'Engineer'}{profile.experienceYears ? ` • ${profile.experienceYears} Yrs Exp` : ''}
+                      </span>
+                    ) : null}
+
+                    {profile.noticePeriod ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/50 text-xs font-semibold theme-muted">
+                        <Clock className="w-3.5 h-3.5 text-indigo-500" /> Notice: <strong className="theme-text ml-0.5">{profile.noticePeriod}</strong>
+                      </span>
+                    ) : null}
+
+                    {profile.expectedSalary && Number(profile.expectedSalary) > 0 ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                        <IndianRupee className="w-3.5 h-3.5" /> Exp: ₹{Number(profile.expectedSalary).toLocaleString('en-IN')}
+                      </span>
+                    ) : null}
+
+                    {(!profile.currentTitle && !profile.experienceYears && !profile.noticePeriod && (!profile.expectedSalary || Number(profile.expectedSalary) === 0)) && (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditProfileOpen(true)}
+                        className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Pencil className="w-3 h-3" /> Add experience, notice period & expected CTC
+                      </button>
+                    )}
                   </div>
 
                   {/* Contact info */}
@@ -1269,32 +1275,25 @@ export default function CandidateProfilePage() {
           </div>
         </div>
 
-        {/* SECTION 2: MULTIPLE RESUMES MANAGEMENT */}
+        {/* SECTION 2: CANDIDATE RESUMES */}
         <div className="theme-surface border theme-border rounded-2xl p-6 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b theme-border">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b theme-border">
             <div>
               <h2 className="text-sm font-black theme-text uppercase tracking-wider flex items-center gap-2">
-                <Upload className="w-4 h-4 text-indigo-500" /> Candidate Multiple Resumes ({resumesList.length})
+                <Upload className="w-4 h-4 text-indigo-500" /> Candidate Resumes ({resumesList.length})
               </h2>
-              <p className="text-xs theme-muted mt-0.5">Uploaded directly to backend server storage (Ready for S3)</p>
+              <p className="text-xs theme-muted mt-0.5">Manage your uploaded resumes and access your standardized Camzy Profile Resume</p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsRecruiterDrawerOpen(true)}
-                className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-                title="See live slide-out profile drawer as seen by recruiters"
-              >
-                <Eye className="w-3.5 h-3.5" /> Recruiter View
-              </button>
 
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Only 1 clean Resume by Camzy button in section header */}
               <button
                 type="button"
                 onClick={() => setIsResumeModalOpen(true)}
-                className="px-3.5 py-2 rounded-xl border theme-border font-extrabold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-950/40 font-extrabold text-xs text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
                 title="View formatted profile as a resume"
               >
-                <FileText className="w-3.5 h-3.5 text-indigo-500" /> Resume (By Camzy)
+                <FileText className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> Resume (By Camzy)
               </button>
 
               <button
@@ -1305,7 +1304,7 @@ export default function CandidateProfilePage() {
                   setNewResumeTitle('');
                   setActiveModal('RESUME');
                 }}
-                className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" /> Upload New Resume
               </button>
@@ -1313,35 +1312,41 @@ export default function CandidateProfilePage() {
           </div>
 
           {resumesList.length === 0 ? (
-            /* Prominent fallback when candidate doesn't have an uploaded resume */
+            /* Clear, non-duplicated fallback when candidate has not uploaded a resume */
             <div className="p-6 rounded-2xl border-2 border-dashed border-indigo-500/30 bg-indigo-500/5 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
-                  <div className="p-3.5 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                  <div className="p-3.5 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shrink-0">
                     <FileText className="w-7 h-7" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-black theme-text">Don't have an uploaded resume file?</h4>
+                    <h4 className="text-sm font-black theme-text">No uploaded resume file yet</h4>
                     <p className="text-xs theme-muted mt-0.5 max-w-xl leading-relaxed">
-                      You can instantly view your profile in the recruiter slide-out view or download your standardized executive resume.
+                      You haven't uploaded an external resume file yet. You can upload a PDF or DOCX file, or view and download your standardized <strong>Resume (By Camzy)</strong> generated automatically from your profile.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsRecruiterDrawerOpen(true)}
-                    className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
-                  >
-                    <Eye className="w-4 h-4" /> Recruiter View
-                  </button>
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsResumeModalOpen(true)}
-                    className="px-4 py-2.5 rounded-xl border theme-border font-black text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 font-extrabold text-xs text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-slate-700 flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
                   >
-                    <FileText className="w-4 h-4 text-indigo-500" /> Resume (By Camzy)
+                    <FileText className="w-4 h-4 text-indigo-600" /> Resume (By Camzy)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUploadError(null);
+                      setResumeUploadFile(null);
+                      setNewResumeTitle('');
+                      setActiveModal('RESUME');
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
+                  >
+                    <Upload className="w-4 h-4" /> Upload Resume
                   </button>
                 </div>
               </div>
@@ -1356,13 +1361,13 @@ export default function CandidateProfilePage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="text-xs font-black theme-text">System Generated Profile Resume</h4>
+                      <h4 className="text-xs font-black theme-text">Standardized Profile Resume (By Camzy)</h4>
                       <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-extrabold border border-indigo-500/20">
                         Profile Sync
                       </span>
                     </div>
                     <p className="text-[11px] theme-muted mt-0.5">
-                      Standardized format synced with your experience, education, skills, and projects.
+                      Standardized executive format automatically synced with your profile details.
                     </p>
                   </div>
                 </div>
@@ -1370,18 +1375,10 @@ export default function CandidateProfilePage() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setIsRecruiterDrawerOpen(true)}
-                    className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <Eye className="w-3.5 h-3.5" /> Recruiter View
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => setIsResumeModalOpen(true)}
-                    className="px-3 py-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-all cursor-pointer"
+                    className="px-3.5 py-1.5 rounded-lg border theme-border font-bold text-xs theme-text hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 transition-all cursor-pointer"
                   >
-                    <FileText className="w-3.5 h-3.5 text-indigo-500" /> Resume (By Camzy)
+                    <FileText className="w-3.5 h-3.5 text-indigo-500" /> View Camzy Resume
                   </button>
                 </div>
               </div>
@@ -1418,24 +1415,36 @@ export default function CandidateProfilePage() {
                         Set as Default
                       </button>
                     )}
-                    <a
-                      href={fileUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 flex items-center gap-1"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" /> View PDF
-                    </a>
-                    <a
-                      href={fileUrl}
-                      download
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-1.5 rounded-lg border theme-border hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold"
-                      title="Download PDF"
-                    >
-                      <Download className="w-4 h-4" />
-                    </a>
+                    {fileUrl ? (
+                      <>
+                        <a
+                          href={fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" /> View PDF
+                        </a>
+                        <a
+                          href={fileUrl}
+                          download
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-lg border theme-border hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold"
+                          title="Download PDF"
+                        >
+                          <Download className="w-4 h-4" />
+                        </a>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsResumeModalOpen(true)}
+                        className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 flex items-center gap-1 cursor-pointer"
+                      >
+                        <FileText className="w-3.5 h-3.5" /> View Camzy Resume
+                      </button>
+                    )}
                     {resumesList.length > 1 && (
                       <button
                         type="button"
