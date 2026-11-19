@@ -136,8 +136,8 @@ export declare class JobPortalSdk {
     getDashboardMetrics(): Promise<DashboardMetrics>;
     getCurrentSubscription(tenantId?: string): Promise<any>;
     getBillingTransactions(tenantId?: string): Promise<any[]>;
-    upgradeSubscriptionPlan(planCode: string, billingCycle?: 'monthly' | 'yearly', tenantId?: string): Promise<any>;
-    purchaseQuotaTopup(topupType: string, tenantId?: string): Promise<any>;
+    upgradeSubscriptionPlan(planCode: string, billingCycle?: 'monthly' | 'yearly', tenantId?: string, paymentMethod?: string): Promise<any>;
+    purchaseQuotaTopup(topupType: string, tenantId?: string, paymentMethod?: string): Promise<any>;
     trackResumeDownload(candidateId?: string, tenantId?: string): Promise<any>;
     getAdminTransactions(): Promise<any[]>;
     getLocations(params?: {

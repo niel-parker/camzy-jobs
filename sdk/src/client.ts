@@ -404,17 +404,17 @@ export class JobPortalSdk {
     return this.request(`/subscriptions/transactions${q}`);
   }
 
-  async upgradeSubscriptionPlan(planCode: string, billingCycle: 'monthly' | 'yearly' = 'monthly', tenantId?: string): Promise<any> {
+  async upgradeSubscriptionPlan(planCode: string, billingCycle: 'monthly' | 'yearly' = 'monthly', tenantId?: string, paymentMethod?: string): Promise<any> {
     return this.request('/subscriptions/upgrade', {
       method: 'POST',
-      body: JSON.stringify({ planCode, billingCycle, tenantId }),
+      body: JSON.stringify({ planCode, billingCycle, tenantId, paymentMethod }),
     });
   }
 
-  async purchaseQuotaTopup(topupType: string, tenantId?: string): Promise<any> {
+  async purchaseQuotaTopup(topupType: string, tenantId?: string, paymentMethod?: string): Promise<any> {
     return this.request('/subscriptions/topup', {
       method: 'POST',
-      body: JSON.stringify({ topupType, tenantId }),
+      body: JSON.stringify({ topupType, tenantId, paymentMethod }),
     });
   }
 

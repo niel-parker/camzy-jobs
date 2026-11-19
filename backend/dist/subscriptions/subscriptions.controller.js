@@ -32,10 +32,10 @@ let SubscriptionsController = class SubscriptionsController {
         return await this.subscriptionsService.getTransactions(tenantId);
     }
     async upgradePlan(body) {
-        return await this.subscriptionsService.upgradePlan(body.tenantId || 'techcorp-global', body.planCode, body.billingCycle || 'monthly');
+        return await this.subscriptionsService.upgradePlan(body.tenantId || 'techcorp-global', body.planCode, body.billingCycle || 'monthly', body.paymentMethod);
     }
     async purchaseTopup(body) {
-        return await this.subscriptionsService.purchaseTopup(body.tenantId || 'techcorp-global', body.topupType);
+        return await this.subscriptionsService.purchaseTopup(body.tenantId || 'techcorp-global', body.topupType, body.paymentMethod);
     }
     async trackResumeDownload(body) {
         return await this.subscriptionsService.trackResumeDownload(body.tenantId || 'techcorp-global', body.candidateId);

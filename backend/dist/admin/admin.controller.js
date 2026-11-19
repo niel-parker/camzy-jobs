@@ -1364,15 +1364,63 @@ let AdminController = class AdminController {
         return await this.planRepo.find({ order: { priceMonthly: 'ASC' } });
     }
     async createPackage(body) {
-        const code = body.code || body.name.toUpperCase().replace(/[^A-Z0-9]/g, '_');
+        if (body.id) {
+            const existing = await this.planRepo.findOne({ where: { id: body.id } });
+            if (existing) {
+                if (body.name !== undefined)
+                    existing.name = body.name;
+                if (body.code !== undefined)
+                    existing.code = body.code.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+                if (body.priceMonthly !== undefined)
+                    existing.priceMonthly = Number(body.priceMonthly);
+                if (body.priceYearly !== undefined)
+                    existing.priceYearly = Number(body.priceYearly);
+                if (body.maxActiveJobs !== undefined)
+                    existing.maxActiveJobs = Number(body.maxActiveJobs);
+                if (body.maxResumeDownloads !== undefined)
+                    existing.maxResumeDownloads = Number(body.maxResumeDownloads);
+                if (body.maxTeamSeats !== undefined || body.maxRecruiterSeats !== undefined) {
+                    existing.maxTeamSeats = Number(body.maxTeamSeats ?? body.maxRecruiterSeats);
+                }
+                if (body.isActive !== undefined)
+                    existing.isActive = Boolean(body.isActive);
+                if (body.features !== undefined)
+                    existing.features = body.features;
+                return await this.planRepo.save(existing);
+            }
+        }
+        const rawCode = body.code || body.name || 'CUSTOM_PLAN';
+        const code = rawCode.toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+        const byCode = await this.planRepo.findOne({ where: { code } });
+        if (byCode) {
+            if (body.name !== undefined)
+                byCode.name = body.name;
+            if (body.priceMonthly !== undefined)
+                byCode.priceMonthly = Number(body.priceMonthly);
+            if (body.priceYearly !== undefined)
+                byCode.priceYearly = Number(body.priceYearly);
+            if (body.maxActiveJobs !== undefined)
+                byCode.maxActiveJobs = Number(body.maxActiveJobs);
+            if (body.maxResumeDownloads !== undefined)
+                byCode.maxResumeDownloads = Number(body.maxResumeDownloads);
+            if (body.maxTeamSeats !== undefined || body.maxRecruiterSeats !== undefined) {
+                byCode.maxTeamSeats = Number(body.maxTeamSeats ?? body.maxRecruiterSeats);
+            }
+            if (body.isActive !== undefined)
+                byCode.isActive = Boolean(body.isActive);
+            if (body.features !== undefined)
+                byCode.features = body.features;
+            return await this.planRepo.save(byCode);
+        }
         const plan = this.planRepo.create({
             name: body.name,
             code,
-            priceMonthly: body.priceMonthly ?? 49,
-            priceYearly: body.priceYearly ?? 490,
-            maxActiveJobs: body.maxActiveJobs ?? 5,
-            maxResumeDownloads: body.maxResumeDownloads ?? 50,
-            maxTeamSeats: body.maxTeamSeats ?? body.maxRecruiterSeats ?? 3,
+            priceMonthly: Number(body.priceMonthly ?? 49),
+            priceYearly: Number(body.priceYearly ?? 490),
+            maxActiveJobs: Number(body.maxActiveJobs ?? 5),
+            maxResumeDownloads: Number(body.maxResumeDownloads ?? 50),
+            maxTeamSeats: Number(body.maxTeamSeats ?? body.maxRecruiterSeats ?? 3),
+            isActive: body.isActive !== undefined ? Boolean(body.isActive) : true,
             features: body.features || ['Active Job Postings', 'Standard ATS', 'Candidate Search'],
         });
         return await this.planRepo.save(plan);
@@ -3198,7 +3246,7 @@ __decorate([
 ], AdminController.prototype, "getPackages", null);
 __decorate([
     (0, common_1.Post)('packages'),
-    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Create subscription package' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Super Admin: Create or update subscription package' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

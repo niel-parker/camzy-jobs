@@ -16,8 +16,8 @@ export class SubscriptionPlan {
   @Column({ length: 100 })
   name: string;
 
-  @Column({ type: 'enum', enum: PlanCode, unique: true })
-  code: PlanCode;
+  @Column({ length: 100, unique: true })
+  code: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   priceMonthly: number;

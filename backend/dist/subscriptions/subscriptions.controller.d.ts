@@ -1,6 +1,5 @@
 import { SubscriptionsService } from './subscriptions.service';
 import { StripeService } from './stripe.service';
-import { PlanCode } from './entities/subscription-plan.entity';
 export declare class SubscriptionsController {
     private readonly subscriptionsService;
     private readonly stripeService;
@@ -11,17 +10,21 @@ export declare class SubscriptionsController {
         tenantId: string;
         tenantName: string;
         status: import("./entities/tenant-subscription.entity").SubscriptionStatus;
+        isExpired: boolean;
+        daysRemaining: number;
+        isNearExpiry: boolean;
         currentPeriodStart: Date;
         currentPeriodEnd: Date;
         plan: {
             id: string;
             name: string;
-            code: PlanCode;
+            code: string;
             priceMonthly: number;
             priceYearly: number;
             maxActiveJobs: number;
             maxResumeDownloads: number;
             maxTeamSeats: number;
+            features: string[];
         };
         quotas: {
             activeJobs: {
@@ -47,8 +50,9 @@ export declare class SubscriptionsController {
     getTransactions(tenantId?: string): Promise<import("./entities/billing-transaction.entity").BillingTransaction[]>;
     upgradePlan(body: {
         tenantId?: string;
-        planCode: PlanCode;
+        planCode: string;
         billingCycle?: 'monthly' | 'yearly';
+        paymentMethod?: string;
     }): Promise<{
         success: boolean;
         message: string;
@@ -57,17 +61,21 @@ export declare class SubscriptionsController {
             tenantId: string;
             tenantName: string;
             status: import("./entities/tenant-subscription.entity").SubscriptionStatus;
+            isExpired: boolean;
+            daysRemaining: number;
+            isNearExpiry: boolean;
             currentPeriodStart: Date;
             currentPeriodEnd: Date;
             plan: {
                 id: string;
                 name: string;
-                code: PlanCode;
+                code: string;
                 priceMonthly: number;
                 priceYearly: number;
                 maxActiveJobs: number;
                 maxResumeDownloads: number;
                 maxTeamSeats: number;
+                features: string[];
             };
             quotas: {
                 activeJobs: {
@@ -100,7 +108,7 @@ export declare class SubscriptionsController {
             type: import("./entities/billing-transaction.entity").TransactionType.SUBSCRIPTION;
             status: import("./entities/billing-transaction.entity").TransactionStatus.PAID;
             paymentMethod: string;
-            planCode: PlanCode;
+            planCode: string;
             quotaDetails: {
                 activeJobs: number;
                 resumeDownloads: number;
@@ -113,6 +121,7 @@ export declare class SubscriptionsController {
     purchaseTopup(body: {
         tenantId?: string;
         topupType: 'RESUME_50' | 'RESUME_150' | 'JOBS_5' | 'SEATS_2';
+        paymentMethod?: string;
     }): Promise<{
         success: boolean;
         message: string;
@@ -136,17 +145,21 @@ export declare class SubscriptionsController {
             tenantId: string;
             tenantName: string;
             status: import("./entities/tenant-subscription.entity").SubscriptionStatus;
+            isExpired: boolean;
+            daysRemaining: number;
+            isNearExpiry: boolean;
             currentPeriodStart: Date;
             currentPeriodEnd: Date;
             plan: {
                 id: string;
                 name: string;
-                code: PlanCode;
+                code: string;
                 priceMonthly: number;
                 priceYearly: number;
                 maxActiveJobs: number;
                 maxResumeDownloads: number;
                 maxTeamSeats: number;
+                features: string[];
             };
             quotas: {
                 activeJobs: {

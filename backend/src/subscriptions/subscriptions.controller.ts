@@ -33,23 +33,25 @@ export class SubscriptionsController {
   @Post('upgrade')
   @ApiOperation({ summary: 'Upgrade company subscription plan and generate paid invoice' })
   async upgradePlan(
-    @Body() body: { tenantId?: string; planCode: PlanCode; billingCycle?: 'monthly' | 'yearly' },
+    @Body() body: { tenantId?: string; planCode: string; billingCycle?: 'monthly' | 'yearly'; paymentMethod?: string },
   ) {
     return await this.subscriptionsService.upgradePlan(
       body.tenantId || 'techcorp-global',
       body.planCode,
       body.billingCycle || 'monthly',
+      body.paymentMethod,
     );
   }
 
   @Post('topup')
   @ApiOperation({ summary: 'Purchase extra quota pack (resumes, job slots, recruiter seats) and generate invoice' })
   async purchaseTopup(
-    @Body() body: { tenantId?: string; topupType: 'RESUME_50' | 'RESUME_150' | 'JOBS_5' | 'SEATS_2' },
+    @Body() body: { tenantId?: string; topupType: 'RESUME_50' | 'RESUME_150' | 'JOBS_5' | 'SEATS_2'; paymentMethod?: string },
   ) {
     return await this.subscriptionsService.purchaseTopup(
       body.tenantId || 'techcorp-global',
       body.topupType,
+      body.paymentMethod,
     );
   }
 

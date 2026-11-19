@@ -8,7 +8,7 @@ export declare enum PlanCode {
 export declare class SubscriptionPlan {
     id: string;
     name: string;
-    code: PlanCode;
+    code: string;
     priceMonthly: number;
     priceYearly: number;
     maxActiveJobs: number;

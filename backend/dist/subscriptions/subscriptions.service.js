@@ -65,21 +65,38 @@ let SubscriptionsService = class SubscriptionsService {
             where: { tenantId: tenant.id },
             relations: { plan: true },
         });
+        if (sub && !sub.plan) {
+            let resolvedPlan = await this.planRepo.findOne({
+                where: [{ id: sub.planId }, { code: sub.planId }],
+            });
+            if (!resolvedPlan) {
+                resolvedPlan = await this.planRepo.findOne({ where: { code: subscription_plan_entity_1.PlanCode.FREE } })
+                    || await this.planRepo.findOne({ where: { code: subscription_plan_entity_1.PlanCode.PRO } });
+            }
+            if (resolvedPlan) {
+                sub.planId = resolvedPlan.id;
+                sub.plan = resolvedPlan;
+                await this.subRepo.save(sub);
+            }
+        }
         if (!sub) {
-            let plan = await this.planRepo.findOne({ where: { code: subscription_plan_entity_1.PlanCode.PRO } });
+            let plan = await this.planRepo.findOne({ where: { code: subscription_plan_entity_1.PlanCode.FREE } });
             if (!plan)
-                plan = await this.planRepo.findOne({ where: { code: subscription_plan_entity_1.PlanCode.FREE } });
+                plan = await this.planRepo.findOne({ where: { code: subscription_plan_entity_1.PlanCode.PRO } });
+            if (!plan)
+                plan = await this.planRepo.findOne({ where: { isActive: true }, order: { priceMonthly: 'ASC' } });
             if (!plan) {
                 plan = await this.planRepo.save({
-                    name: 'Professional Employer',
-                    code: subscription_plan_entity_1.PlanCode.PRO,
-                    priceMonthly: 199,
-                    priceYearly: 159,
-                    maxActiveJobs: 15,
-                    maxResumeDownloads: 150,
+                    name: 'Starter Company',
+                    code: subscription_plan_entity_1.PlanCode.FREE,
+                    priceMonthly: 0,
+                    priceYearly: 0,
+                    maxActiveJobs: 2,
+                    maxResumeDownloads: 0,
                     maxFeaturedJobs: 0,
-                    maxTeamSeats: 5,
+                    maxTeamSeats: 1,
                     isActive: true,
+                    features: ['2 Active Job Postings', 'Standard ATS Kanban', 'Candidate Search'],
                 });
             }
             const now = new Date();
@@ -106,12 +123,24 @@ let SubscriptionsService = class SubscriptionsService {
             sub.activeJobsUsed = liveActiveJobs;
             await this.subRepo.save(sub);
         }
+        const now = new Date();
+        const isExpired = sub.plan?.code !== 'FREE' && sub.currentPeriodEnd && new Date(sub.currentPeriodEnd) < now;
+        if (isExpired && sub.status !== tenant_subscription_entity_1.SubscriptionStatus.EXPIRED) {
+            sub.status = tenant_subscription_entity_1.SubscriptionStatus.EXPIRED;
+            await this.subRepo.save(sub);
+        }
+        const daysRemaining = sub.currentPeriodEnd
+            ? Math.ceil((new Date(sub.currentPeriodEnd).getTime() - now.getTime()) / 86400000)
+            : 30;
         const plan = sub.plan;
         return {
             id: sub.id,
             tenantId: tenant.id,
             tenantName: tenant.name,
             status: sub.status,
+            isExpired: Boolean(isExpired),
+            daysRemaining: Math.max(0, daysRemaining),
+            isNearExpiry: !isExpired && daysRemaining <= 5 && sub.plan?.code !== 'FREE',
             currentPeriodStart: sub.currentPeriodStart,
             currentPeriodEnd: sub.currentPeriodEnd,
             plan: {
@@ -123,6 +152,7 @@ let SubscriptionsService = class SubscriptionsService {
                 maxActiveJobs: plan.maxActiveJobs,
                 maxResumeDownloads: plan.maxResumeDownloads,
                 maxTeamSeats: plan.maxTeamSeats,
+                features: plan.features,
             },
             quotas: {
                 activeJobs: {
@@ -164,6 +194,20 @@ let SubscriptionsService = class SubscriptionsService {
             where: { tenantId: tenant.id },
             relations: { plan: true },
         });
+        if (sub && !sub.plan) {
+            let resolvedPlan = await this.planRepo.findOne({
+                where: [{ id: sub.planId }, { code: sub.planId }],
+            });
+            if (!resolvedPlan) {
+                resolvedPlan = await this.planRepo.findOne({ where: { code: subscription_plan_entity_1.PlanCode.FREE } })
+                    || await this.planRepo.findOne({ where: { code: subscription_plan_entity_1.PlanCode.PRO } });
+            }
+            if (resolvedPlan) {
+                sub.planId = resolvedPlan.id;
+                sub.plan = resolvedPlan;
+                await this.subRepo.save(sub);
+            }
+        }
         if (!sub) {
             await this.getCurrentSubscription(tenant.id);
             sub = await this.subRepo.findOne({
@@ -196,11 +240,14 @@ let SubscriptionsService = class SubscriptionsService {
             message: 'Resume download successfully recorded against monthly quota.',
         };
     }
-    async upgradePlan(tenantIdOrSlug, planCode, billingCycle = 'monthly') {
+    async upgradePlan(tenantIdOrSlug, planCodeOrId, billingCycle = 'monthly', paymentMethod = 'Online Card (•••• 4242)') {
         const tenant = await this.resolveTenant(tenantIdOrSlug);
-        const plan = await this.planRepo.findOne({ where: { code: planCode } });
+        let plan = await this.planRepo.findOne({ where: { code: planCodeOrId } });
+        if (!plan) {
+            plan = await this.planRepo.findOne({ where: { id: planCodeOrId } });
+        }
         if (!plan)
-            throw new common_1.NotFoundException(`Subscription plan ${planCode} not found`);
+            throw new common_1.NotFoundException(`Subscription plan ${planCodeOrId} not found`);
         let sub = await this.subRepo.findOne({ where: { tenantId: tenant.id } });
         const now = new Date();
         const periodEnd = new Date(now.getTime() + (billingCycle === 'yearly' ? 365 : 30) * 86400000);
@@ -209,6 +256,7 @@ let SubscriptionsService = class SubscriptionsService {
             sub.status = tenant_subscription_entity_1.SubscriptionStatus.ACTIVE;
             sub.currentPeriodStart = now;
             sub.currentPeriodEnd = periodEnd;
+            sub.resumeDownloadsUsed = 0;
             await this.subRepo.save(sub);
         }
         else {
@@ -234,7 +282,7 @@ let SubscriptionsService = class SubscriptionsService {
             currency: 'INR',
             type: billing_transaction_entity_1.TransactionType.SUBSCRIPTION,
             status: billing_transaction_entity_1.TransactionStatus.PAID,
-            paymentMethod: 'Stripe Card (•••• 4242)',
+            paymentMethod: paymentMethod || 'Online Card (•••• 4242)',
             planCode: plan.code,
             quotaDetails: {
                 activeJobs: plan.maxActiveJobs,
@@ -251,12 +299,26 @@ let SubscriptionsService = class SubscriptionsService {
             transaction: txn,
         };
     }
-    async purchaseTopup(tenantIdOrSlug, topupType) {
+    async purchaseTopup(tenantIdOrSlug, topupType, paymentMethod = 'Online Card (•••• 4242)') {
         const tenant = await this.resolveTenant(tenantIdOrSlug);
         let sub = await this.subRepo.findOne({
             where: { tenantId: tenant.id },
             relations: { plan: true },
         });
+        if (sub && !sub.plan) {
+            let resolvedPlan = await this.planRepo.findOne({
+                where: [{ id: sub.planId }, { code: sub.planId }],
+            });
+            if (!resolvedPlan) {
+                resolvedPlan = await this.planRepo.findOne({ where: { code: subscription_plan_entity_1.PlanCode.FREE } })
+                    || await this.planRepo.findOne({ where: { code: subscription_plan_entity_1.PlanCode.PRO } });
+            }
+            if (resolvedPlan) {
+                sub.planId = resolvedPlan.id;
+                sub.plan = resolvedPlan;
+                await this.subRepo.save(sub);
+            }
+        }
         if (!sub) {
             await this.getCurrentSubscription(tenant.id);
             sub = await this.subRepo.findOne({
@@ -311,7 +373,7 @@ let SubscriptionsService = class SubscriptionsService {
             currency: 'INR',
             type,
             status: billing_transaction_entity_1.TransactionStatus.PAID,
-            paymentMethod: 'Stripe Card (•••• 4242)',
+            paymentMethod: paymentMethod || 'Online Card (•••• 4242)',
             planCode: sub?.plan?.code || 'PRO',
             quotaDetails,
             periodStart: new Date(),

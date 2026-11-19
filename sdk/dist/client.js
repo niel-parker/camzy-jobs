@@ -302,16 +302,16 @@ class JobPortalSdk {
         const q = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : '';
         return this.request(`/subscriptions/transactions${q}`);
     }
-    async upgradeSubscriptionPlan(planCode, billingCycle = 'monthly', tenantId) {
+    async upgradeSubscriptionPlan(planCode, billingCycle = 'monthly', tenantId, paymentMethod) {
         return this.request('/subscriptions/upgrade', {
             method: 'POST',
-            body: JSON.stringify({ planCode, billingCycle, tenantId }),
+            body: JSON.stringify({ planCode, billingCycle, tenantId, paymentMethod }),
         });
     }
-    async purchaseQuotaTopup(topupType, tenantId) {
+    async purchaseQuotaTopup(topupType, tenantId, paymentMethod) {
         return this.request('/subscriptions/topup', {
             method: 'POST',
-            body: JSON.stringify({ topupType, tenantId }),
+            body: JSON.stringify({ topupType, tenantId, paymentMethod }),
         });
     }
     async trackResumeDownload(candidateId, tenantId) {

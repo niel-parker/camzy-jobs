@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm';
-import { SubscriptionPlan, PlanCode } from './entities/subscription-plan.entity';
+import { SubscriptionPlan } from './entities/subscription-plan.entity';
 import { TenantSubscription, SubscriptionStatus } from './entities/tenant-subscription.entity';
 import { BillingTransaction, TransactionType, TransactionStatus } from './entities/billing-transaction.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
@@ -20,17 +20,21 @@ export declare class SubscriptionsService {
         tenantId: string;
         tenantName: string;
         status: SubscriptionStatus;
+        isExpired: boolean;
+        daysRemaining: number;
+        isNearExpiry: boolean;
         currentPeriodStart: Date;
         currentPeriodEnd: Date;
         plan: {
             id: string;
             name: string;
-            code: PlanCode;
+            code: string;
             priceMonthly: number;
             priceYearly: number;
             maxActiveJobs: number;
             maxResumeDownloads: number;
             maxTeamSeats: number;
+            features: string[];
         };
         quotas: {
             activeJobs: {
@@ -62,7 +66,7 @@ export declare class SubscriptionsService {
         remaining: number;
         message: string;
     }>;
-    upgradePlan(tenantIdOrSlug: string, planCode: PlanCode, billingCycle?: 'monthly' | 'yearly'): Promise<{
+    upgradePlan(tenantIdOrSlug: string, planCodeOrId: string, billingCycle?: 'monthly' | 'yearly', paymentMethod?: string): Promise<{
         success: boolean;
         message: string;
         subscription: {
@@ -70,17 +74,21 @@ export declare class SubscriptionsService {
             tenantId: string;
             tenantName: string;
             status: SubscriptionStatus;
+            isExpired: boolean;
+            daysRemaining: number;
+            isNearExpiry: boolean;
             currentPeriodStart: Date;
             currentPeriodEnd: Date;
             plan: {
                 id: string;
                 name: string;
-                code: PlanCode;
+                code: string;
                 priceMonthly: number;
                 priceYearly: number;
                 maxActiveJobs: number;
                 maxResumeDownloads: number;
                 maxTeamSeats: number;
+                features: string[];
             };
             quotas: {
                 activeJobs: {
@@ -113,7 +121,7 @@ export declare class SubscriptionsService {
             type: TransactionType.SUBSCRIPTION;
             status: TransactionStatus.PAID;
             paymentMethod: string;
-            planCode: PlanCode;
+            planCode: string;
             quotaDetails: {
                 activeJobs: number;
                 resumeDownloads: number;
@@ -123,7 +131,7 @@ export declare class SubscriptionsService {
             periodEnd: Date;
         } & BillingTransaction;
     }>;
-    purchaseTopup(tenantIdOrSlug: string, topupType: 'RESUME_50' | 'RESUME_150' | 'JOBS_5' | 'SEATS_2'): Promise<{
+    purchaseTopup(tenantIdOrSlug: string, topupType: 'RESUME_50' | 'RESUME_150' | 'JOBS_5' | 'SEATS_2', paymentMethod?: string): Promise<{
         success: boolean;
         message: string;
         transaction: {
@@ -146,17 +154,21 @@ export declare class SubscriptionsService {
             tenantId: string;
             tenantName: string;
             status: SubscriptionStatus;
+            isExpired: boolean;
+            daysRemaining: number;
+            isNearExpiry: boolean;
             currentPeriodStart: Date;
             currentPeriodEnd: Date;
             plan: {
                 id: string;
                 name: string;
-                code: PlanCode;
+                code: string;
                 priceMonthly: number;
                 priceYearly: number;
                 maxActiveJobs: number;
                 maxResumeDownloads: number;
                 maxTeamSeats: number;
+                features: string[];
             };
             quotas: {
                 activeJobs: {

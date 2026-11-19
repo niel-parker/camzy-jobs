@@ -73,7 +73,7 @@ export declare class AdminController {
         slug: string;
         industry: string;
         status: TenantStatus;
-        planCode: PlanCode;
+        planCode: string;
         planName: string;
         maxActiveJobs: number;
         maxResumeDownloads: number;
@@ -86,7 +86,7 @@ export declare class AdminController {
     }): Promise<{
         message: string;
         tenantId: string;
-        planCode: PlanCode;
+        planCode: string;
         maxActiveJobs: number;
         maxResumeDownloads: number;
         maxTeamSeats: number;
