@@ -227,6 +227,7 @@ export default function CandidateProfilePage() {
     rolesAndResponsibilities: '',
   });
 
+  const [editingEduIndex, setEditingEduIndex] = useState<number | null>(null);
   const [eduForm, setEduForm] = useState<EducationItem>({
     degree: '',
     fieldOfStudy: '',
@@ -361,10 +362,6 @@ export default function CandidateProfilePage() {
             resumeName = parts[parts.length - 1] || '';
           }
 
-          const hasCustomHeadline = data.headline && data.headline !== 'Full Stack Candidate';
-          const hasCustomSalary = data.expectedSalary != null && Number(data.expectedSalary) !== 80000;
-          const hasCustomExp = data.experienceYears != null && !(Number(data.experienceYears) === 1 && Number(data.expectedSalary) === 80000);
-
           const initialLocations = Array.isArray(data.preferredLocations) ? data.preferredLocations : [];
           const initialSkills: string[] = Array.isArray(data.skills)
             ? data.skills.map((s: any) => String(s).trim()).filter(Boolean)
@@ -375,12 +372,12 @@ export default function CandidateProfilePage() {
           setSkillsList(initialSkills);
 
           setProfile({
-            headline: hasCustomHeadline ? data.headline : '',
+            headline: data.headline || '',
             summary: data.summary || '',
             currentTitle: data.currentTitle || '',
-            experienceYears: hasCustomExp ? String(data.experienceYears) : '',
-            currentSalary: data.currentSalary != null ? String(data.currentSalary) : '',
-            expectedSalary: hasCustomSalary ? String(data.expectedSalary) : '',
+            experienceYears: data.experienceYears != null && data.experienceYears !== '' ? String(data.experienceYears) : '',
+            currentSalary: data.currentSalary != null && data.currentSalary !== '' ? String(data.currentSalary) : '',
+            expectedSalary: data.expectedSalary != null && data.expectedSalary !== '' ? String(data.expectedSalary) : '',
             noticePeriod: data.noticePeriod || '',
             preferredLocations: initialLocations,
             skills: initialSkills.join(', '),
@@ -963,25 +960,123 @@ export default function CandidateProfilePage() {
     triggerAutoSave({ experience: formatted }, 'Removed experience entry ✓');
   };
 
-  const handleAddEducation = () => {
-    if (!eduForm.degree || !eduForm.institution) return;
-    setEducationList([...educationList, { ...eduForm, id: `edu_${Date.now()}` }]);
-    setEduForm({ degree: '', fieldOfStudy: '', institution: '', startYear: '', endYear: '', grade: '' });
+  // Salary & Profile Field Auto-Save Handlers
+  const handleAutoSaveSalary = (field: 'currentSalary' | 'expectedSalary', rawVal: string) => {
+    const cleaned = rawVal.trim().replace(/[^0-9.]/g, '');
+    const numVal = cleaned ? Number(cleaned) : null;
+    const label = field === 'currentSalary' ? 'Current salary' : 'Expected salary';
+    triggerAutoSave({ [field]: numVal }, `Saved ${label} (${numVal ? `₹${numVal.toLocaleString('en-IN')}` : 'Cleared'}) ✓`);
+  };
+
+  // Education Handlers with Auto-Save
+  const handleOpenAddEducation = () => {
+    setEduForm({
+      degree: '',
+      fieldOfStudy: '',
+      institution: '',
+      startYear: '',
+      endYear: '',
+      grade: '',
+    });
+    setEditingEduIndex(null);
+    setActiveModal('EDU');
+  };
+
+  const handleOpenEditEducation = (idx: number) => {
+    const item = educationList[idx];
+    if (item) {
+      setEduForm({
+        id: item.id,
+        degree: item.degree || (item as any).degree_title || '',
+        fieldOfStudy: item.fieldOfStudy || '',
+        institution: item.institution || '',
+        startYear: item.startYear || '',
+        endYear: item.endYear || (item as any).year || '',
+        grade: item.grade || (item as any).result || '',
+      });
+      setEditingEduIndex(idx);
+      setActiveModal('EDU');
+    }
+  };
+
+  const handleSaveEducation = async () => {
+    if (!eduForm.degree.trim() || !eduForm.institution.trim()) return;
+
+    let updatedList: EducationItem[];
+    if (editingEduIndex !== null && editingEduIndex >= 0 && editingEduIndex < educationList.length) {
+      updatedList = [...educationList];
+      updatedList[editingEduIndex] = {
+        ...eduForm,
+        id: eduForm.id || educationList[editingEduIndex].id || `edu_${Date.now()}`,
+      };
+    } else {
+      updatedList = [
+        ...educationList,
+        { ...eduForm, id: `edu_${Date.now()}` },
+      ];
+    }
+
+    setEducationList(updatedList);
     setActiveModal(null);
+    setEditingEduIndex(null);
+    setEduForm({
+      degree: '',
+      fieldOfStudy: '',
+      institution: '',
+      startYear: '',
+      endYear: '',
+      grade: '',
+    });
+
+    const formatted = updatedList.map((edu) => ({
+      ...edu,
+      degree_title: edu.degree,
+      year: edu.endYear,
+      result: edu.grade,
+    }));
+    triggerAutoSave({ education: formatted }, editingEduIndex !== null ? 'Updated education ✓' : 'Added education ✓');
+  };
+
+  const handleDeleteEducation = (idx: number) => {
+    const updatedList = educationList.filter((_, i) => i !== idx);
+    setEducationList(updatedList);
+    const formatted = updatedList.map((edu) => ({
+      ...edu,
+      degree_title: edu.degree,
+      year: edu.endYear,
+      result: edu.grade,
+    }));
+    triggerAutoSave({ education: formatted }, 'Removed education entry ✓');
   };
 
   const handleAddCertification = () => {
     if (!certForm.title || !certForm.issuingOrganization) return;
-    setCertificationList([...certificationList, { ...certForm, id: `cert_${Date.now()}` }]);
+    const updated = [...certificationList, { ...certForm, id: `cert_${Date.now()}` }];
+    setCertificationList(updated);
     setCertForm({ title: '', issuingOrganization: '', issueDate: '', expiryDate: '', credentialUrl: '' });
     setActiveModal(null);
+    triggerAutoSave({ certifications: updated }, 'Added certification ✓');
+  };
+
+  const handleDeleteCertification = (idx: number) => {
+    const updated = certificationList.filter((_, i) => i !== idx);
+    setCertificationList(updated);
+    triggerAutoSave({ certifications: updated }, 'Removed certification ✓');
   };
 
   const handleAddProject = () => {
     if (!projForm.projectTitle) return;
-    setProjectList([...projectList, { ...projForm, id: `proj_${Date.now()}` }]);
+    const updated = [...projectList, { ...projForm, id: `proj_${Date.now()}` }];
+    setProjectList(updated);
     setProjForm({ projectTitle: '', client: '', role: '', projectDescription: '', technologies: [], projectUrl: '' });
     setActiveModal(null);
+    triggerAutoSave({ projects: updated }, 'Added project ✓');
+  };
+
+  const handleDeleteProject = (idx: number) => {
+    const updated = projectList.filter((_, i) => i !== idx);
+    setProjectList(updated);
+    triggerAutoSave({ projects: updated }, 'Removed project ✓');
   };
 
   // Language Management Handlers
@@ -1452,6 +1547,15 @@ export default function CandidateProfilePage() {
                 placeholder="+91 98765 43210"
                 value={userForm.phoneNumber}
                 onChange={(e) => setUserForm({ ...userForm, phoneNumber: e.target.value })}
+                onBlur={() => {
+                  if (userForm.firstName.trim() || userForm.lastName.trim() || userForm.phoneNumber.trim()) {
+                    triggerAutoSave({
+                      firstName: userForm.firstName.trim(),
+                      lastName: userForm.lastName.trim(),
+                      phoneNumber: userForm.phoneNumber.trim(),
+                    }, 'Saved contact details ✓');
+                  }
+                }}
                 className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
@@ -1464,6 +1568,19 @@ export default function CandidateProfilePage() {
                 placeholder="e.g. Senior Full Stack Engineer | Next.js & NestJS Specialist"
                 value={profile.headline}
                 onChange={(e) => setProfile({ ...profile, headline: e.target.value })}
+                onBlur={(e) => {
+                  if (e.target.value.trim()) {
+                    triggerAutoSave({ headline: e.target.value.trim() }, 'Saved headline ✓');
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur();
+                    if ((e.target as HTMLInputElement).value.trim()) {
+                      triggerAutoSave({ headline: (e.target as HTMLInputElement).value.trim() }, 'Saved headline ✓');
+                    }
+                  }
+                }}
                 className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
@@ -1472,7 +1589,11 @@ export default function CandidateProfilePage() {
               <label className="block font-bold theme-text mb-1">Notice Period <span className="text-rose-500">*</span></label>
               <select
                 value={profile.noticePeriod}
-                onChange={(e) => setProfile({ ...profile, noticePeriod: e.target.value })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setProfile({ ...profile, noticePeriod: val });
+                  triggerAutoSave({ noticePeriod: val }, `Saved notice period "${val}" ✓`);
+                }}
                 className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none font-bold"
               >
                 <option value="Immediate">Immediate / Serving Notice</option>
@@ -1487,8 +1608,20 @@ export default function CandidateProfilePage() {
               <label className="block font-bold theme-text mb-1">Years of Total Experience</label>
               <input
                 type="number"
+                placeholder="e.g. 5"
                 value={profile.experienceYears}
                 onChange={(e) => setProfile({ ...profile, experienceYears: e.target.value })}
+                onBlur={(e) => {
+                  const expVal = Number(e.target.value) || 0;
+                  triggerAutoSave({ experienceYears: expVal }, `Saved experience (${expVal} yrs) ✓`);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur();
+                    const expVal = Number((e.target as HTMLInputElement).value) || 0;
+                    triggerAutoSave({ experienceYears: expVal }, `Saved experience (${expVal} yrs) ✓`);
+                  }
+                }}
                 className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
@@ -1500,6 +1633,13 @@ export default function CandidateProfilePage() {
                 placeholder="1800000"
                 value={profile.currentSalary}
                 onChange={(e) => setProfile({ ...profile, currentSalary: e.target.value })}
+                onBlur={(e) => handleAutoSaveSalary('currentSalary', e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur();
+                    handleAutoSaveSalary('currentSalary', (e.target as HTMLInputElement).value);
+                  }
+                }}
                 className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
@@ -1511,6 +1651,13 @@ export default function CandidateProfilePage() {
                 placeholder="2400000"
                 value={profile.expectedSalary}
                 onChange={(e) => setProfile({ ...profile, expectedSalary: e.target.value })}
+                onBlur={(e) => handleAutoSaveSalary('expectedSalary', e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur();
+                    handleAutoSaveSalary('expectedSalary', (e.target as HTMLInputElement).value);
+                  }
+                }}
                 className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
@@ -2070,23 +2217,54 @@ export default function CandidateProfilePage() {
               </h2>
               <button
                 type="button"
-                onClick={() => setActiveModal('EDU')}
-                className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
+                onClick={handleOpenAddEducation}
+                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1 shadow-sm transition-all cursor-pointer"
               >
-                + Add
+                <Plus className="w-3.5 h-3.5" /> Add Degree
               </button>
             </div>
-            <div className="space-y-3">
-              {educationList.map((edu, idx) => (
-                <div key={idx} className="p-3.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 text-xs space-y-1">
-                  <h4 className="font-bold theme-text">{edu.degree || (edu as any).degree_title}</h4>
-                  <p className="text-indigo-500 font-semibold">{edu.institution}</p>
-                  <p className="theme-muted text-[11px]">
-                    {edu.startYear ? `${edu.startYear} – ` : ''}{edu.endYear || (edu as any).year || 'Completed'} {(edu.grade || (edu as any).result) && `• Grade: ${edu.grade || (edu as any).result}`}
-                  </p>
-                </div>
-              ))}
-            </div>
+            {educationList.length === 0 ? (
+              <div className="p-4 rounded-xl border border-dashed theme-border text-center text-xs theme-muted py-6">
+                No education details added yet. Click &quot;Add Degree&quot; to add your qualification.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {educationList.map((edu, idx) => (
+                  <div key={edu.id || idx} className="p-3.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 text-xs space-y-1 relative">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 pr-1">
+                        <h4 className="font-bold theme-text truncate">{edu.degree || (edu as any).degree_title}</h4>
+                        {edu.fieldOfStudy && (
+                          <p className="text-[11px] theme-muted font-medium">{edu.fieldOfStudy}</p>
+                        )}
+                        <p className="text-indigo-500 font-semibold">{edu.institution}</p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditEducation(idx)}
+                          className="px-2 py-1 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800/60 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                          title="Edit Education"
+                        >
+                          <Pencil className="w-3 h-3" /> Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteEducation(idx)}
+                          className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all cursor-pointer"
+                          title="Delete Degree"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="theme-muted text-[11px]">
+                      {edu.startYear ? `${edu.startYear} – ` : ''}{edu.endYear || (edu as any).year || 'Completed'} {(edu.grade || (edu as any).result) && `• Grade: ${edu.grade || (edu as any).result}`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="theme-surface border theme-border rounded-2xl p-6 shadow-sm space-y-4">
@@ -2097,19 +2275,37 @@ export default function CandidateProfilePage() {
               <button
                 type="button"
                 onClick={() => setActiveModal('CERT')}
-                className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
+                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1 shadow-sm transition-all cursor-pointer"
               >
-                + Add
+                <Plus className="w-3.5 h-3.5" /> Add Certification
               </button>
             </div>
-            <div className="space-y-3">
-              {certificationList.map((cert, idx) => (
-                <div key={idx} className="p-3.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 text-xs space-y-1">
-                  <h4 className="font-bold theme-text">{cert.title}</h4>
-                  <p className="text-indigo-500 font-semibold">{cert.issuingOrganization}</p>
-                </div>
-              ))}
-            </div>
+            {certificationList.length === 0 ? (
+              <div className="p-4 rounded-xl border border-dashed theme-border text-center text-xs theme-muted py-6">
+                No certifications added yet. Click &quot;Add Certification&quot; to showcase your credentials.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {certificationList.map((cert, idx) => (
+                  <div key={cert.id || idx} className="p-3.5 rounded-xl border theme-border bg-slate-50/50 dark:bg-slate-900/50 text-xs space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="font-bold theme-text">{cert.title}</h4>
+                        <p className="text-indigo-500 font-semibold">{cert.issuingOrganization}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCertification(idx)}
+                        className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all cursor-pointer"
+                        title="Delete Certification"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -2511,6 +2707,10 @@ export default function CandidateProfilePage() {
                     type="number"
                     value={profile.experienceYears}
                     onChange={(e) => setProfile({ ...profile, experienceYears: e.target.value })}
+                    onBlur={(e) => {
+                      const expVal = Number(e.target.value) || 0;
+                      triggerAutoSave({ experienceYears: expVal }, `Saved experience (${expVal} yrs) ✓`);
+                    }}
                     className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
@@ -2519,8 +2719,16 @@ export default function CandidateProfilePage() {
                   <label className="block font-bold theme-text mb-1">Current Salary (INR)</label>
                   <input
                     type="number"
+                    placeholder="1800000"
                     value={profile.currentSalary}
                     onChange={(e) => setProfile({ ...profile, currentSalary: e.target.value })}
+                    onBlur={(e) => handleAutoSaveSalary('currentSalary', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAutoSaveSalary('currentSalary', (e.target as HTMLInputElement).value);
+                      }
+                    }}
                     className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
@@ -2529,8 +2737,16 @@ export default function CandidateProfilePage() {
                   <label className="block font-bold theme-text mb-1">Expected Salary (INR)</label>
                   <input
                     type="number"
+                    placeholder="2400000"
                     value={profile.expectedSalary}
                     onChange={(e) => setProfile({ ...profile, expectedSalary: e.target.value })}
+                    onBlur={(e) => handleAutoSaveSalary('expectedSalary', e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAutoSaveSalary('expectedSalary', (e.target as HTMLInputElement).value);
+                      }
+                    }}
                     className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   />
                 </div>
@@ -3014,15 +3230,20 @@ export default function CandidateProfilePage() {
           </div>
         )}
 
-        {/* MODAL FOR ADDING EDUCATION */}
+        {/* MODAL FOR ADDING / EDITING EDUCATION */}
         {activeModal === 'EDU' && (
           <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
             <div className="relative w-full max-w-md max-h-[90vh] my-auto flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95">
               <div className="flex-shrink-0 p-4 sm:p-5 border-b theme-border flex items-center justify-between gap-3 bg-inherit">
-                <h3 className="text-base font-extrabold theme-text truncate">Add Education Degree</h3>
+                <h3 className="text-base font-extrabold theme-text truncate">
+                  {editingEduIndex !== null ? 'Edit Education Degree' : 'Add Education Degree'}
+                </h3>
                 <button
                   type="button"
-                  onClick={() => setActiveModal(null)}
+                  onClick={() => {
+                    setActiveModal(null);
+                    setEditingEduIndex(null);
+                  }}
                   className="flex-shrink-0 p-1.5 rounded-xl theme-muted hover:theme-text hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   aria-label="Close modal"
                 >
@@ -3032,7 +3253,7 @@ export default function CandidateProfilePage() {
 
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 text-xs">
                 <div>
-                  <label className="block font-bold theme-text mb-1">Degree / Certification *</label>
+                  <label className="block font-bold theme-text mb-1">Degree / Course *</label>
                   <input
                     type="text"
                     required
@@ -3043,11 +3264,21 @@ export default function CandidateProfilePage() {
                   />
                 </div>
                 <div>
+                  <label className="block font-bold theme-text mb-1">Field of Study / Specialization</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Computer Science and Engineering"
+                    value={eduForm.fieldOfStudy || ''}
+                    onChange={(e) => setEduForm({ ...eduForm, fieldOfStudy: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text"
+                  />
+                </div>
+                <div>
                   <label className="block font-bold theme-text mb-1">Institution / University *</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. IIT Bombay"
+                    placeholder="e.g. IIT Bombay / University of Delhi"
                     value={eduForm.institution}
                     onChange={(e) => setEduForm({ ...eduForm, institution: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text"
@@ -3059,40 +3290,70 @@ export default function CandidateProfilePage() {
                     <input
                       type="text"
                       placeholder="2016"
-                      value={eduForm.startYear}
+                      value={eduForm.startYear || ''}
                       onChange={(e) => setEduForm({ ...eduForm, startYear: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text"
                     />
                   </div>
                   <div>
-                    <label className="block font-bold theme-text mb-1">End Year</label>
+                    <label className="block font-bold theme-text mb-1">End / Passing Year</label>
                     <input
                       type="text"
                       placeholder="2020"
-                      value={eduForm.endYear}
+                      value={eduForm.endYear || ''}
                       onChange={(e) => setEduForm({ ...eduForm, endYear: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text"
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="block font-bold theme-text mb-1">Grade / CGPA / Percentage</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 8.5 CGPA or First Class"
+                    value={eduForm.grade || ''}
+                    onChange={(e) => setEduForm({ ...eduForm, grade: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border theme-border theme-surface theme-text"
+                  />
+                </div>
               </div>
 
-              <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-slate-900/50">
-                <button
-                  type="button"
-                  onClick={() => setActiveModal(null)}
-                  className="px-4 py-2.5 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAddEducation}
-                  disabled={!eduForm.degree || !eduForm.institution}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
-                >
-                  Save Education
-                </button>
+              <div className="flex-shrink-0 p-4 sm:p-5 border-t theme-border flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                {editingEduIndex !== null ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleDeleteEducation(editingEduIndex);
+                      setActiveModal(null);
+                      setEditingEduIndex(null);
+                    }}
+                    className="text-xs font-bold text-rose-500 hover:text-rose-600 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Degree</span>
+                  </button>
+                ) : <div />}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveModal(null);
+                      setEditingEduIndex(null);
+                    }}
+                    className="px-4 py-2.5 rounded-xl border theme-border theme-text text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveEducation}
+                    disabled={!eduForm.degree.trim() || !eduForm.institution.trim()}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <GraduationCap className="w-4 h-4" /> {editingEduIndex !== null ? 'Update Degree' : 'Save Degree'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
