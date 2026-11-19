@@ -16,7 +16,7 @@ export class SubscriptionPlan {
   @Column({ length: 100 })
   name: string;
 
-  @Column({ length: 100, unique: true })
+  @Column({ length: 100 })
   code: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
