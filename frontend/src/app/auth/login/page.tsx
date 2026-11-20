@@ -139,7 +139,7 @@ export default function LoginPage() {
         </div>
 
         {/* Employer / Recruiter Entry Banner */}
-        <div className="p-3 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/50 flex items-center justify-between text-xs">
+        {/* <div className="p-3 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/50 flex items-center justify-between text-xs">
           <div>
             <div className="text-purple-700 dark:text-purple-300 font-bold">Hiring Top Talent?</div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400">Post jobs &amp; search 10M+ resumes</div>
@@ -151,7 +151,7 @@ export default function LoginPage() {
             <span>Employer Login</span>
             <ArrowRight className="w-3 h-3" />
           </Link>
-        </div>
+        </div> */}
 
         {/* Toggle Mode Tabs */}
         <div className="grid grid-cols-2 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/80 theme-border border text-xs font-bold">
@@ -161,11 +161,10 @@ export default function LoginPage() {
               setAuthMode('OTP');
               setError(null);
             }}
-            className={`py-2 rounded-xl transition-all flex items-center justify-center space-x-1.5 ${
-              authMode === 'OTP'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'theme-muted hover:theme-text'
-            }`}
+            className={`py-2 rounded-xl transition-all flex items-center justify-center space-x-1.5 ${authMode === 'OTP'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'theme-muted hover:theme-text'
+              }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>OTP One-Click</span>
@@ -176,11 +175,10 @@ export default function LoginPage() {
               setAuthMode('PASSWORD');
               setError(null);
             }}
-            className={`py-2 rounded-xl transition-all flex items-center justify-center space-x-1.5 ${
-              authMode === 'PASSWORD'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'theme-muted hover:theme-text'
-            }`}
+            className={`py-2 rounded-xl transition-all flex items-center justify-center space-x-1.5 ${authMode === 'PASSWORD'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'theme-muted hover:theme-text'
+              }`}
           >
             <KeyRound className="w-3.5 h-3.5" />
             <span>Password Login</span>
