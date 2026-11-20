@@ -425,6 +425,25 @@ export class JobPortalSdk {
     });
   }
 
+  // --- Stripe Hosted Checkout & Verification ---
+  async createStripeCheckoutSession(payload: {
+    tenantId?: string;
+    planCodeOrId?: string;
+    billingCycle?: 'monthly' | 'yearly';
+    topupType?: string;
+    successUrl?: string;
+    cancelUrl?: string;
+  }): Promise<{ sessionId: string; checkoutUrl: string }> {
+    return this.request('/subscriptions/checkout', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async verifyStripeSession(sessionId: string): Promise<any> {
+    return this.request(`/subscriptions/verify-session?sessionId=${encodeURIComponent(sessionId)}`);
+  }
+
   async getAdminTransactions(): Promise<any[]> {
     return this.request('/admin/transactions');
   }

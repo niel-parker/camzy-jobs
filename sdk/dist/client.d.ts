@@ -139,6 +139,18 @@ export declare class JobPortalSdk {
     upgradeSubscriptionPlan(planCode: string, billingCycle?: 'monthly' | 'yearly', tenantId?: string, paymentMethod?: string): Promise<any>;
     purchaseQuotaTopup(topupType: string, tenantId?: string, paymentMethod?: string): Promise<any>;
     trackResumeDownload(candidateId?: string, tenantId?: string): Promise<any>;
+    createStripeCheckoutSession(payload: {
+        tenantId?: string;
+        planCodeOrId?: string;
+        billingCycle?: 'monthly' | 'yearly';
+        topupType?: string;
+        successUrl?: string;
+        cancelUrl?: string;
+    }): Promise<{
+        sessionId: string;
+        checkoutUrl: string;
+    }>;
+    verifyStripeSession(sessionId: string): Promise<any>;
     getAdminTransactions(): Promise<any[]>;
     getLocations(params?: {
         q?: string;

@@ -6,7 +6,7 @@ import { useTheme } from '../../../context/ThemeContext';
 import { 
   CreditCard, Check, Zap, Download, Users, Briefcase, RefreshCw, 
   Loader2, Sparkles, FileText, Printer, X, ShieldCheck, ArrowRight,
-  Lock, AlertTriangle, QrCode, Building2, CheckCircle2, Calendar, Percent, Info
+  Lock, AlertTriangle, QrCode, Building2, CheckCircle2, Calendar, ExternalLink
 } from 'lucide-react';
 
 interface CheckoutState {
@@ -29,12 +29,13 @@ export default function EmployerBillingPage() {
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isVerifyingStripe, setIsVerifyingStripe] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Interactive Payment Checkout Modal State
   const [checkoutModal, setCheckoutModal] = useState<CheckoutState | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'netbanking' | 'invoice'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'card' | 'upi' | 'netbanking' | 'invoice'>('stripe');
   const [cardForm, setCardForm] = useState({
     number: '4242 4242 4242 4242',
     name: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'TechCorp Accounts',
@@ -71,7 +72,54 @@ export default function EmployerBillingPage() {
     loadBillingData();
   }, [sdk, tenantId]);
 
+  // Handle Stripe Redirect Return (?session_id=cs_test_...&success=true)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    const isSuccess = params.get('success');
+    const isCanceled = params.get('canceled');
+
+    if (sessionId && isSuccess === 'true') {
+      setIsVerifyingStripe(true);
+      sdk.verifyStripeSession(sessionId)
+        .then((res: any) => {
+          if (res?.success) {
+            setNotification({
+              type: 'success',
+              message: '🎉 Stripe Payment Succeeded! Your subscription plan has been activated.',
+            });
+            if (res.transaction) setSelectedInvoice(res.transaction);
+            loadBillingData();
+          } else {
+            setNotification({
+              type: 'error',
+              message: res?.message || 'Stripe payment verification pending. Please check again in a moment.',
+            });
+          }
+        })
+        .catch((err: any) => {
+          setNotification({
+            type: 'error',
+            message: err?.message || 'Failed to verify Stripe payment session.',
+          });
+        })
+        .finally(() => {
+          setIsVerifyingStripe(false);
+          // Clean query parameters from browser URL
+          window.history.replaceState({}, '', window.location.pathname);
+        });
+    } else if (isCanceled === 'true') {
+      setNotification({
+        type: 'error',
+        message: 'Stripe checkout was canceled. No charges were made.',
+      });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [sdk]);
+
   const handleOpenPlanCheckout = (p: any) => {
+    setPaymentMethod('stripe');
     setCheckoutModal({
       isOpen: true,
       type: 'PLAN',
@@ -90,6 +138,7 @@ export default function EmployerBillingPage() {
   };
 
   const handleOpenTopupCheckout = (topupType: string, title: string, price: number) => {
+    setPaymentMethod('stripe');
     setCheckoutModal({
       isOpen: true,
       type: 'TOPUP',
@@ -101,7 +150,34 @@ export default function EmployerBillingPage() {
     });
   };
 
-  const handleConfirmPayment = async () => {
+  // Stripe Hosted Checkout Handler
+  const handleStripeCheckout = async () => {
+    if (!checkoutModal) return;
+    setIsProcessing(true);
+    try {
+      const res = await sdk.createStripeCheckoutSession({
+        tenantId,
+        planCodeOrId: checkoutModal.planCode,
+        billingCycle: checkoutModal.billingCycle,
+        topupType: checkoutModal.topupType,
+      });
+
+      if (res?.checkoutUrl) {
+        window.location.href = res.checkoutUrl;
+      } else {
+        throw new Error('No checkout URL received from Stripe service');
+      }
+    } catch (err: any) {
+      setNotification({
+        type: 'error',
+        message: err?.message || 'Failed to initialize Stripe checkout. Please try again.',
+      });
+      setIsProcessing(false);
+    }
+  };
+
+  // Offline / Direct Payment Handler (Alternative)
+  const handleDirectPayment = async () => {
     if (!checkoutModal) return;
     setIsProcessing(true);
     let methodLabel = '';
@@ -219,7 +295,7 @@ export default function EmployerBillingPage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-                Monetization & Plans
+                Stripe Payments & Monetization
               </span>
               <span className="text-xs font-semibold theme-muted">Company Billing Center</span>
             </div>
@@ -239,6 +315,19 @@ export default function EmployerBillingPage() {
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh Quotas & Invoices
           </button>
         </div>
+
+        {/* Stripe Verification Loader Overlay */}
+        {isVerifyingStripe && (
+          <div className="p-4 rounded-2xl bg-indigo-600 text-white flex items-center justify-between shadow-lg animate-in fade-in">
+            <div className="flex items-center gap-3">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <div>
+                <p className="font-extrabold text-sm">Verifying Stripe Payment Session...</p>
+                <p className="text-xs text-indigo-100">Synchronizing subscription quotas and generating paid invoice.</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Status notification toast */}
         {notification && (
@@ -273,9 +362,10 @@ export default function EmployerBillingPage() {
               <button
                 type="button"
                 onClick={() => handleOpenPlanCheckout(plan)}
-                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs shrink-0 shadow-md transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs shrink-0 shadow-md transition-all cursor-pointer flex items-center gap-1.5"
               >
-                Renew {plan.name} Now
+                <span>Renew with Stripe</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
@@ -390,14 +480,14 @@ export default function EmployerBillingPage() {
           </div>
         </div>
 
-        {/* Quota Top-Up Packs (Instant Purchase) */}
+        {/* Quota Top-Up Packs (Instant Purchase with Stripe) */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-black theme-text flex items-center gap-2">
                 <Zap className="w-5 h-5 text-amber-500" /> Quota Top-Up Add-ons
               </h2>
-              <p className="text-xs theme-muted">Need extra candidate resume downloads or job posting slots without upgrading your full plan?</p>
+              <p className="text-xs theme-muted">Instant candidate resume downloads or job posting slots powered by Stripe Checkout.</p>
             </div>
           </div>
 
@@ -500,7 +590,7 @@ export default function EmployerBillingPage() {
                 <Sparkles className="w-5 h-5 text-indigo-500" /> Available Subscription Plans
               </h2>
               <p className="text-xs theme-muted">
-                Admin-managed packages updated in real time. Choose the plan that fits your recruitment velocity.
+                Admin-managed packages updated in real time. Pay securely via Stripe hosted checkout.
               </p>
             </div>
           </div>
@@ -577,7 +667,7 @@ export default function EmployerBillingPage() {
                         onClick={() => handleOpenPlanCheckout(p)}
                         className="w-full py-2.5 px-4 rounded-xl border border-indigo-500/40 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
                       >
-                        <RefreshCw className="w-3.5 h-3.5" /> {isExpired ? 'Renew Expired Plan' : 'Renew / Extend Plan'}
+                        <RefreshCw className="w-3.5 h-3.5" /> {isExpired ? 'Renew via Stripe' : 'Renew / Extend Plan'}
                       </button>
                     ) : (
                       <button
@@ -609,7 +699,7 @@ export default function EmployerBillingPage() {
                 <FileText className="w-4 h-4 text-indigo-500" /> Billing Transactions & Invoices
               </h3>
               <p className="text-xs theme-muted">
-                Complete audit trail of all subscription charges, quota top-ups, and downloadable tax receipts.
+                Complete audit trail of all Stripe subscription charges, quota top-ups, and downloadable tax receipts.
               </p>
             </div>
             <span className="text-xs font-bold theme-muted">
@@ -658,7 +748,7 @@ export default function EmployerBillingPage() {
                           {txn.type.replace('_', ' ')}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 theme-muted">{txn.paymentMethod || 'Online Payment (Verified)'}</td>
+                      <td className="py-3.5 px-4 theme-muted">{txn.paymentMethod || 'Stripe Card (Verified)'}</td>
                       <td className="py-3.5 px-4 font-black theme-text">₹{Number(txn.amount).toFixed(2)}</td>
                       <td className="py-3.5 px-4">
                         <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-extrabold border border-emerald-500/20">
@@ -683,19 +773,24 @@ export default function EmployerBillingPage() {
         </div>
       </div>
 
-      {/* Interactive Payment Checkout Modal */}
+      {/* Stripe Payment Checkout Modal */}
       {checkoutModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto animate-in fade-in duration-200">
           <div className="relative w-full max-w-2xl max-h-[92vh] my-auto flex flex-col bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             {/* Header */}
             <div className="flex-shrink-0 px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                <div className="p-2 rounded-xl bg-[#635BFF]/20 text-[#635BFF] border border-[#635BFF]/30">
                   <Lock className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm">Secure Payment & Plan Activation</h3>
-                  <p className="text-[11px] text-slate-400">256-Bit SSL Encrypted • Instant Quota Provisioning</p>
+                  <h3 className="font-extrabold text-sm flex items-center gap-2">
+                    <span>Stripe Secure Payment & Plan Activation</span>
+                    <span className="px-2 py-0.5 rounded-full bg-[#635BFF] text-white text-[9px] font-black tracking-wider uppercase">
+                      Stripe Verified
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">256-Bit SSL Encrypted • PCI-DSS Level 1 Certified • Instant Activation</p>
                 </div>
               </div>
               <button
@@ -714,7 +809,7 @@ export default function EmployerBillingPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-indigo-500">
-                      {checkoutModal.type === 'PLAN' ? 'Subscription Tier' : 'Quota Boost'}
+                      {checkoutModal.type === 'PLAN' ? 'Selected Subscription Tier' : 'Selected Quota Add-on'}
                     </span>
                     <h4 className="text-base font-black theme-text">{checkoutModal.title}</h4>
                   </div>
@@ -783,9 +878,22 @@ export default function EmployerBillingPage() {
               {/* Payment Method Selector */}
               <div className="space-y-3">
                 <label className="block text-xs font-black uppercase tracking-wider theme-text">
-                  Select Payment Method
+                  Choose Payment Gateway
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('stripe')}
+                    className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${
+                      paymentMethod === 'stripe'
+                        ? 'border-[#635BFF] bg-[#635BFF]/10 text-[#635BFF] font-black ring-2 ring-[#635BFF]/40'
+                        : 'theme-border hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold'
+                    }`}
+                  >
+                    <CreditCard className="w-5 h-5 text-[#635BFF]" />
+                    <span>Stripe Checkout</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('card')}
@@ -796,7 +904,7 @@ export default function EmployerBillingPage() {
                     }`}
                   >
                     <CreditCard className="w-5 h-5" />
-                    <span>Card / Debit</span>
+                    <span>Card (Direct)</span>
                   </button>
 
                   <button
@@ -814,19 +922,6 @@ export default function EmployerBillingPage() {
 
                   <button
                     type="button"
-                    onClick={() => setPaymentMethod('netbanking')}
-                    className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${
-                      paymentMethod === 'netbanking'
-                        ? 'border-indigo-600 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black ring-1 ring-indigo-500'
-                        : 'theme-border hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold'
-                    }`}
-                  >
-                    <Building2 className="w-5 h-5" />
-                    <span>Net Banking</span>
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => setPaymentMethod('invoice')}
                     className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${
                       paymentMethod === 'invoice'
@@ -835,11 +930,44 @@ export default function EmployerBillingPage() {
                     }`}
                   >
                     <FileText className="w-5 h-5" />
-                    <span>Direct PO</span>
+                    <span>Corporate PO</span>
                   </button>
                 </div>
 
-                {/* Card Payment Form */}
+                {/* Stripe Hosted Checkout Card (Primary) */}
+                {paymentMethod === 'stripe' && (
+                  <div className="p-5 rounded-2xl border-2 border-[#635BFF]/30 bg-[#635BFF]/5 space-y-4 animate-in fade-in">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h5 className="font-black text-sm text-[#635BFF] flex items-center gap-1.5">
+                          <span>Pay with Stripe Hosted Checkout</span>
+                        </h5>
+                        <p className="text-xs theme-muted mt-1 leading-relaxed">
+                          You will be seamlessly redirected to Stripe's secure checkout page to complete your payment. Accepts all major cards, Apple Pay, Google Pay, and international cards with 3D Secure verification.
+                        </p>
+                      </div>
+                      <div className="px-2.5 py-1 rounded-lg bg-[#635BFF] text-white font-black text-[11px] shrink-0 tracking-wider">
+                        STRIPE
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#635BFF]/20 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                      <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border theme-border">Visa</span>
+                      <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border theme-border">Mastercard</span>
+                      <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border theme-border">Amex</span>
+                      <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border theme-border">RuPay</span>
+                      <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border theme-border">Apple Pay</span>
+                      <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border theme-border">Google Pay</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border theme-border text-[11px] flex items-center gap-2 theme-muted">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>Upon payment completion, Stripe automatically redirects back here and activates your plan and quotas instantly.</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Direct Card Form */}
                 {paymentMethod === 'card' && (
                   <div className="p-4 rounded-2xl border theme-border bg-slate-50/50 dark:bg-slate-800/20 space-y-3 animate-in fade-in">
                     <div>
@@ -919,27 +1047,6 @@ export default function EmployerBillingPage() {
                   </div>
                 )}
 
-                {/* Net Banking Form */}
-                {paymentMethod === 'netbanking' && (
-                  <div className="p-4 rounded-2xl border theme-border bg-slate-50/50 dark:bg-slate-800/20 space-y-3 animate-in fade-in">
-                    <label className="block font-bold theme-text mb-1">Select Bank</label>
-                    <select
-                      value={selectedBank}
-                      onChange={(e) => setSelectedBank(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border theme-border theme-surface theme-text font-bold"
-                    >
-                      <option value="HDFC Bank">HDFC Bank</option>
-                      <option value="ICICI Bank">ICICI Bank</option>
-                      <option value="State Bank of India">State Bank of India (SBI)</option>
-                      <option value="Axis Bank">Axis Bank</option>
-                      <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
-                      <option value="Punjab National Bank">Punjab National Bank</option>
-                      <option value="Bank of Baroda">Bank of Baroda</option>
-                    </select>
-                    <p className="text-[11px] theme-muted">You will be securely routed to your bank's portal for one-time verification.</p>
-                  </div>
-                )}
-
                 {/* Corporate Invoice Form */}
                 {paymentMethod === 'invoice' && (
                   <div className="p-4 rounded-2xl border theme-border bg-slate-50/50 dark:bg-slate-800/20 space-y-3 animate-in fade-in">
@@ -968,26 +1075,51 @@ export default function EmployerBillingPage() {
               >
                 Cancel
               </button>
-              <button
-                type="button"
-                onClick={handleConfirmPayment}
-                disabled={isProcessing}
-                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-extrabold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing Payment...</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>Pay ₹{checkoutModal.billingCycle === 'yearly' 
-                      ? (checkoutModal.priceYearly * 12).toLocaleString('en-IN') 
-                      : checkoutModal.priceMonthly.toLocaleString('en-IN')} & Activate</span>
-                  </>
-                )}
-              </button>
+
+              {paymentMethod === 'stripe' ? (
+                <button
+                  type="button"
+                  onClick={handleStripeCheckout}
+                  disabled={isProcessing}
+                  className="px-6 py-2.5 rounded-xl bg-[#635BFF] hover:bg-[#5249f3] disabled:opacity-50 text-white font-extrabold text-xs shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Redirecting to Stripe...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Proceed to Stripe Checkout (₹{checkoutModal.billingCycle === 'yearly' 
+                        ? (checkoutModal.priceYearly * 12).toLocaleString('en-IN') 
+                        : checkoutModal.priceMonthly.toLocaleString('en-IN')})</span>
+                      <ExternalLink className="w-3.5 h-3.5 ml-1" />
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleDirectPayment}
+                  disabled={isProcessing}
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-extrabold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Processing Payment...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>Pay ₹{checkoutModal.billingCycle === 'yearly' 
+                        ? (checkoutModal.priceYearly * 12).toLocaleString('en-IN') 
+                        : checkoutModal.priceMonthly.toLocaleString('en-IN')} & Activate</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -1051,7 +1183,7 @@ export default function EmployerBillingPage() {
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">PAYMENT DETAILS</span>
-                  <p className="font-extrabold text-slate-900 text-sm mt-0.5">{selectedInvoice.paymentMethod || 'Online Payment (Verified)'}</p>
+                  <p className="font-extrabold text-slate-900 text-sm mt-0.5">{selectedInvoice.paymentMethod || 'Stripe Card (Verified)'}</p>
                   <p className="text-slate-600 text-[11px]">Currency: {selectedInvoice.currency || 'INR'}</p>
                   <p className="text-slate-600 text-[11px]">Type: {selectedInvoice.type}</p>
                 </div>

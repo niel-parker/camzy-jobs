@@ -195,12 +195,17 @@ export declare class SubscriptionsController {
         message: string;
     }>;
     createCheckoutSession(body: {
-        tenantId: string;
-        planId: string;
+        tenantId?: string;
+        planCodeOrId?: string;
+        billingCycle?: 'monthly' | 'yearly';
+        topupType?: 'RESUME_50' | 'RESUME_150' | 'JOBS_5' | 'SEATS_2';
+        successUrl?: string;
+        cancelUrl?: string;
     }): Promise<{
         checkoutUrl: string;
         sessionId: string;
     }>;
+    verifySession(sessionId: string): Promise<any>;
     handleStripeWebhook(body: {
         type: string;
         data: any;

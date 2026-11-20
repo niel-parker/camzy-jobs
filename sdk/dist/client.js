@@ -320,6 +320,16 @@ class JobPortalSdk {
             body: JSON.stringify({ candidateId, tenantId }),
         });
     }
+    // --- Stripe Hosted Checkout & Verification ---
+    async createStripeCheckoutSession(payload) {
+        return this.request('/subscriptions/checkout', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    }
+    async verifyStripeSession(sessionId) {
+        return this.request(`/subscriptions/verify-session?sessionId=${encodeURIComponent(sessionId)}`);
+    }
     async getAdminTransactions() {
         return this.request('/admin/transactions');
     }

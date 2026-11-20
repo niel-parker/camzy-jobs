@@ -69,8 +69,23 @@ export class SubscriptionsController {
   @Post('checkout')
   @ApiOperation({ summary: 'Create Stripe Checkout Session for company plan upgrade' })
   @ApiResponse({ status: 201, description: 'Hosted Stripe Checkout session URL generated' })
-  createCheckoutSession(@Body() body: { tenantId: string; planId: string }) {
-    return this.stripeService.createCheckoutSession(body.tenantId, body.planId);
+  createCheckoutSession(
+    @Body() body: {
+      tenantId?: string;
+      planCodeOrId?: string;
+      billingCycle?: 'monthly' | 'yearly';
+      topupType?: 'RESUME_50' | 'RESUME_150' | 'JOBS_5' | 'SEATS_2';
+      successUrl?: string;
+      cancelUrl?: string;
+    },
+  ) {
+    return this.stripeService.createCheckoutSession(body);
+  }
+
+  @Get('verify-session')
+  @ApiOperation({ summary: 'Verify and fulfill Stripe Checkout Session' })
+  async verifySession(@Query('sessionId') sessionId: string) {
+    return await this.stripeService.verifyAndFulfillSession(sessionId);
   }
 
   @Post('webhook')

@@ -41,7 +41,10 @@ let SubscriptionsController = class SubscriptionsController {
         return await this.subscriptionsService.trackResumeDownload(body.tenantId || 'techcorp-global', body.candidateId);
     }
     createCheckoutSession(body) {
-        return this.stripeService.createCheckoutSession(body.tenantId, body.planId);
+        return this.stripeService.createCheckoutSession(body);
+    }
+    async verifySession(sessionId) {
+        return await this.stripeService.verifyAndFulfillSession(sessionId);
     }
     handleStripeWebhook(body) {
         return this.stripeService.handleWebhookEvent(body);
@@ -104,6 +107,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], SubscriptionsController.prototype, "createCheckoutSession", null);
+__decorate([
+    (0, common_1.Get)('verify-session'),
+    (0, swagger_1.ApiOperation)({ summary: 'Verify and fulfill Stripe Checkout Session' }),
+    __param(0, (0, common_1.Query)('sessionId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], SubscriptionsController.prototype, "verifySession", null);
 __decorate([
     (0, common_1.Post)('webhook'),
     (0, swagger_1.ApiOperation)({ summary: 'Stripe Webhook Listener for automated billing & quota resets' }),
