@@ -34,7 +34,16 @@ let StripeService = StripeService_1 = class StripeService {
         if (!this.apiKey) {
             throw new Error('Stripe API key (STRIPE_SECRET_KEY) is not configured in backend environment.');
         }
-        const tenantId = dto.tenantId || 'techcorp-global';
+        let tenantId = dto.tenantId;
+        try {
+            const resolvedTenant = await this.subscriptionsService.resolveTenant(tenantId);
+            if (resolvedTenant?.id) {
+                tenantId = resolvedTenant.id;
+            }
+        }
+        catch {
+            tenantId = '895c2926-0596-4115-a3e5-03a9d8fe042d';
+        }
         const billingCycle = dto.billingCycle || 'monthly';
         const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
         const successUrl = dto.successUrl || `${baseUrl}/employer/billing?success=true&session_id={CHECKOUT_SESSION_ID}`;
@@ -171,7 +180,16 @@ let StripeService = StripeService_1 = class StripeService {
             };
         }
         const metadata = session.metadata || {};
-        const tenantId = metadata.tenantId || session.client_reference_id || 'techcorp-global';
+        let tenantId = metadata.tenantId || session.client_reference_id;
+        try {
+            const resolvedTenant = await this.subscriptionsService.resolveTenant(tenantId);
+            if (resolvedTenant?.id) {
+                tenantId = resolvedTenant.id;
+            }
+        }
+        catch {
+            tenantId = '895c2926-0596-4115-a3e5-03a9d8fe042d';
+        }
         const type = metadata.type || 'SUBSCRIPTION';
         const paymentLabel = `Stripe Checkout (${sessionId})`;
         if (type === 'QUOTA_TOPUP') {
